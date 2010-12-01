@@ -27,22 +27,31 @@ stuff = OneOrMore(bingy)
 # Real MediaWiki syntax:
 ## Fundamental elements:
 newline = (Literal('\r\n') | Literal('\n\r') | Literal('\r') | Literal('\n')).leaveWhitespace()
-newlines = OneOrMore(newline)
+newlines = Combine(OneOrMore(newline)).leaveWhitespace()
 #newlines.verbose_stacktrace = True
-parsed_eq(newlines, '\r\r\n\n\r\n', ['\r', '\r\n', '\n\r', '\n'])
+parsed_eq(OneOrMore(newline), '\r\r\n\n\r\n', ['\r', '\r\n', '\n\r', '\n'])
+parsed_eq(newlines, '\r\r\n\n\r\n', ['\r\r\n\n\r\n'])
 
 space = Literal(' ').leaveWhitespace()
-spaces = OneOrMore(space)
-parsed_eq(spaces, '  ', [' ', ' '])
+spaces = Combine(OneOrMore(space)).leaveWhitespace()
+parsed_eq(spaces, '  ', ['  '])
 space_tab = (space | Literal('\t').leaveWhitespace()).leaveWhitespace().parseWithTabs()
 parsed_eq(space_tab, '\t', ['\t'])
 space_tabs = OneOrMore(space_tab)
 
 whitespace_char = (space_tab | newline).leaveWhitespace().parseWithTabs()
 parsed_eq(whitespace_char, '\t', ['\t'])
-whitespace = (OneOrMore(whitespace_char) | StringEnd()).leaveWhitespace().parseWithTabs()
-parsed_eq(whitespace, ' \t\r', [' ', '\t', '\r'])
+whitespace = Combine(OneOrMore(whitespace_char) + Optional(StringEnd())).leaveWhitespace().parseWithTabs()
+parsed_eq(whitespace, ' \t\r', [' \t\r'])
+parsed_eq(whitespace, ' hi', [' '])  # no StringEnd
 
+hex_digit = oneOf(list(hexnums))
+hex_number = Combine(OneOrMore(hex_digit))
+parsed_eq(hex_number, '123DECAFBAD', ['123DECAFBAD'])
+
+decimal_digit = oneOf(list(nums))
+decimal_number = Combine(OneOrMore(decimal_digit))
+parsed_eq(decimal_number, '0123', ['0123'])
 # try:
 #     p = newlines.parseString(str)
 # except ParseException, e:
