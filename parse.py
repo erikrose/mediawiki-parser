@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""What will eventually become a MediaWiki parser.
+
+Based on the work at http://www.mediawiki.org/wiki/Markup_spec/BNF
+
+"""
 
 from pyparsing import *
 import string
@@ -27,10 +32,16 @@ stuff = OneOrMore(bingy)
 # Real MediaWiki syntax:
 ## Fundamental elements:
 newline = (Literal('\r\n') | Literal('\n\r') | Literal('\r') | Literal('\n')).leaveWhitespace()
+parsed_eq(OneOrMore(newline), '\r\r\n\n\r\n', ['\r', '\r\n', '\n\r', '\n'])
 newlines = Combine(OneOrMore(newline)).leaveWhitespace()
 #newlines.verbose_stacktrace = True
-parsed_eq(OneOrMore(newline), '\r\r\n\n\r\n', ['\r', '\r\n', '\n\r', '\n'])
 parsed_eq(newlines, '\r\r\n\n\r\n', ['\r\r\n\n\r\n'])
+bol = (newline | StringStart()).leaveWhitespace()
+parsed_eq(bol + 'hi', 'hi', ['hi'])
+parsed_eq(bol + 'hi', '\nhi', ['\n', 'hi'])
+eol = newline | StringEnd()
+parsed_eq('hi' + eol, 'hi', ['hi'])
+parsed_eq('hi' + eol, 'hi\n', ['hi', '\n'])
 
 space = Literal(' ').leaveWhitespace()
 spaces = Combine(OneOrMore(space)).leaveWhitespace()
@@ -52,6 +63,24 @@ parsed_eq(hex_number, '123DECAFBAD', ['123DECAFBAD'])
 decimal_digit = oneOf(list(nums))
 decimal_number = Combine(OneOrMore(decimal_digit))
 parsed_eq(decimal_number, '0123', ['0123'])
+
+underscore = Literal('_')
+html_unsafe_symbol = oneOf(list('<>&'))  # TODO: on output, escape
+symbol = Regex('[^0-9a-zA-Z]')  # inferred from inadequate description
+lcase_letter = Regex('[a-z]')
+ucase_letter = Regex('[A-Z]')
+letter = Regex('[a-zA-Z]')
+non_whitespace_char = letter | decimal_digit | symbol  # Optimize all such combinations; they'd probably benefit from being collapsed into single regex alternations.
+
+html_entity_char = letter | decimal_digit
+html_entity_chars = OneOrMore(html_entity_char)
+html_entity = (('&#x' + hex_number + ';') |
+               ('&#' + decimal_number + ';') |
+               ('&' + html_entity_chars + ';')).setParseAction(lambda toks: 'yeah%s' % toks).setResultsName('html_entity')
+
+character = html_entity | whitespace_char | non_whitespace_char
+parsed_eq(character, '&#xdeadbeef', ['yeahdeadbeef'])  # NEXT: Make this work, just to understand setParseAction.
+
 # try:
 #     p = newlines.parseString(str)
 # except ParseException, e:
