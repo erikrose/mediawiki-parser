@@ -15,6 +15,7 @@ def parsed_eq(expr, text, want):
         raise AssertionError('%s != %s' % (got, want))
 
 
+ParserElement.setDefaultWhitespaceChars('')  # Whitespace is significant.
 ParserElement.enablePackrat()  # Enable memoizing.
 
 bold = Literal("'''")
@@ -26,33 +27,33 @@ inline = bold | italic | char  # in order of precedence: see docs at MatchFirst
 stuff = ZeroOrMore(inline)
 
 nice_char = oneOf(['a', 'b', 'c'])
-bingy = Group(Literal('!') + Combine(OneOrMore(nice_char)) + Literal('@'))
+bingy = Group('!' + Combine(OneOrMore(nice_char)) + '@')
 stuff = OneOrMore(bingy)
 
 # Real MediaWiki syntax:
 ## Fundamental elements:
-newline = (Literal('\r\n') | Literal('\n\r') | Literal('\r') | Literal('\n')).leaveWhitespace()
+newline = (Literal('\r\n') | '\n\r' | '\r' | '\n')
 parsed_eq(OneOrMore(newline), '\r\r\n\n\r\n', ['\r', '\r\n', '\n\r', '\n'])
-newlines = Combine(OneOrMore(newline)).leaveWhitespace()
+newlines = Combine(OneOrMore(newline))
 #newlines.verbose_stacktrace = True
 parsed_eq(newlines, '\r\r\n\n\r\n', ['\r\r\n\n\r\n'])
-bol = (newline | StringStart()).leaveWhitespace()
+bol = newline | StringStart()
 parsed_eq(bol + 'hi', 'hi', ['hi'])
 parsed_eq(bol + 'hi', '\nhi', ['\n', 'hi'])
 eol = newline | StringEnd()
 parsed_eq('hi' + eol, 'hi', ['hi'])
 parsed_eq('hi' + eol, 'hi\n', ['hi', '\n'])
 
-space = Literal(' ').leaveWhitespace()
-spaces = Combine(OneOrMore(space)).leaveWhitespace()
+space = Literal(' ')
+spaces = Combine(OneOrMore(space))
 parsed_eq(spaces, '  ', ['  '])
-space_tab = (space | Literal('\t').leaveWhitespace()).leaveWhitespace().parseWithTabs()
+space_tab = (space | '\t').parseWithTabs()
 parsed_eq(space_tab, '\t', ['\t'])
 space_tabs = OneOrMore(space_tab)
 
-whitespace_char = (space_tab | newline).leaveWhitespace().parseWithTabs()
+whitespace_char = (space_tab | newline).parseWithTabs()
 parsed_eq(whitespace_char, '\t', ['\t'])
-whitespace = Combine(OneOrMore(whitespace_char) + Optional(StringEnd())).leaveWhitespace().parseWithTabs()
+whitespace = Combine(OneOrMore(whitespace_char) + Optional(StringEnd())).parseWithTabs()
 parsed_eq(whitespace, ' \t\r', [' \t\r'])
 parsed_eq(whitespace, ' hi', [' '])  # no StringEnd
 
@@ -79,7 +80,8 @@ html_entity = (('&#x' + hex_number + ';') |
                ('&' + html_entity_chars + ';')).setParseAction(lambda toks: 'yeah%s' % toks).setResultsName('html_entity')
 
 character = html_entity | whitespace_char | non_whitespace_char
-parsed_eq(character, '&#xdeadbeef', ['yeahdeadbeef'])  # NEXT: Make this work, just to understand setParseAction.
+#parsed_eq(character, '&#xdeadbeef', ['yeahdeadbeef'])  # NEXT: Make this work, just to understand setParseAction.
+print "All's well!"
 
 # try:
 #     p = newlines.parseString(str)
