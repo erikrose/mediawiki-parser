@@ -1,0 +1,39 @@
+Goals
+=====
+* Possible (to represent MediaWiki syntax)
+* Extensible per project
+
+Parser libs
+===========
+
+LEPL
+----
+* Supports ambiguous grammars
+o Idiosyncratic syntax with lots of operator overloading (even slices!)
+o Slow (http://www.quora.com/What-is-the-best-parser-generator-for-Python/answer/Matthew-Lloyd)
+
+PLY
+---
+. LALR or, optionally, SLR
+* Modal lexer. (Is this necessary? Understand what can't be BNF'd about apostrophe jungles and lists.)
+
+PyParsing
+---------
+. Recursive descent (LL)
+
+Milestones
+==========
+* Understand what's so hard about apostrophes and lists (http://www.mediawiki.org/wiki/Markup_spec/BNF/Inline_text).
+    This claims MW isn't context-free and has code on how to hack through the apostrophe jungle: http://web.archiveorange.com/archive/v/e7MXfq0OoW0nCOGyX0oa
+    
+    Useful background discussion by the folks who wrote the BNF attempt: http://www.mediawiki.org/wiki/Talk:Markup_spec
+    The flex markup looks to have naive apostrophe jungle state rules: http://www.mediawiki.org/wiki/Markup_spec/flex
+* Get a parse tree out of a lib.
+* Think about extensibility
+* Get apostrophes working (to test ambiguity support).
+* Implement productions, tag by tag
+
+Notes
+=====
+LR good. LALR even better.
+If we build the parse tree in custom lexer callbacks, we can make it an ElementTree or whatever we want--meaning we can use XPath on it later if we want.
