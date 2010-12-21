@@ -1,7 +1,7 @@
 Goals
 =====
 * Possible (to represent MediaWiki syntax)
-* Extensible per project
+* Extensible per project (for {for} syntax, DekiWiki conditionals, etc.)
 
 Parser libs
 ===========
@@ -15,11 +15,17 @@ o Slow (http://www.quora.com/What-is-the-best-parser-generator-for-Python/answer
 PLY
 ---
 . LALR or, optionally, SLR
-* Modal lexer. (Is this necessary? Understand what can't be BNF'd about apostrophe jungles and lists.)
+* Modal lexer and parser. (Is this necessary? Understand what can't be BNF'd about apostrophe jungles and lists.)
+* Easy to translate into C later
+. Can turn off magic autodiscovery
+o Potential for yacc to guess wrong about how to assemble symbols: reduce/reduce and shift/reduce errors
+* Much faster than PLY? http://www.mefeedia.com/watch/29412150 at 23:58 suggests it's 5.5x faster. More benchmarks (ANTLR and more): http://www.dalkescientific.com/writings/diary/archive/2007/11/03/antlr_java.html
+o A bit more verbose (but very clear)
 
 PyParsing
 ---------
 . Recursive descent (LL)
+* Easier to write and debug?
 
 Milestones
 ==========
