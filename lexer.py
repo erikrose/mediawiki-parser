@@ -31,6 +31,12 @@ class LexerBox(object):
     # Remember, when defining tokens, not to couple any HTML-output-specific
     # transformations to their t.values. That's for the parser to decide.
 
+    # How does PLY tell what order tokens are defined in? Allegedly, it adds
+    # the callable ones in definition order and then the string ones in
+    # ascending length order. [Ed: It looks at each function obj to get
+    # co_firstlineno. Thus, subclassing this might not work as well as I
+    # thought. TODO: Reconsider how to extend.]
+
     # Fundamental elements
     # (http://www.mediawiki.org/wiki/Markup_spec/BNF/Fundamental_elements):
 
@@ -56,17 +62,21 @@ class LexerBox(object):
         return t
 
     def t_html_entity_sym(self, t):
-        t.value = unichr(html_entities[t.lexer.lexmatch.group('html_entity_sym_name')])
+        r'&(?P<html_entity_sym_name>[a-zA-Z1-4]+);'
+        sym = t.lexer.lexmatch.group('html_entity_sym_name')
+        if sym in html_entities:
+            t.value = unichr(html_entities[sym])
+        else:
+            t.type = 'text'
         return t
-    t_html_entity_sym.__doc__ = r'&(?P<html_entity_sym_name>' + '|'.join(html_entities.keys()) + ');'
-    # ^ Optimize by using a hash table? By putting common entities first?
 
     def t_error(self, t):
         raise LexError('Illegal character', t.value[0])
         #t.lexer.skip(1)
 
     # Everything after the t_ in anything that starts with t_:
-    tokens = [k[2:] for k in vars().keys() if k.startswith('t_') and k != 't_error']
+    tokens = ([k[2:] for k in vars().keys() if k.startswith('t_') and k != 't_error'] +
+              ['text'])
 
 lexer = LexerBox().lexer
 # TODO: If we ever need more than one lexer, have the class build the lexer

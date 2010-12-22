@@ -56,7 +56,7 @@ class LexerTests(TestCase):
         lexed_eq('&#x2014;', [T('html_entity_hex', u'\u2014')])
         lexed_eq('&#8212;', [T('html_entity_dec', u'\u2014')])
         lexed_eq('&mdash;', [T('html_entity_sym', u'\u2014')])
-        self.assertRaises(LexError, lexed_eq, '&badentity;', [])
+        lexed_eq('&badentity;', [T('text', '&badentity;')])
 
 
 if __name__ == '__main__':
