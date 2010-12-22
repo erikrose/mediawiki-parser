@@ -43,19 +43,19 @@ def lexed_eq(input, want):
 
 class LexerTests(TestCase):
     def test_newline(self):
-        lexed_eq('\r\r\n\n\r\n', [T('newline', '\r'),
-                                  T('newline', '\r\n'),
-                                  T('newline', '\n\r'),
-                                  T('newline', '\n')])
+        lexed_eq('\r\r\n\n\r\n', [T('NEWLINE', '\r'),
+                                  T('NEWLINE', '\r\n'),
+                                  T('NEWLINE', '\n\r'),
+                                  T('NEWLINE', '\n')])
 
     def test_space_tabs(self):
-        lexed_eq(' ', [T('space_tabs', ' ')])
-        lexed_eq('\t', [T('space_tabs', '\t')])
+        lexed_eq(' ', [T('SPACE_TABS', ' ')])
+        lexed_eq('\t', [T('SPACE_TABS', '\t')])
 
     def test_html_entity(self):
-        lexed_eq('&#x2014;', [T('html_entity_hex', u'\u2014')])
-        lexed_eq('&#8212;', [T('html_entity_dec', u'\u2014')])
-        lexed_eq('&mdash;', [T('html_entity_sym', u'\u2014')])
+        lexed_eq('&#x2014;', [T('HTML_ENTITY_HEX', u'\u2014')])
+        lexed_eq('&#8212;', [T('HTML_ENTITY_DEC', u'\u2014')])
+        lexed_eq('&mdash;', [T('HTML_ENTITY_SYM', u'\u2014')])
         lexed_eq('&badentity;', [T('text', '&badentity;')])
 
 
