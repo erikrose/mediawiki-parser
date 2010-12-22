@@ -53,9 +53,9 @@ class LexerTests(TestCase):
         lexed_eq('\t', [T('space_tabs', '\t')])
 
     def test_html_entity(self):
-        lexed_eq('&#xbeef;', [T('html_entity_hex', '&#xbeef;')])
-        lexed_eq('&#8212;', [T('html_entity_dec', '&#8212;')])
-        lexed_eq('&aring;', [T('html_entity_sym', '&aring;')])
+        lexed_eq('&#x2014;', [T('html_entity_hex', u'\u2014')])
+        lexed_eq('&#8212;', [T('html_entity_dec', u'\u2014')])
+        lexed_eq('&mdash;', [T('html_entity_sym', u'\u2014')])
         self.assertRaises(LexError, lexed_eq, '&badentity;', [])
 
 

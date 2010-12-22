@@ -44,9 +44,21 @@ class LexerBox(object):
     t_space_tabs = r'[\t ]+'
     # Add the rest of these as needed. They might be overly formal noise.
 
-    t_html_entity_hex = r'&\#x[0-9a-fA-F]+;'
-    t_html_entity_dec = r'&\#[0-9]+;'
-    t_html_entity_sym = r'&(?:' + '|'.join(html_entities.keys()) + ');'
+    def t_html_entity_hex(self, t):
+        r'&\#x(?P<html_entity_hex_num>[0-9a-fA-F]+);'
+        t.value = unichr(int(t.lexer.lexmatch.group('html_entity_hex_num'), 16))
+        return t
+
+    def t_html_entity_dec(self, t):
+        r'&\#(?P<html_entity_dec_num>[0-9]+);'
+        # Group indexes reference the combined, master regex: hard to predict.
+        t.value = unichr(int(t.lexer.lexmatch.group('html_entity_dec_num')))
+        return t
+
+    def t_html_entity_sym(self, t):
+        t.value = unichr(html_entities[t.lexer.lexmatch.group('html_entity_sym_name')])
+        return t
+    t_html_entity_sym.__doc__ = r'&(?P<html_entity_sym_name>' + '|'.join(html_entities.keys()) + ');'
     # ^ Optimize by using a hash table? By putting common entities first?
 
     def t_error(self, t):
