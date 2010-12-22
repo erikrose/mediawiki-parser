@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from ply.lex import LexToken
 
-from lexer import lexer
+from lexer import lexer, LexError
 
 
 class T(object):
@@ -34,7 +34,7 @@ class T(object):
     __repr__ = __str__
 
 
-def lexed_eq(lexer, input, want):
+def lexed_eq(input, want):
     lexer.input(input)
     got = list(lexer)
     if want != got:
@@ -43,10 +43,21 @@ def lexed_eq(lexer, input, want):
 
 class LexerTests(TestCase):
     def test_newline(self):
-        lexed_eq(lexer, '\r\r\n\n\r\n', [T('newline', '\r'),
-                                         T('newline', '\r\n'),
-                                         T('newline', '\n\r'),
-                                         T('newline', '\n')])
+        lexed_eq('\r\r\n\n\r\n', [T('newline', '\r'),
+                                  T('newline', '\r\n'),
+                                  T('newline', '\n\r'),
+                                  T('newline', '\n')])
+
+    def test_space_tabs(self):
+        lexed_eq(' ', [T('space_tabs', ' ')])
+        lexed_eq('\t', [T('space_tabs', '\t')])
+
+    def test_html_entity(self):
+        lexed_eq('&#xbeef;', [T('html_entity_hex', '&#xbeef;')])
+        lexed_eq('&#8212;', [T('html_entity_dec', '&#8212;')])
+        lexed_eq('&aring;', [T('html_entity_sym', '&aring;')])
+        self.assertRaises(LexError, lexed_eq, '&badentity;', [])
+
 
 if __name__ == '__main__':
     unittest.main()

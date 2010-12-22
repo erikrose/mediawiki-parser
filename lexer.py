@@ -4,6 +4,17 @@ Based on the work at http://www.mediawiki.org/wiki/Markup_spec/BNF
 
 """
 from ply import lex
+from ply.lex import LexError as PlyLexError, lex
+
+from constants import html_entities
+
+
+class LexError(PlyLexError):
+    def __str__(self):
+        return str(self.__unicode__())
+
+    def __unicode__(self):
+        return u'%s: %s' % (self.args[0], self.text)
 
 
 class LexerBox(object):
@@ -14,21 +25,33 @@ class LexerBox(object):
 
     """
     def __init__(self):
-        """Generate the parsing tables and such. This is expensive."""
-        self.lexer = lex.lex(module=self)
+        """Combine the regexes and such. This is expensive."""
+        self.lexer = lex(module=self, debug=True)
+
+    # Remember, when defining tokens, not to couple any HTML-output-specific
+    # transformations to their t.values. That's for the parser to decide.
 
     # Fundamental elements
     # (http://www.mediawiki.org/wiki/Markup_spec/BNF/Fundamental_elements):
 
-    def t_newline(self, t):
-        r'(?:\r\n|\n\r|\r|\n)'
-        return t
+    t_newline = r'(?:\r\n|\n\r|\r|\n)'
+    #t_newlines: >=1 t_newline. In the BNF but possibly unneeded.
+    #t_bol: beginning of line. Should be able to fold into individual regexes.
+    #t_eol: same
+    #t_space = r'[ ]'  # Brackets because PLY compiles regexes with re.VERBOSE
+    #t_spaces = r'[ ]+'
+    #t_space_tab = r'[\t ]'
+    t_space_tabs = r'[\t ]+'
+    # Add the rest of these as needed. They might be overly formal noise.
 
-    #def t_newlines(t): >=1 t_newline. In the BNF but possibly unneeded.
+    t_html_entity_hex = r'&\#x[0-9a-fA-F]+;'
+    t_html_entity_dec = r'&\#[0-9]+;'
+    t_html_entity_sym = r'&(?:' + '|'.join(html_entities.keys()) + ');'
+    # ^ Optimize by using a hash table? By putting common entities first?
 
     def t_error(self, t):
-        print "Illegal character: '%s'" % t.value[0]
-        t.lexer.skip(1)
+        raise LexError('Illegal character', t.value[0])
+        #t.lexer.skip(1)
 
     # Everything after the t_ in anything that starts with t_:
     tokens = [k[2:] for k in vars().keys() if k.startswith('t_') and k != 't_error']
