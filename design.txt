@@ -5,6 +5,7 @@ Goals
 
 Parser libs
 ===========
+In the following lists, * signifies a pro, "o" a con, and "." a neutral point.
 
 LEPL
 ----
@@ -26,14 +27,33 @@ PyParsing
 ---------
 . Recursive descent (LL)
 * Easier to write and debug?
+o "[An LL(k) parser] may defer error detection to a different branch of the grammar due to backtracking, often making errors harder to localize across disjunctions with long common prefixes."—Wikipedia. I had that problem when writing a simple italics/bold parser: you have to keep the recursion stack in your head to make any sense of the debug info. I eventually gave up trying to fix it.
+
+PyBison
+-------
+Not researched in depth.
+* Claims to be nearly as fast as C
+o Requires a C build step
+
+Previous work
+=============
+* OCaml lexer implementation: http://www.mediawiki.org/wiki/MediaWiki_lexer
+* Markup spec: http://www.mediawiki.org/wiki/Markup_spec
+* BNF grammar: http://www.mediawiki.org/wiki/Markup_spec/BNF
+  * Corresponds closely to lex input format
+  * Pretty comprehensive: lots of English describing corner cases and error recovery
+  . Also discusses render phase
+* EBNF grammar: http://www.mediawiki.org/wiki/Markup_spec/EBNF
+  * Well-organized and concise
+  o Nothing about error recovery
 
 Milestones
 ==========
 * Understand what's so hard about apostrophes and lists (http://www.mediawiki.org/wiki/Markup_spec/BNF/Inline_text).
-    This claims MW isn't context-free and has code on how to hack through the apostrophe jungle: http://web.archiveorange.com/archive/v/e7MXfq0OoW0nCOGyX0oa
-    
-    Useful background discussion by the folks who wrote the BNF attempt: http://www.mediawiki.org/wiki/Talk:Markup_spec
-    The flex markup looks to have naive apostrophe jungle state rules: http://www.mediawiki.org/wiki/Markup_spec/flex
+  * This claims MW isn't context-free and has C code on how to hack through the apostrophe jungle: http://web.archiveorange.com/archive/v/e7MXfq0OoW0nCOGyX0oa
+  * Useful background discussion by the folks who wrote the BNF attempt: http://www.mediawiki.org/wiki/Talk:Markup_spec
+  * The flex markup looks to have naive apostrophe jungle state rules: http://www.mediawiki.org/wiki/Markup_spec/flex
+  * mwlib has a pretty clean, decoupled Python impl. See styleanalyzer.py.
 * Get a parse tree out of a lib.
 * Think about extensibility
 * Get apostrophes working (to test ambiguity support).
@@ -42,4 +62,5 @@ Milestones
 Notes
 =====
 LR good. LALR even better.
+
 If we build the parse tree in custom lexer callbacks, we can make it an ElementTree or whatever we want--meaning we can use XPath on it later if we want.
