@@ -35,12 +35,17 @@ Not researched in depth.
 * Claims to be nearly as fast as C
 o Requires a C build step
 
+ANTLR
+-----
+o Separate code generation step
+o Slow because it generates a lot of function calls
+
 Previous work
 =============
 * OCaml lexer implementation: http://www.mediawiki.org/wiki/MediaWiki_lexer
 * Markup spec: http://www.mediawiki.org/wiki/Markup_spec
 * BNF grammar: http://www.mediawiki.org/wiki/Markup_spec/BNF
-  * Corresponds closely to lex input format
+  * Corresponds closely to yacc input format
   * Pretty comprehensive: lots of English describing corner cases and error recovery
   . Also discusses render phase
 * EBNF grammar: http://www.mediawiki.org/wiki/Markup_spec/EBNF
@@ -58,6 +63,13 @@ Milestones
 * Think about extensibility
 * Get apostrophes working (to test ambiguity support).
 * Implement productions, tag by tag
+
+Units of estimation
+===================
+* Apostrophe jungle
+* Tables
+* Lists
+* HTML outputter
 
 Notes
 =====

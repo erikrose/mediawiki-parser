@@ -2,10 +2,25 @@
 # supported with variations of case, (2) this lacks &apos;, for which there's a
 # complicated discussion at http://www.mail-archive.com/mediawiki-
 # cvs@lists.wikimedia.org/msg01907.html.
+#
+# These are current as of MW 1.16.0.
 html_entities = {
-    u'Aacute': 193,    u'aacute': 225, u'Acirc': 194, u'acirc': 226, u'acute': 180,
-    u'AElig': 198, u'aelig': 230, u'Agrave': 192, u'agrave': 224, u'alefsym': 8501,
-    u'Alpha': 913, u'alpha': 945, u'amp': 38, u'and': 8743, u'ang': 8736, u'Aring': 197,
+    u'Aacute':     193,
+    u'aacute':     225,
+    u'Acirc':      194,
+    u'acirc':      226,
+    u'acute':      180,
+    u'AElig':      198,
+    u'aelig':      230,
+    u'Agrave':     192,
+    u'agrave':     224,
+    u'alefsym':    8501,
+    u'Alpha':      913,
+    u'alpha':      945,
+    u'amp':        38,
+    u'and':        8743,
+    u'ang':        8736,
+    u'Aring':      197,
     u'aring':      229,
     u'asymp':      8776,
     u'Atilde':     195,
