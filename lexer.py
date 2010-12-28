@@ -53,11 +53,13 @@ class LexerBox(object):
     instance in `lexer`.
 
     """
-    states = [('nowiki', 'exclusive')]
+    states = [('nowiki', 'exclusive'),
+              ('heading', 'exclusive')]
 
     def __init__(self):
         """Combine the regexes and such. This is expensive."""
         self.lexer = lex(module=self, debug=True)
+        self.heading_level = 0  # number of =s in the start token of the heading we're currently scanning
 
     # Remember, when defining tokens, not to couple any HTML-output-specific
     # transformations to their t.values. That's for the formatter to decide.
@@ -78,23 +80,50 @@ class LexerBox(object):
     # co_firstlineno. Thus, subclassing this might not work as well as I
     # thought. TODO: Reconsider how to extend.]
 
-    def t_NOWIKI(self, t):
+    def t_heading_INITIAL_NOWIKI(self, t):
         r'<[nN][oO][wW][iI][kK][iI]>'
         t.lexer.push_state('nowiki')  # Use stack in case inside a table or something.
         # TODO: Optimize this state by making a special text token that'll chew
         # up anything that's not </nowiki>.
         return None
 
-    def t_nowiki_NOWIKI_END(self, t):
+    def t_nowiki_heading_NOWIKI_END(self, t):
         r'</[nN][oO][wW][iI][kK][iI]>'
         t.lexer.pop_state()
         return None
 
-    def t_HEADING(self, t):
-        r'^(?P<HEADING_LEVEL>={1,6})(?P<HEADING_CONTENT>.+?)(?P=HEADING_LEVEL)\s*$'
+    def t_HEADING_START(self, t):
+        r'^(?P<HEADING_LEVEL>={1,6})(?=.+?(?P=HEADING_LEVEL)\s*$)'
         # Hoping the non-greedy .+? makes this a bit more efficient
-        t.type = 'H' + str(len(t.lexer.lexmatch.group('HEADING_LEVEL')))
-        t.value = t.lexer.lexmatch.group('HEADING_CONTENT')
+        level = len(t.lexer.lexmatch.group('HEADING_LEVEL'))
+        t.type = 'H%i' % level
+        # t.value doesn't matter.
+        self.heading_level = level
+        t.lexer.push_state('heading')
+        return t
+
+    def t_heading_HEADING_END(self, t):
+        r'=+\s*$'
+        # If we mistakenly match too early and catch more =s than needed in a
+        # heading like = hi ==, return one of the =s as a text token, and
+        # resume lexing at the next = to try again. It was either this or else
+        # face a profusion of states, one for each heading level. Headings that
+        # end in = should be a rare case, thankfully.
+        matched_level = len(t.value.rstrip())
+        if matched_level > self.heading_level:
+            t.type = 'TEXT'
+            t.value = '='
+            t.lexer.lexpos -= (matched_level - 1)
+        else:
+            t.type = 'H%i_END' % self.heading_level
+            # t.value doesn't matter.
+            self.heading_level = 0
+            t.lexer.pop_state()
+        return t
+
+    def t_HR(self, t):
+        r'^----+'
+        # t.value doesn't matter.
         return t
 
     # def t_HEADING(self, t):
@@ -145,14 +174,14 @@ class LexerBox(object):
     def t_ANY_error(self, t):
         raise LexError('Illegal character', t.value[0])
         #t.lexer.skip(1)
-    
+
     def __iter__(self):
         return merged_text_tokens(iter(self.lexer))
-    
+
     def input(self, text):
         return self.lexer.input(text)
 
-    tokens = ['NEWLINE', 'TEXT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']
+    tokens = ['NEWLINE', 'TEXT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H1_END', 'H2_END', 'H3_END', 'H4_END', 'H5_END', 'H6_END', 'HR']
 
 lexer = LexerBox()
 # TODO: Since we might have multiple threads, have the class build the lexer

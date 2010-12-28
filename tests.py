@@ -61,10 +61,16 @@ class LexerTests(TestCase):
         lexed_eq('hi', [T('TEXT', 'hi')])
 
     def test_heading(self):
-        lexed_eq('======', [T('H2', '==')])
+        lexed_eq('======', [T('H2'), T('TEXT', '=='), T('H2_END')])
         lexed_eq('==', [T('TEXT', '==')])  # Headings must contain something.
-        lexed_eq('====== h6 ======', [T('H6', ' h6 ')])  # maintain whitespace
-        lexed_eq('=h1=   ', [T('H1', 'h1')])  # strip trailing whitespace
+        lexed_eq('====== h6 ======', [T('H6'), T('TEXT', ' h6 '), T('H6_END')])  # maintain whitespace
+        lexed_eq('=h1=   ', [T('H1'), T('TEXT', 'h1'), T('H1_END')])  # strip trailing whitespace
+        lexed_eq('=&amp;=', [T('H1'), T('TEXT', '&'), T('H1_END')])  # recognize contained lexemes
+
+    def test_hr(self):
+        lexed_eq('----one', [T('HR'), T('TEXT', 'one')])
+        lexed_eq('-------one', [T('HR'), T('TEXT', 'one')])
+        lexed_eq('one----two', [T('TEXT', 'one----two')])
 
 
 class IntegrationTests(TestCase):
