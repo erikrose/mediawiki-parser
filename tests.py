@@ -18,9 +18,9 @@ def lexed_eq(input, want):
 
 def html_eq(input, want):
     """Assert the lexed, parsed, HTML-formatted input string equals `want`.
-    
+
     Lets differences in linebreaks slide.
-    
+
     """
 
 
@@ -43,10 +43,10 @@ class LexerTests(TestCase):
 
     def test_nowiki(self):
         lexed_eq("<nowiki>''not bold''</nowiki>", [T('TEXT', "''not bold''")])
-        
+
         # HTML entities inside <nowiki> should be resolved.
         lexed_eq("<nowiki>&#8212;</nowiki>", [T('TEXT', u'\u2014')])
-        
+
         lexed_eq('</nowiki>', [T('TEXT', '</nowiki>')])
 
         # <nowiki>s aren't nestable. Uncomment when bold is implemented.
@@ -59,6 +59,12 @@ class LexerTests(TestCase):
 
     def test_text(self):
         lexed_eq('hi', [T('TEXT', 'hi')])
+
+    def test_heading(self):
+        lexed_eq('======', [T('H2', '==')])
+        lexed_eq('==', [T('TEXT', '==')])  # Headings must contain something.
+        lexed_eq('====== h6 ======', [T('H6', ' h6 ')])  # maintain whitespace
+        lexed_eq('=h1=   ', [T('H1', 'h1')])  # strip trailing whitespace
 
 
 class IntegrationTests(TestCase):

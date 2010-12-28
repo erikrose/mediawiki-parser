@@ -54,24 +54,24 @@ class LexerBox(object):
 
     """
     states = [('nowiki', 'exclusive')]
-    
+
     def __init__(self):
         """Combine the regexes and such. This is expensive."""
         self.lexer = lex(module=self, debug=True)
 
     # Remember, when defining tokens, not to couple any HTML-output-specific
     # transformations to their t.values. That's for the formatter to decide.
-    
+
     # The secret to lexer/parser division is: lexer recognizes only terminals
     # (or else makes recursive calls to itself).
-    
+
     # Any line that does not start with one of the following is not a special
     # block: " " | "{|" | "#" | ";" | ":" | "*" | "=".
     # (http://www.mediawiki.org/wiki/Markup_spec/BNF/Article#Article)
-    
+
     # TODO: Would using __slots__ in LexToken speed things up? token()
     # instantiates a lot of them.
-    
+
     # How does PLY tell what order tokens are defined in? Allegedly, it adds
     # the callable ones in definition order and then the string ones in
     # ascending length order. [Ed: It looks at each function obj to get
@@ -90,10 +90,17 @@ class LexerBox(object):
         t.lexer.pop_state()
         return None
 
+    def t_HEADING(self, t):
+        r'^(?P<HEADING_LEVEL>={1,6})(?P<HEADING_CONTENT>.+?)(?P=HEADING_LEVEL)\s*$'
+        # Hoping the non-greedy .+? makes this a bit more efficient
+        t.type = 'H' + str(len(t.lexer.lexmatch.group('HEADING_LEVEL')))
+        t.value = t.lexer.lexmatch.group('HEADING_CONTENT')
+        return t
+
     # def t_HEADING(self, t):
     #     r'^(?P<HEADING_LEVEL>={1,6})(.+)\g<HEADING_LEVEL>\s*'  # TODO: Or do we just match the terminals and let the parser sort out the pairing of === spans? H2 :: =={text}=={whitespace}. Or do we match ^== and then throw the lexer into a 'header' state which tries to .... Can't just match the whole line in one regex, because then the lexer never gets a chance to parse the text of the header normally and resolve the entities.
     #   # Swallows trailing whitespace like MediaWiki
-    #   t.type = 
+    #   t.type =
 
     def t_NEWLINE(self, t):
         r'(?:\r\n|\n\r|\r|\n)'
@@ -119,7 +126,7 @@ class LexerBox(object):
             t.value = unichr(html_entities[sym])
         t.type = 'TEXT'
         return t
-    
+
     def t_ANY_HARMLESS_TEXT(self, t):
         r'[a-zA-Z0-9]+'
         # Runs of stuff that can't possibly be part of another token. An
@@ -145,7 +152,7 @@ class LexerBox(object):
     def input(self, text):
         return self.lexer.input(text)
 
-    tokens = ['NEWLINE', 'TEXT']
+    tokens = ['NEWLINE', 'TEXT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']
 
 lexer = LexerBox()
 # TODO: Since we might have multiple threads, have the class build the lexer
@@ -155,6 +162,7 @@ lexer = LexerBox()
 
 def merged_text_tokens(tokens):
     """Merge adjacent TEXT tokens in the given iterable of LexTokens."""
+    # I hope to make this unnecessary with clever definitions of tokens somehow.
     acc = []
     for t in tokens:
         if t.type == 'TEXT':
