@@ -4,6 +4,7 @@
 Based on the work at http://www.mediawiki.org/wiki/Markup_spec/BNF
 
 """
+import re
 import readline  # Make raw_input() cool.
 
 from ply import lex
@@ -58,7 +59,7 @@ class LexerBox(object):
 
     def __init__(self):
         """Combine the regexes and such. This is expensive."""
-        self.lexer = lex(module=self, debug=True)
+        self.lexer = lex(module=self, debug=True, reflags=re.M)
         self.heading_level = 0  # number of =s in the start token of the heading we're currently scanning
 
     # Remember, when defining tokens, not to couple any HTML-output-specific
@@ -103,12 +104,14 @@ class LexerBox(object):
         return t
 
     def t_heading_HEADING_END(self, t):
-        r'=+\s*$'
+        r'=+\s*$'  # Swallows trailing whitespace like MediaWiki
         # If we mistakenly match too early and catch more =s than needed in a
         # heading like = hi ==, return one of the =s as a text token, and
         # resume lexing at the next = to try again. It was either this or else
-        # face a profusion of states, one for each heading level. Headings that
-        # end in = should be a rare case, thankfully.
+        # face a profusion of states, one for each heading level (or
+        # dynamically add a regex to the master regex, which would be a cool
+        # feature for it to support). Headings that end in = should be a rare
+        # case, thankfully.
         matched_level = len(t.value.rstrip())
         if matched_level > self.heading_level:
             t.type = 'TEXT'
@@ -125,11 +128,6 @@ class LexerBox(object):
         r'^----+'
         # t.value doesn't matter.
         return t
-
-    # def t_HEADING(self, t):
-    #     r'^(?P<HEADING_LEVEL>={1,6})(.+)\g<HEADING_LEVEL>\s*'  # TODO: Or do we just match the terminals and let the parser sort out the pairing of === spans? H2 :: =={text}=={whitespace}. Or do we match ^== and then throw the lexer into a 'header' state which tries to .... Can't just match the whole line in one regex, because then the lexer never gets a chance to parse the text of the header normally and resolve the entities.
-    #   # Swallows trailing whitespace like MediaWiki
-    #   t.type =
 
     def t_NEWLINE(self, t):
         r'(?:\r\n|\n\r|\r|\n)'

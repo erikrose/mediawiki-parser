@@ -72,6 +72,15 @@ class LexerTests(TestCase):
         lexed_eq('-------one', [T('HR'), T('TEXT', 'one')])
         lexed_eq('one----two', [T('TEXT', 'one----two')])
 
+    def test_combination(self):
+        lexed_eq('===Llamas===\n'
+                 'Llamas are cute.\n'
+                 '----\n'
+                 'And poetic.',
+                 [T('H3'), T('TEXT', 'Llamas'), T('H3_END'), T('NEWLINE'),
+                  T('TEXT', 'Llamas are cute.'), T('NEWLINE'),
+                  T('HR'), T('NEWLINE'),
+                  T('TEXT', 'And poetic.')])
 
 class IntegrationTests(TestCase):
     """Tests of the whole stack, from lexer to HTML formatter"""
