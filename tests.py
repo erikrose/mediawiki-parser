@@ -48,6 +48,10 @@ class LexerTests(TestCase):
         lexed_eq("<nowiki>&#8212;</nowiki>", [T('TEXT', u'\u2014')])
 
         lexed_eq('</nowiki>', [T('TEXT', '</nowiki>')])
+        
+        # Junk inside the opening tag should be tolerated:
+        lexed_eq("<nowiki dudes and froods>>''cool''</nowiki>",
+                 [T('TEXT', ">''cool''")])
 
         # <nowiki>s aren't nestable. Uncomment when bold is implemented.
         # lexed_eq("<nowiki><nowiki></nowiki>''hey''</nowiki>",

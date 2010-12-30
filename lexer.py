@@ -1,13 +1,9 @@
 #!/usr/bin/env python
-"""What will eventually become a MediaWiki lexer
+"""What will eventually become a MediaWiki lexer"""
 
-Based on the work at http://www.mediawiki.org/wiki/Markup_spec/BNF
-
-"""
 import re
 import readline  # Make raw_input() cool.
 
-from ply import lex
 from ply.lex import LexError as PlyLexError, lex
 
 from constants import html_entities
@@ -82,7 +78,7 @@ class LexerBox(object):
     # thought. TODO: Reconsider how to extend.]
 
     def t_heading_INITIAL_NOWIKI(self, t):
-        r'<[nN][oO][wW][iI][kK][iI]>'
+        r'<[nN][oO][wW][iI][kK][iI](?:\s.*?)?>'
         t.lexer.push_state('nowiki')  # Use stack in case inside a table or something.
         # TODO: Optimize this state by making a special text token that'll chew
         # up anything that's not </nowiki>.
