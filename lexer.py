@@ -78,7 +78,7 @@ class LexerBox(object):
     # thought. TODO: Reconsider how to extend.]
 
     def t_heading_INITIAL_NOWIKI(self, t):
-        r'<[nN][oO][wW][iI][kK][iI](?:\s.*?)?>'
+        r'<[nN][oO][wW][iI][kK][iI](?:\s[^>]*)?>'
         t.lexer.push_state('nowiki')  # Use stack in case inside a table or something.
         # TODO: Optimize this state by making a special text token that'll chew
         # up anything that's not </nowiki>.

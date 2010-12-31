@@ -86,6 +86,7 @@ class LexerTests(TestCase):
                   T('HR'), T('NEWLINE'),
                   T('TEXT', 'And poetic.')])
 
+
 class IntegrationTests(TestCase):
     """Tests of the whole stack, from lexer to HTML formatter"""
 
