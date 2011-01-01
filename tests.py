@@ -101,6 +101,7 @@ class ParserTests(TestCase):
 
     def test_internal_link(self):
         parsed_eq('[[Booga]]', Inline([Link('Booga')]))
+        parsed_eq('[[this [[thing]]]]', Inline([u'[[this ', Link('thing'), u']]']))
 
     def test_inline(self):
         """Make sure lists of inline elements parse."""

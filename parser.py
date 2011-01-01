@@ -32,13 +32,24 @@ class ParserBox(object):
             p[0] = Inline([p[1]])
 
     def p_inline_element(self, p):
-        """inline_element : TEXT
+        """inline_element : texts
                           | internal_link"""
         p[0] = p[1]
 
     def p_internal_link(self, p):
-        'internal_link : INTERNAL_LINK_START TEXT INTERNAL_LINK_END'
+        'internal_link : INTERNAL_LINK_START texts INTERNAL_LINK_END'  # "texts" should probably be "link-safe texts": that is, excluding "]]" (and "[["?)
         p[0] = Link(p[2])
+
+    def p_texts(self, p):  # Merge consecutive TEXT terminals.
+        """texts : texts TEXT
+                 | TEXT"""
+        if len(p) == 3:
+            p[0] = p[1] + p[2]
+        else:
+            p[0] = p[1]
+
+    def p_error(self, p):
+        print "yo: {%s}" % p
 
     def parse(self, text):
         return self._parser.parse(text, lexer=self._lexer)
