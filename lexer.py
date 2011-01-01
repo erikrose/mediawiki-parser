@@ -6,7 +6,7 @@ import readline  # Make raw_input() cool.
 
 from ply.lex import LexError as PlyLexError, lex
 
-from constants import html_entities
+from mediawiki_parser.constants import html_entities
 
 
 class LexError(PlyLexError):
@@ -149,6 +149,14 @@ class LexerBox(object):
             t.value = unichr(html_entities[sym])
         t.type = 'TEXT'
         return t
+    
+    def t_heading_INITIAL_INTERNAL_LINK_START(self, t):
+        r'\[\['
+        return t
+
+    def t_heading_INITIAL_INTERNAL_LINK_END(self, t):
+        r'\]\]'
+        return t
 
     def t_ANY_HARMLESS_TEXT(self, t):
         r'[a-zA-Z0-9]+'
@@ -156,10 +164,12 @@ class LexerBox(object):
         # optimization to avoid hitting t_ANY_TEXT
         # TODO: Harmless Unicode chars are missing, so Japanese will go slow.
         t.type = 'TEXT'
+        t.value = unicode(t.value)
         return t
 
     def t_ANY_TEXT(self, t):  # probably scarily inefficient
         r'.'
+        t.value = unicode(t.value)
         return t
 
     # <url-path>		::= <url-char> [<url-path>]
@@ -172,10 +182,18 @@ class LexerBox(object):
     def __iter__(self):
         return merged_text_tokens(iter(self.lexer))
 
+    def token(self):
+        return self.lexer.token()
+
     def input(self, text):
+        """Break the given text into tokens.
+        
+        Results are available by iterating over me.
+        
+        """
         return self.lexer.input(text)
 
-    tokens = ['NEWLINE', 'TEXT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H1_END', 'H2_END', 'H3_END', 'H4_END', 'H5_END', 'H6_END', 'HR']
+    tokens = ['NEWLINE', 'TEXT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H1_END', 'H2_END', 'H3_END', 'H4_END', 'H5_END', 'H6_END', 'HR', 'INTERNAL_LINK_START', 'INTERNAL_LINK_END']
 
 lexer = LexerBox()
 # TODO: Since we might have multiple threads, have the class build the lexer

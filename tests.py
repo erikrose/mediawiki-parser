@@ -5,13 +5,21 @@ from unittest import TestCase
 
 from ply.lex import LexToken
 
-from lexer import lexer, LexError, Token as T
+from mediawiki_parser.lexer import lexer, LexError, Token as T
+from mediawiki_parser.parser import parser, Link, Inline
 
 
 def lexed_eq(input, want):
     """Assert lexing `input` yields `want`."""
     lexer.input(input)
     got = list(lexer)
+    if want != got:
+        raise AssertionError('%s != %s' % (got, want))
+
+
+def parsed_eq(input, want):
+    """Assert parsing `input` yields `want`."""
+    got = parser.parse(input)
     if want != got:
         raise AssertionError('%s != %s' % (got, want))
 
@@ -87,6 +95,18 @@ class LexerTests(TestCase):
                   T('TEXT', 'And poetic.')])
 
 
+class ParserTests(TestCase):
+    def test_text(self):
+        parsed_eq('Hi', Inline([u'Hi']))
+
+    def test_internal_link(self):
+        parsed_eq('[[Booga]]', Inline([Link('Booga')]))
+
+    def test_inline(self):
+        """Make sure lists of inline elements parse."""
+        parsed_eq('The[[Booga]]Loo', Inline([u'The', Link('Booga'), u'Loo']))
+
+
 class IntegrationTests(TestCase):
     """Tests of the whole stack, from lexer to HTML formatter"""
 
@@ -100,6 +120,12 @@ class IntegrationTests(TestCase):
 # <ref>[http://www.susanscott.net/Oceanwatch2002/mar1-02.html Seaweed also plays a role in the formation of sand<!-- Bot generated title -->]</ref>, from wikipedia:Sand
 # [[File:Suesswasserstachelroche.jpg|thumb|A [[stingray]] about to bury itself in sand]]
 # In MW, [[clay [[this [[thing]]]]]] links "thing". py-wikimarkup links the whole thing.
+# [[LimBo\n]] isn't a link, but [[LimBo|and\n]] is.
+# [[L'''i'''mB'''o|a'''''n''d]] is not a link; neither bold nor italics seems to be allowed in page names.
+# [[LimBo|a''n''d]] is a link with an italic n.
+# [[LimBo]]ohai9 uses "LimBoohai" as the linked text. (See "extra-description" on the Links page of the BNF.)
+# [[Limbo|and]]ohai9 gives "andohai" as the linked text.
+
 
 if __name__ == '__main__':
     unittest.main()
