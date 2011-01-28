@@ -3,6 +3,10 @@ Goals
 * Possible (to represent MediaWiki syntax)
 * Extensible per project (for {for} syntax, DekiWiki conditionals, etc.)
 
+Ungoals
+=======
+* It is not necessary to be bug-for-bug compatible with MW. We can't constrain ourselves to give the exact same output for egregiously bad wikisyntax; we'll make a mess, which kills our goal of being easy to understand. We should catch common errors like bad quote nesting but not go out of our minds to be bug-for-bug compatible. After all, MW itself changes the language in every release. Let them chase us.
+
 Parser libs
 ===========
 In the following lists, * signifies a pro, "o" a con, and "." a neutral point.
@@ -15,7 +19,7 @@ o Slow (http://www.quora.com/What-is-the-best-parser-generator-for-Python/answer
 
 PLY
 ---
-. LALR or, optionally, SLR
+. LALR or, optionally, SLR (Can SLR look ahead farther? No: actually, it has no lookahead.)
 * Modal lexer and parser. (Is this necessary? Understand what can't be BNF'd about apostrophe jungles and lists.)
 * Easy to translate into C later
 . Can turn off magic autodiscovery
@@ -39,6 +43,11 @@ ANTLR
 -----
 o Separate code generation step
 o Slow because it generates a lot of function calls
+* Can parse LL(k) grammars (arbitrary lookahead)
+
+SPARK
+-----
+* Has an implementation of an Earley parser, which can do arbitrary lookahead in O(n^3)
 
 Previous work
 =============
@@ -63,20 +72,41 @@ Milestones
   * Useful background discussion by the folks who wrote the BNF attempt: http://www.mediawiki.org/wiki/Talk:Markup_spec
   * The flex markup looks to have naive apostrophe jungle state rules: http://www.mediawiki.org/wiki/Markup_spec/flex
   * mwlib has a pretty clean, decoupled Python impl. See styleanalyzer.py.
-* Get a parse tree out of a lib.
+  * When rebalancing '''hi''' <b>''mo</b>m'', the algorithm seems to be something like this: read left to right, building a tag stack as we go. If we hit a closer that doesn't match what's on the top of the stack (1), close what's on the top (2), and let the closer through. HOWEVER, also put (1) onto another stack (or single var?) and, after doing step (2), push that stack onto the tag stack.
+* √ Get a parse tree out of a lib.
 * Think about extensibility
 * Get apostrophes working (to test ambiguity support).
 * Implement productions, tag by tag
 
-Units of estimation
-===================
-* Apostrophe jungle
-* Tables
-* Lists
-* HTML outputter
+Quasi Gantt chart
+=================
+Re-examing parsing algorithm, 
+& implement links                       |----|----|----   Bold/Italics/Apostrophe Jungles (3 weeks)                                      |----|----|----   HTML formatter |----   Showfor support |--
+& other long-lookahead productions
+(3 weeks)                                                 Simple productions:
+                                                          Paragraphs (3 days)                                                            |--
+                                                          HRs (1 day)                                                                    |
+                                                          magic words (3 days)                                                           |--
+
+                                                          Tables (long lookahead?) (1 week)                                              |----
+
+                                                          One person should do these:
+                                                          Includes (long lookahead?) (2 weeks)                                           |----|----
+                                                          Templates w/params (long lookahead?) (2 weeks)                                 |----|----
+
+                                                          Redirects (3 days)                                                             |--
+                                                          Naked URLs (long lookahead but doable in lexer?) (1 day)                       |
+                                                          Headers (long lookahead but doable in lexer) (done for now)
+                                                          Entities (done for now)
+                                                          Behavior switches (optional) (4 days--will require some architecture thinking) |---
+                                                          
+                                                          HTML tags: probably just tokenize and preserve them through the parser and     |----|----|----
+                                                            then have a separate post-parse step to balance and validate them and, for
+                                                            example, escape any invalid ones (3 weeks)
 
 Notes
 =====
 LR good. LALR even better.
 
 If we build the parse tree in custom lexer callbacks, we can make it an ElementTree or whatever we want--meaning we can use XPath on it later if we want.
+
