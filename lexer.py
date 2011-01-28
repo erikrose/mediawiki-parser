@@ -52,6 +52,7 @@ class LexerBox(object):
     """
     states = [('nowiki', 'exclusive'),
               ('heading', 'exclusive')]
+    TITLE_LEGAL_CHARS = """[ %!"$&'()*,\-.\/0-9:;=?@A-Z\\^_`a-z~\x80-\xFF+\n\r]+"""
 
     def __init__(self):
         """Combine the regexes and such. This is expensive."""
@@ -77,7 +78,7 @@ class LexerBox(object):
     # co_firstlineno. Thus, subclassing this might not work as well as I
     # thought. TODO: Reconsider how to extend.]
 
-    def t_heading_INITIAL_NOWIKI(self, t):
+    def t_INITIAL_heading_NOWIKI(self, t):
         r'<[nN][oO][wW][iI][kK][iI](?:\s[^>]*)?>'
         t.lexer.push_state('nowiki')  # Use stack in case inside a table or something.
         # TODO: Optimize this state by making a special text token that'll chew
@@ -92,6 +93,7 @@ class LexerBox(object):
     def t_HEADING_START(self, t):
         r'^(?P<HEADING_LEVEL>={1,6})(?=.+?(?P=HEADING_LEVEL)\s*$)'
         # Hoping the non-greedy .+? makes this a bit more efficient
+        # TODO: If the lookahead-and-set-state thing becomes common, write a wrapper around the lexer we pass to the parser: let us push tokens onto a list from within a token handler, and make the lexer wrapper return those to the parser before finding another token handler. IOW, let us return multiple tokens from one regex match. Beware the implications for things that aren't atomic (which is most things--most things can contain entities, for example).
         level = len(t.lexer.lexmatch.group('HEADING_LEVEL'))
         t.type = 'H%i' % level
         # t.value doesn't matter.
@@ -112,7 +114,7 @@ class LexerBox(object):
         if matched_level > self.heading_level:
             t.type = 'TEXT'
             t.value = '='
-            t.lexer.lexpos -= (matched_level - 1)
+            t.lexer.lexpos -= matched_level - 1
         else:
             t.type = 'H%i_END' % self.heading_level
             # t.value doesn't matter.
@@ -150,13 +152,26 @@ class LexerBox(object):
         t.type = 'TEXT'
         return t
     
-    def t_heading_INITIAL_INTERNAL_LINK_START(self, t):
-        r'\[\['
+    def t_INITIAL_heading_INTERNAL_LINK(self, t):
+        # The canonical regex for internal links is $e1 in replaceInternalLinks2() in Parser.php. (TODO: See about accounting for $e1_img as well.) The MW internal link recognizer splits the whole page on "[[" and then runs a regex over each element. We attempt to emulate that behavior here by tweaking the MW pattern.
+        # If you want the lexer to state, without doubt, what a [[ token represents, you have to lookahead. Is there a way to disambiguate a [[ later, in the parser? Perhaps: just have the lexer call it a DOUBLE_BRACKET or something, and then have error fallbacks in the parser for if it can't pair them with anything. I suspect, though, that disambiguating gets more expensive as we go deeper in the stack.
         return t
+    t_INITIAL_heading_INTERNAL_LINK.__doc__ = (
+        r'\[\[['
+        + self.TITLE_LEGAL_CHARS +
+        r']+'
+        r'(?:\|.+?)?]][a-zA-Z]*')  # We might need a lexer state (and a token with a different pattern with a different lookahead) for each combination of present subgroups: title, alternate, and ending; title, alternate; title, ending. Otherwise, I'm not sure how we're going to backtrack to get the precise subgroup boundaries that this regex chose. Try to think of a better way. Hmm. I'm starting to think it would be better after all to embrace ambiguity at the lexer level and return DOUBLE_BRACKET or even just BRACKET. Next: Determine whether the parser can sort it out. If all the interesting productions fail, for example, just return a "[[" text node. Can we left-factorize things until the lookahead of 1 is sufficient?
+    # TODO: Perhaps add a post-parse pass that finds text after links and moves any leading [a-zA-Z] portion thereof onto the link's .ending attr. That way, we can support [[hey]]&#0065;, which MW doesn't.
 
-    def t_heading_INITIAL_INTERNAL_LINK_END(self, t):
+
+    def t_INITIAL_heading_INTERNAL_LINK_END(self, t):
         r'\]\]'
         return t
+
+    def t_INITIAL_heading_TITLE_LEGAL_CHARS(self, t):
+        # from $wgLegalTitleChars in DefaultSettings.php. Added \n\r to make up for not being able to set PCRE_DOTALL on the pattern.
+        return something
+    t_INITIAL_heading_TITLE_LEGAL_CHARS.__doc__ = TITLE_LEGAL_CHARS
 
     def t_ANY_HARMLESS_TEXT(self, t):
         r'[a-zA-Z0-9]+'
@@ -193,7 +208,7 @@ class LexerBox(object):
         """
         return self.lexer.input(text)
 
-    tokens = ['NEWLINE', 'TEXT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H1_END', 'H2_END', 'H3_END', 'H4_END', 'H5_END', 'H6_END', 'HR', 'INTERNAL_LINK_START', 'INTERNAL_LINK_END']
+    tokens = ['NEWLINE', 'TEXT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H1_END', 'H2_END', 'H3_END', 'H4_END', 'H5_END', 'H6_END', 'HR', 'INTERNAL_LINK', 'INTERNAL_LINK_END']
 
 lexer = LexerBox()
 # TODO: Since we might have multiple threads, have the class build the lexer

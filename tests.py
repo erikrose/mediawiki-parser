@@ -121,6 +121,8 @@ class IntegrationTests(TestCase):
 # <ref>[http://www.susanscott.net/Oceanwatch2002/mar1-02.html Seaweed also plays a role in the formation of sand<!-- Bot generated title -->]</ref>, from wikipedia:Sand
 # [[File:Suesswasserstachelroche.jpg|thumb|A [[stingray]] about to bury itself in sand]]
 # In MW, [[clay [[this [[thing]]]]]] links "thing". py-wikimarkup links the whole thing.
+# In endings, like [[somelink]]ending, only [a-zA-Z] should be captured as the ending: not even umlauts or numbers or entities representing ASCII letters get captured in MW.
+# [[h&#0069;llo]] is a link called "hEllo".
 # [[LimBo\n]] isn't a link, but [[LimBo|and\n]] is.
 # [[L'''i'''mB'''o|a'''''n''d]] is not a link; neither bold nor italics seems to be allowed in page names.
 # [[LimBo|a''n''d]] is a link with an italic n.

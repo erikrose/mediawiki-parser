@@ -10,8 +10,6 @@
 
 # Perhaps we can best recover from things that look like they're going to be productions but aren't by catching them in the error procedure and then just printing them out verbatim.
 
-from pprint import pformat
-
 from ply.yacc import yacc
 
 from mediawiki_parser.lexer import lexer
@@ -37,16 +35,20 @@ class ParserBox(object):
         p[0] = p[1]
 
     def p_internal_link(self, p):
-        'internal_link : INTERNAL_LINK_START texts INTERNAL_LINK_END'  # "texts" should probably be "link-safe texts": that is, excluding "]]" (and "[["?)
+        """internal_link : INTERNAL_LINK texts INTERNAL_LINK_END
+                         | INTERNAL_LINK texts INTERNAL_LINK_END"""  # "texts" should probably be "link-safe texts": that is, excluding "]]" (and "[["?)
         p[0] = Link(p[2])
 
     def p_texts(self, p):  # Merge consecutive TEXT terminals.
-        """texts : texts TEXT
+        """texts : texts TEXT"""
+        p[0] = p[1] + p[2]
+    
+    def p_texts_from_brackets(self, p):
+        """texts : INTERNAL_LINK
+                 | INTERNAL_LINK_END
                  | TEXT"""
-        if len(p) == 3:
-            p[0] = p[1] + p[2]
-        else:
-            p[0] = p[1]
+        # Failed brace matches can be treated as text.
+        p[0] = unicode(p[1])
 
     def p_error(self, p):
         print "yo: {%s}" % p
@@ -57,7 +59,10 @@ class ParserBox(object):
 parser = ParserBox()
 
 
-class Node(object):
+class NodeWithAttributes(object):
+    """An abstract-syntax-tree node that has attrs and compares by them"""
+    # Will probably turn into something with a generic concept of children
+
     def __str__(self):
         return '%s(%s)' % (self.__class__.__name__, ', '.join('%s=%s' % (k, repr(v)) for k, v in self.__dict__.iteritems()))
 
@@ -70,7 +75,7 @@ class Node(object):
         return not self == other
 
 
-class Link(Node):
+class Link(NodeWithAttributes):
     def __init__(self, text):
         self.text = text
 
