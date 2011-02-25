@@ -16,8 +16,8 @@ In the following lists, (+) signifies a pro, (-) a con, and (.) a neutral point.
 LEPL
 ----
 * (+) Supports ambiguous grammars
-* (o) Idiosyncratic syntax with lots of operator overloading (even slices!)
-* (o) Slow (http://www.quora.com/What-is-the-best-parser-generator-for-Python/answer/Matthew-Lloyd)
+* (.) Idiosyncratic syntax with lots of operator overloading (even slices!)
+* (.) Slow (http://www.quora.com/What-is-the-best-parser-generator-for-Python/answer/Matthew-Lloyd)
 
 PLY
 ---
