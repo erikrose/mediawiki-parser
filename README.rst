@@ -58,25 +58,32 @@ Previous work
 * (+) OCaml lexer implementation: http://www.mediawiki.org/wiki/MediaWiki_lexer
 * (+) Markup spec: http://www.mediawiki.org/wiki/Markup_spec
 * (+) BNF grammar: http://www.mediawiki.org/wiki/Markup_spec/BNF
+
   * (+) Corresponds closely to yacc input format
   * (+) Pretty comprehensive: lots of English describing corner cases and error recovery
   * (.) Also discusses render phase
+
 * (+) EBNF grammar: http://www.mediawiki.org/wiki/Markup_spec/EBNF
+
   * (+) Well-organized and concise
   * (-) Nothing about error recovery
   * (-) Wrong in some places (like the header rules that chew up whitespace)
+
 * (+) flex implementation: http://www.mediawiki.org/wiki/Markup_spec/flex
+
   * (-) Prints HTML directly; doesn't seem to have a consume/parse/render flow
   * (-) Doesn't seem very comprehensive. I converted it quickly to a PLY lex implementation (fixed the \135 codes and such), and it didn't seem to do a particularly good job recognizing things. There are some heuristics we can glean from it, however, like stripping any trailing comma or period off a scanned URL. Another example is that it doesn't look like it handles the "== H2 ===" case correctly.
 
 Milestones
 ==========
 * Understand what's so hard about apostrophes and lists (http://www.mediawiki.org/wiki/Markup_spec/BNF/Inline_text).
+
   * This claims MW isn't context-free and has C code on how to hack through the apostrophe jungle: http://web.archiveorange.com/archive/v/e7MXfq0OoW0nCOGyX0oa
   * Useful background discussion by the folks who wrote the BNF attempt: http://www.mediawiki.org/wiki/Talk:Markup_spec
   * The flex markup looks to have naive apostrophe jungle state rules: http://www.mediawiki.org/wiki/Markup_spec/flex
   * mwlib has a pretty clean, decoupled Python impl. See styleanalyzer.py.
   * When rebalancing '''hi''' <b>''mo</b>m'', the algorithm seems to be something like this: read left to right, building a tag stack as we go. If we hit a closer that doesn't match what's on the top of the stack (1), close what's on the top (2), and let the closer through. HOWEVER, also put (1) onto another stack (or single var?) and, after doing step (2), push that stack onto the tag stack.
+
 * (Done.) Get a parse tree out of a lib.
 * Think about extensibility
 * Get apostrophes working (to test ambiguity support).
