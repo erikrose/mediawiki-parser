@@ -53,6 +53,29 @@ SPARK
 -----
 * (+) Has an implementation of an Earley parser, which can do arbitrary lookahead in n^3 worst case.
 
+MediaWiki parser libs
+=====================
+
+Py-wikimarkup (https://github.com/dcramer/py-wikimarkup)
+--------------------------------------------------------
+* (+) Probably works (untested)
+* (-) Direct transformation from wikitext to HTML (generates no AST)
+
+mwlib (http://code.pediapress.com/wiki/wiki/mwlib)
+--------------------------------------------------
+* (+) Works well, lots of unittests already defined and successfully passed
+* (+) Generates an AST
+* (.) Implements its own lexer/parser (see mwlib/refine/core.py)
+* (-) Structure of the code somewhat hard to understand (uparser.py vs old_uparser.py)
+* (-) Lot of code not related to parsing (output for ODF, Latex, etc. that should be more isolated from the parsing part)
+
+mediawiki_parser (this one)
+---------------------------
+* (+) Good start (parser + lexer, unittests)
+* (.) Currently using PLY but will be abandoned due to the lack of lookahead
+* (-) Currently incomplete syntax
+* (-) Currently generates no AST
+
 Previous work
 =============
 * (+) OCaml lexer implementation: http://www.mediawiki.org/wiki/MediaWiki_lexer
@@ -98,26 +121,26 @@ Quasi Gantt chart
 
 ::
 
-  Re-examing parsing algorithm, 
+  Re-examing parsing algorithm,
   & implement links                       |----|----|----   Bold/Italics/Apostrophe Jungles (3 weeks)                                      |----|----|----   HTML formatter |----   Showfor support |--
   & other long-lookahead productions
   (3 weeks)                                                 Simple productions:
                                                             Paragraphs (3 days)                                                            |--
                                                             HRs (1 day)                                                                    |
                                                             magic words (3 days)                                                           |--
-  
+
                                                             Tables (long lookahead?) (1 week)                                              |----
-  
+
                                                             One person should do these:
                                                             Includes (long lookahead?) (2 weeks)                                           |----|----
                                                             Templates w/params (long lookahead?) (2 weeks)                                 |----|----
-  
+
                                                             Redirects (3 days)                                                             |--
                                                             Naked URLs (long lookahead but doable in lexer?) (1 day)                       |
                                                             Headers (long lookahead but doable in lexer) (done for now)
                                                             Entities (done for now)
                                                             Behavior switches (optional) (4 days--will require some architecture thinking) |---
-                                                            
+
                                                             HTML tags: probably just tokenize and preserve them through the parser and     |----|----|----
                                                               then have a separate post-parse step to balance and validate them and, for
                                                               example, escape any invalid ones (3 weeks)
