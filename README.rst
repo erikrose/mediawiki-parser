@@ -76,6 +76,13 @@ mediawiki_parser (this one)
 * (-) Currently incomplete syntax
 * (-) Currently generates no AST
 
+Sweble
+------
+* (.) Interesting description of the parser philosophy: http://sweble.org/gitweb/?p=sweble-wikitext.git;f=swc-parser-lazy/src/main/autogen/org/sweble/wikitext/lazy/parser/Content.rats;h=e6f0e250b01c3c76ce85a38ba75eb0fcbe636d7a;hb=899a68c087fb6439b4d60c3e6d3c7c025ac0d663
+* (.) Same for preprocessor: http://sweble.org/gitweb/?p=sweble-wikitext.git;a=blob;f=swc-parser-lazy/src/main/autogen/org/sweble/wikitext/lazy/preprocessor/Grammar.rats;h=c13e8a662178516f730d4c63115ba59210aa2481;hb=899a68c087fb6439b4d60c3e6d3c7c025ac0d663
+* (.) Uses the xtc parser: http://www.cs.nyu.edu/rgrimm/xtc/rats.html which generats '.rats' files
+* (-) Not simple...
+
 Previous work
 =============
 * (+) OCaml lexer implementation: http://www.mediawiki.org/wiki/MediaWiki_lexer
