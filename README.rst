@@ -76,12 +76,34 @@ mediawiki_parser (this one)
 * (-) Currently incomplete syntax
 * (-) Currently generates no AST
 
-Sweble
-------
+Sweble (http://sweble.org/gitweb/)
+----------------------------------
+* (+) Works well: demo here: http://sweble.org/crystalball/
 * (.) Interesting description of the parser philosophy: http://sweble.org/gitweb/?p=sweble-wikitext.git;f=swc-parser-lazy/src/main/autogen/org/sweble/wikitext/lazy/parser/Content.rats;h=e6f0e250b01c3c76ce85a38ba75eb0fcbe636d7a;hb=899a68c087fb6439b4d60c3e6d3c7c025ac0d663
 * (.) Same for preprocessor: http://sweble.org/gitweb/?p=sweble-wikitext.git;a=blob;f=swc-parser-lazy/src/main/autogen/org/sweble/wikitext/lazy/preprocessor/Grammar.rats;h=c13e8a662178516f730d4c63115ba59210aa2481;hb=899a68c087fb6439b4d60c3e6d3c7c025ac0d663
-* (.) Uses the xtc parser: http://www.cs.nyu.edu/rgrimm/xtc/rats.html which generats '.rats' files
+* (.) Uses the packrat xtc parser: http://www.cs.nyu.edu/rgrimm/xtc/rats.html
 * (-) Not simple...
+
+Possible approaches
+===================
+
+Lexer + parser (eg. PLY)
+------------------------
+* (+) Easy to use and debug
+* (+) Statefull (specific simple rules for each context)
+* (-) Not enough lookahead in the case of LR(1) parser
+
+Packrat parser (eg. PyParsing)
+------------------------------
+* (+) No need to separate lexing and parsing
+* (+) Memoization makes it run in linear time
+* (.) Recursive
+* (-) May require large amounts of memory
+* (-) Quite hard to read and debug
+
+Earley parser (eg. Spark, NLTK)
+-------------------------------
+* TODO
 
 Previous work
 =============
