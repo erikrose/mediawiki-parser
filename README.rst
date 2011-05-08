@@ -65,9 +65,10 @@ mwlib (http://code.pediapress.com/wiki/wiki/mwlib)
 --------------------------------------------------
 * (+) Works well, lots of unittests already defined and successfully passed
 * (+) Generates an AST
-* (.) Implements its own lexer/parser (see mwlib/refine/core.py)
-* (-) Structure of the code somewhat hard to understand (uparser.py vs old_uparser.py)
-* (-) Lot of code not related to parsing (output for ODF, Latex, etc. that should be more isolated from the parsing part)
+* (.) Implements its own lexer/parser (see mwlib/refine/core.py and mwlib/refine/_core.pyx: compiled token walker)
+* (.) Seems to: tokenize the text and then apply ~20 different parsers one by one (see mwlib/refine/core.py#928 and #635)
+* (-) Structure of the code somewhat hard to understand (uparser.py vs old_uparser.py, etc.)
+* (-) Lot of code not related to parsing (fetching articles, (un)zip files, API stuff, output for ODF, Latex, etc. that should be more isolated from the parsing part)
 
 mediawiki_parser (this one)
 ---------------------------
