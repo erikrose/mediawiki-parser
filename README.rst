@@ -11,6 +11,7 @@ Ungoals
 
 Parser libs
 ===========
+See: http://wiki.python.org/moin/LanguageParsing
 In the following lists, (+) signifies a pro, (-) a con, and (.) a neutral point.
 
 LEPL
@@ -53,8 +54,16 @@ SPARK
 -----
 * (+) Has an implementation of an Earley parser, which can do arbitrary lookahead in n^3 worst case.
 
+Pyggy (http://pypi.python.org/pypi/pyggy/0.3)
+---------------------------------------------
+* (.) Untested
+* (+) Public domain
+* (-) Might be dead (the home page has disappeared: http://www.lava.net/~newsham/pyggy/)
+* (-) "PyGgy was written and tested with Python 2.2.3." (in 2003)
+
 MediaWiki parser libs
 =====================
+See: http://www.mediawiki.org/wiki/Alternative_parsers
 
 Py-wikimarkup (https://github.com/dcramer/py-wikimarkup)
 --------------------------------------------------------
@@ -104,7 +113,13 @@ Packrat parser (eg. PyParsing)
 
 Earley parser (eg. Spark, NLTK)
 -------------------------------
-* TODO
+* (.) O(n³) in the general case, O(n²) for unambiguous grammars
+* (?) Meant for context-free grammars, but may also work in context-free subsections of context-sensitive grammars according to this publication: http://danielmattosroberts.com/earley/context-sensitive-earley.pdf
+
+GLR parser (eg. Pyggy)
+----------------------
+* (+) Supports ambiguous grammars
+* (+) O(n) on deterministic grammars
 
 Previous work
 =============
