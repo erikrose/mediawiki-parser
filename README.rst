@@ -57,6 +57,7 @@ SPARK
 Pyggy (http://pypi.python.org/pypi/pyggy/0.3)
 ---------------------------------------------
 * (.) Untested
+* (.) GLR parser
 * (+) Public domain
 * (-) Might be dead (the home page has disappeared: http://www.lava.net/~newsham/pyggy/)
 * (-) "PyGgy was written and tested with Python 2.2.3." (in 2003)
@@ -113,8 +114,8 @@ Packrat parser (eg. PyParsing)
 
 Earley parser (eg. Spark, NLTK)
 -------------------------------
-* (.) O(n³) in the general case, O(n²) for unambiguous grammars
-* (?) Meant for context-free grammars, but may also work in context-free subsections of context-sensitive grammars according to this publication: http://danielmattosroberts.com/earley/context-sensitive-earley.pdf
+* (.) O(n³) in the general case, O(n²) for unambiguous grammars and linear time for almost all LR(k) grammars
+* (.) Meant for context-free grammars, but may also work in context-free subsections of context-sensitive grammars according to this publication: http://danielmattosroberts.com/earley/context-sensitive-earley.pdf
 
 GLR parser (eg. Pyggy)
 ----------------------
@@ -147,6 +148,7 @@ Milestones
 * Understand what's so hard about apostrophes and lists (http://www.mediawiki.org/wiki/Markup_spec/BNF/Inline_text).
 
   * This claims MW isn't context-free and has C code on how to hack through the apostrophe jungle: http://web.archiveorange.com/archive/v/e7MXfq0OoW0nCOGyX0oa
+  * This claims that MW is probably context-free: http://www.mediawiki.org/wiki/User_talk:Kanor#Response_to_article_in_Meatball
   * Useful background discussion by the folks who wrote the BNF attempt: http://www.mediawiki.org/wiki/Talk:Markup_spec
   * The flex markup looks to have naive apostrophe jungle state rules: http://www.mediawiki.org/wiki/Markup_spec/flex
   * mwlib has a pretty clean, decoupled Python impl. See styleanalyzer.py.
