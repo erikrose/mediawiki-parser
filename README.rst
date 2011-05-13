@@ -11,6 +11,7 @@ Ungoals
 
 Parser libs
 ===========
+See: http://wiki.python.org/moin/LanguageParsing
 In the following lists, (+) signifies a pro, (-) a con, and (.) a neutral point.
 
 LEPL
@@ -53,6 +54,74 @@ SPARK
 -----
 * (+) Has an implementation of an Earley parser, which can do arbitrary lookahead in n^3 worst case.
 
+Pyggy (http://pypi.python.org/pypi/pyggy/0.3)
+---------------------------------------------
+* (.) Untested
+* (.) GLR parser
+* (+) Public domain
+* (-) Might be dead (the home page has disappeared: http://www.lava.net/~newsham/pyggy/)
+* (-) "PyGgy was written and tested with Python 2.2.3." (in 2003)
+
+MediaWiki parser libs
+=====================
+See: http://www.mediawiki.org/wiki/Alternative_parsers
+
+Py-wikimarkup (https://github.com/dcramer/py-wikimarkup)
+--------------------------------------------------------
+* (+) Probably works (untested)
+* (-) Direct transformation from wikitext to HTML (generates no AST)
+
+mwlib (http://code.pediapress.com/wiki/wiki/mwlib)
+--------------------------------------------------
+* (+) Works well, lots of unittests already defined and successfully passed
+* (+) Generates an AST
+* (.) Implements its own lexer/parser (see mwlib/refine/core.py and mwlib/refine/_core.pyx: compiled token walker)
+* (.) Seems to: tokenize the text and then apply ~20 different parsers one by one (see mwlib/refine/core.py#928 and #635)
+* (-) Structure of the code somewhat hard to understand (uparser.py vs old_uparser.py, etc.)
+* (-) Lot of code not related to parsing (fetching articles, (un)zip files, API stuff, output for ODF, Latex, etc. that should be more isolated from the parsing part)
+
+mediawiki_parser (this one)
+---------------------------
+* (+) Good start (parser + lexer, unittests)
+* (.) Currently using PLY but will be abandoned due to the lack of lookahead
+* (-) Currently incomplete syntax
+* (-) Currently generates no AST
+
+Sweble (http://sweble.org/gitweb/)
+----------------------------------
+* (+) Works well: demo here: http://sweble.org/crystalball/
+* (.) Interesting description of the parser philosophy: http://sweble.org/gitweb/?p=sweble-wikitext.git;f=swc-parser-lazy/src/main/autogen/org/sweble/wikitext/lazy/parser/Content.rats;h=e6f0e250b01c3c76ce85a38ba75eb0fcbe636d7a;hb=899a68c087fb6439b4d60c3e6d3c7c025ac0d663
+* (.) Same for preprocessor: http://sweble.org/gitweb/?p=sweble-wikitext.git;a=blob;f=swc-parser-lazy/src/main/autogen/org/sweble/wikitext/lazy/preprocessor/Grammar.rats;h=c13e8a662178516f730d4c63115ba59210aa2481;hb=899a68c087fb6439b4d60c3e6d3c7c025ac0d663
+* (.) Uses the packrat xtc parser: http://www.cs.nyu.edu/rgrimm/xtc/rats.html
+* (-) Not simple...
+
+Possible approaches
+===================
+
+Lexer + parser (eg. PLY)
+------------------------
+* (+) Easy to use and debug
+* (+) Statefull (specific simple rules for each context)
+* (-) Not enough lookahead in the case of LR(1) parser
+
+Packrat parser (eg. PyParsing)
+------------------------------
+* (+) No need to separate lexing and parsing
+* (+) Memoization makes it run in linear time
+* (.) Recursive
+* (-) May require large amounts of memory
+* (-) Quite hard to read and debug
+
+Earley parser (eg. Spark, NLTK)
+-------------------------------
+* (.) O(n³) in the general case, O(n²) for unambiguous grammars and linear time for almost all LR(k) grammars
+* (.) Meant for context-free grammars, but may also work in context-free subsections of context-sensitive grammars according to this publication: http://danielmattosroberts.com/earley/context-sensitive-earley.pdf
+
+GLR parser (eg. Pyggy)
+----------------------
+* (+) Supports ambiguous grammars
+* (+) O(n) on deterministic grammars
+
 Previous work
 =============
 * (+) OCaml lexer implementation: http://www.mediawiki.org/wiki/MediaWiki_lexer
@@ -79,6 +148,7 @@ Milestones
 * Understand what's so hard about apostrophes and lists (http://www.mediawiki.org/wiki/Markup_spec/BNF/Inline_text).
 
   * This claims MW isn't context-free and has C code on how to hack through the apostrophe jungle: http://web.archiveorange.com/archive/v/e7MXfq0OoW0nCOGyX0oa
+  * This claims that MW is probably context-free: http://www.mediawiki.org/wiki/User_talk:Kanor#Response_to_article_in_Meatball
   * Useful background discussion by the folks who wrote the BNF attempt: http://www.mediawiki.org/wiki/Talk:Markup_spec
   * The flex markup looks to have naive apostrophe jungle state rules: http://www.mediawiki.org/wiki/Markup_spec/flex
   * mwlib has a pretty clean, decoupled Python impl. See styleanalyzer.py.
@@ -98,26 +168,26 @@ Quasi Gantt chart
 
 ::
 
-  Re-examing parsing algorithm, 
+  Re-examing parsing algorithm,
   & implement links                       |----|----|----   Bold/Italics/Apostrophe Jungles (3 weeks)                                      |----|----|----   HTML formatter |----   Showfor support |--
   & other long-lookahead productions
   (3 weeks)                                                 Simple productions:
                                                             Paragraphs (3 days)                                                            |--
                                                             HRs (1 day)                                                                    |
                                                             magic words (3 days)                                                           |--
-  
+
                                                             Tables (long lookahead?) (1 week)                                              |----
-  
+
                                                             One person should do these:
                                                             Includes (long lookahead?) (2 weeks)                                           |----|----
                                                             Templates w/params (long lookahead?) (2 weeks)                                 |----|----
-  
+
                                                             Redirects (3 days)                                                             |--
                                                             Naked URLs (long lookahead but doable in lexer?) (1 day)                       |
                                                             Headers (long lookahead but doable in lexer) (done for now)
                                                             Entities (done for now)
                                                             Behavior switches (optional) (4 days--will require some architecture thinking) |---
-                                                            
+
                                                             HTML tags: probably just tokenize and preserve them through the parser and     |----|----|----
                                                               then have a separate post-parse step to balance and validate them and, for
                                                               example, escape any invalid ones (3 weeks)
