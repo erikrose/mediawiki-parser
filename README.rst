@@ -1,8 +1,9 @@
 Goals
 =====
-* Possible (to represent MediaWiki syntax)
+* Possible (to represent MediaWiki syntax). There is no such thing as invalid wiki markup, so we have to make some sense out of anything.
 * Extensible per project (for {for} syntax, DekiWiki conditionals, includes, templates, etc.)
 * Easier to comprehend than MW's existing formatter
+* Must work with Unicode input (Japanese, for example)
 
 
 Ungoals
@@ -41,8 +42,8 @@ PLY
 
 PyParsing
 ---------
-* (.) Recursive descent (LL)
-* (+) Easier to write and debug?
+* (.) Recursive descent (LL) of PEGs
+* (+) Easy to write
 * (-) "[An LL(k) parser] may defer error detection to a different branch of the grammar due to backtracking, often making errors harder to localize across disjunctions with long common prefixes."—Wikipedia. I had that problem when writing a simple italics/bold parser: you have to keep the recursion stack in your head to make any sense of the debug info. I eventually gave up trying to fix it.
 
 PyBison
@@ -69,13 +70,33 @@ NLTK
 * (.) There's a good, free book about the project: http://nltk.googlecode.com/svn/trunk/doc/book/ch08.html. Not sure how good the documentation about the code itself is, though.
 * (-) An enormous dependency
 
-Pyggy (http://pypi.python.org/pypi/pyggy/0.3)
+PyGgy (http://pypi.python.org/pypi/pyggy/0.3)
 ---------------------------------------------
 * (.) Untested
 * (.) GLR parser
 * (+) Public domain
 * (-) Might be dead (the home page has disappeared: http://www.lava.net/~newsham/pyggy/)
 * (-) "PyGgy was written and tested with Python 2.2.3." (in 2003)
+
+Pijnu (http://spir.wikidot.com/pijnu)
+-------------------------------------
+* (+) PEG. Easy, easy grammar definition.
+* (.) Looks promising but not mature. Author has given no thought to speed but much to clarity.
+* (-) Build step
+* (+) Great docs: http://spir.wikidot.com/pijnu-user-guide
+* (+) Great error feedback
+* (+) The generated code looks like what you have to hand-write for PyParsing (see the user guide).
+
+PyMeta (https://launchpad.net/pymeta)
+-------------------------------------
+* (.) PEG. Grammar defined in a DSL.
+* (+) No build step; converts grammar from a DSL at runtime.
+* (+) Good docs in the code
+* (-) Nobody's touched it for a year.
+
+PyMeta2 (http://www.allbuttonspressed.com/projects/pymeta)
+----------------------------------------------------------
+* (.) Is a port of PyMeta to "the simplified OMeta 2 syntax" (new DSL syntax).
 
 
 Previous implementations
@@ -123,7 +144,7 @@ Lexer + parser (e.g. PLY)
 * (+) Stateful (specific simple rules for each context)
 * (-) Not enough lookahead in the case of LR(1) parser
 
-Recursive descent of CFGs (e.g. PyParsing)
+Recursive descent of CFGs
 ------------------------------------------
 * (+) No separate lexer and parser
 * (+) Memoization ("packrat") makes it run in O(n)
@@ -131,11 +152,12 @@ Recursive descent of CFGs (e.g. PyParsing)
 * (-) May require large amounts of memory
 * (-) Quite hard to read and debug
 
-Recursive descent of PEGs (e.g. Rats)
+Recursive descent of PEGs (e.g. Rats, PyParsing)
 -------------------------------------
 * (+) No separate lexer and parser
 * (+) O(n) with packrat
 * (+) Resolves ambiguity by having precedence orders for productions. As a result, it is easy to extend a PEG with productions for use in special situations without wrecking the wider grammar. This could be a very big deal for our extensibility story.
+* (+) We can rip off Sweble's grammar.
 
 Earley parser (e.g. Spark, NLTK)
 --------------------------------
