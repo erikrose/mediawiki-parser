@@ -20,6 +20,7 @@ MW language properties
 Parser libs
 ===========
 See: http://wiki.python.org/moin/LanguageParsing
+Also: http://en.wikipedia.org/wiki/Comparison_of_parser_generators
 In the following lists, (+) signifies a pro, (-) a con, and (.) a neutral point.
 
 LEPL
@@ -83,6 +84,7 @@ Pijnu (http://spir.wikidot.com/pijnu)
 * (+) PEG. Easy, easy grammar definition.
 * (.) Looks promising but not mature. Author has given no thought to speed but much to clarity.
 * (-) Build step
+* (-) Currently no Unicode support
 * (+) Great docs: http://spir.wikidot.com/pijnu-user-guide
 * (+) Great error feedback
 * (+) The generated code looks like what you have to hand-write for PyParsing (see the user guide).
@@ -97,6 +99,15 @@ PyMeta (https://launchpad.net/pymeta)
 PyMeta2 (http://www.allbuttonspressed.com/projects/pymeta)
 ----------------------------------------------------------
 * (.) Is a port of PyMeta to "the simplified OMeta 2 syntax" (new DSL syntax).
+
+Ppeg (https://bitbucket.org/pmoore/ppeg/)
+-----------------------------------------
+* (-) Not in Python: Python code (21 kB) code is just an API for a C parser (172 kB)
+
+pyPEG (http://fdik.org/pyPEG/)
+------------------------------
+* (.) Only 340 lines of Python
+* (-) Similar to Pijnu but much less easy to use
 
 
 Previous implementations
