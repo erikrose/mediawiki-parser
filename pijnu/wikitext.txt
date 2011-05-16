@@ -22,15 +22,21 @@ Normal paragraph.
 == Links and apostrophes ==
 === Apostrophes jungle ===
 
-This is Peter's test for the apostrophe.
-
 This should be in ''italic'', '''bold'''...
 
 And this is '''''bold and italic'''''...
 
-An URL: ftp://mozilla.org inside a paragraph.
+=== Verification ===
+This is Peter's test for the apostrophe.
 
 === Links ===
-This paragraph contains an [[internal]] link.
+An URL: ftp://mozilla.org inside a paragraph.
+
+This paragraph contains an first [[internal]] link and a [[internal link|second one]].
 
 This one an [http://www.mozilla.org external] link.
+
+=== Templates ===
+Here, we insert a simple {{template}}.
+
+Here, we insert a {{template|with|some=3|parameters}}.

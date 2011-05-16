@@ -5,23 +5,37 @@ wikitext
 	ITALIC			: "\'\'"								: drop
 	L_BRACKET		: "["									: drop
 	R_BRACKET		: "\]"									: drop
+	L_BRACE			: "{"									: drop
+	R_BRACE			: "}"									: drop
 	SPACE			: " "									: drop
+	PIPE			: "|"									: drop
+	EQUAL			: "="									: drop
 
 	HTTP			: "http://"								: liftValue
 	FTP			: "ftp://"								: liftValue
 	protocole		: HTTP / FTP								: liftValue
 
 # character expression
-	rawChar			: !(ITALIC/L_BRACKET/R_BRACKET/protocole) [\x20..\xff !!=]
+	escChar			: ITALIC/L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE
+	rawChar			: !escChar [\x20..\xff !!=]
 	rawText			: rawChar+								: join
 # text
+	pageName		: rawChar+								: join
 	address			: !SPACE [\x21..\xff]+							: liftValue
 	url			: protocole address							: liftValue
 	boldText		: BOLD inline BOLD							: liftValue
 	italicText		: ITALIC inline ITALIC							: liftValue
-	internalLink		: L_BRACKET L_BRACKET inline R_BRACKET R_BRACKET			: liftValue
+	value			: ("=" inline)								: join
+	parameter		: PIPE rawText value*							: liftValue
+	parameters		: parameter+
+	simpleInternalLink	: L_BRACKET L_BRACKET pageName R_BRACKET R_BRACKET			: liftValue
+	advancedInternalLink	: L_BRACKET L_BRACKET pageName PIPE inline R_BRACKET R_BRACKET		: liftValue
 	externalLink		: L_BRACKET url SPACE inline R_BRACKET					: liftValue
-	styledText		: boldText / italicText / internalLink / externalLink / url
+	link			: simpleInternalLink / advancedInternalLink / externalLink
+	simpleTemplate		: L_BRACE L_BRACE pageName R_BRACE R_BRACE				: liftValue
+	advancedTemplate	: L_BRACE L_BRACE pageName parameters R_BRACE R_BRACE			: liftValue
+	template		: simpleTemplate / advancedTemplate
+	styledText		: boldText / italicText / link / url / template
 	inline			: (styledText / rawText)+						: @
 # line types
 	LF			: '
