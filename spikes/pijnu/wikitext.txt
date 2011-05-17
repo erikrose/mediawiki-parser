@@ -51,6 +51,8 @@ This paragraph contains an first [[internal]] link and a [[internal link|second 
 
 This one an [http://www.mozilla.org external] link.
 
+This should [[be plain text
+
 === Templates ===
 Here, we insert a simple {{template}}.
 

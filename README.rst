@@ -94,6 +94,7 @@ Pijnu (http://spir.wikidot.com/pijnu)
 * (+) The generated code looks like what you have to hand-write for PyParsing (see the user guide).
 * (+) Can handle having Unicode chars in the input.
 * (.) Can it handle having Unicode chars as part of parse rules? We might need guillemets.
+* (-) Eek, no tests! Throws DeprecationWarnings on import. Very unique coding style.
 
 PyMeta (https://launchpad.net/pymeta)
 -------------------------------------
