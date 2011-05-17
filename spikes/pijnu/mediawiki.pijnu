@@ -1,0 +1,77 @@
+wikitext
+<definition>
+# codes
+	BOLD			: "\'\'\'"								: drop
+	ITALIC			: "\'\'"								: drop
+	L_BRACKET		: "["									: drop
+	R_BRACKET		: "\]"									: drop
+	L_BRACE			: "{"									: drop
+	R_BRACE			: "}"									: drop
+	SPACE			: " "									: drop
+	PIPE			: "|"									: drop
+	EQUAL			: "="									: drop
+	BULLET			: "*"									: drop
+	HASH			: "#"									: drop
+
+	HTTP			: "http://"								: liftValue
+	FTP			: "ftp://"								: liftValue
+	protocole		: HTTP / FTP								: liftValue
+
+# character expression
+	escChar			: BOLD/ITALIC/L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE/EQUAL
+	rawChar			: !escChar [\x20..\xff]
+	rawText			: rawChar+								: join
+# text
+	pageName		: rawChar+								: join
+	address			: !SPACE [\x21..\xff]+							: liftValue
+	url			: protocole address							: join
+	boldText		: BOLD inline BOLD							: liftValue
+	italicText		: ITALIC inline ITALIC							: liftValue
+	value			: EQUAL inline								: join
+	parameter		: PIPE rawText value*							: liftValue
+	parameters		: parameter+
+	simpleInternalLink	: L_BRACKET L_BRACKET pageName R_BRACKET R_BRACKET			: liftValue
+	advancedInternalLink	: L_BRACKET L_BRACKET pageName PIPE inline R_BRACKET R_BRACKET		: liftValue
+	internalLink		: simpleInternalLink / advancedInternalLink				: liftValue
+	externalLink		: L_BRACKET url SPACE inline R_BRACKET					: liftValue
+	link			: internalLink / externalLink
+	simpleTemplate		: L_BRACE L_BRACE pageName R_BRACE R_BRACE				: liftValue
+	advancedTemplate	: L_BRACE L_BRACE pageName parameters R_BRACE R_BRACE			: liftValue
+	template		: simpleTemplate / advancedTemplate
+	styledText		: boldText / italicText / link / url / template
+	inline			: (styledText / rawText)+						: @
+# line types
+	LF			: '
+'
+	CR			: '
+'
+	EOL			: (LF/CR)+								: drop
+	blankLine		: LF{2}/CR{2}
+	ignored			: [\x20..\xff]*								: drop
+
+	title6			: EQUAL{6} inline EQUAL{6} ignored EOL					: liftValue
+	title5			: EQUAL{5} inline EQUAL{5} ignored EOL					: liftValue
+	title4			: EQUAL{4} inline EQUAL{4} ignored EOL					: liftValue
+	title3			: EQUAL{3} inline EQUAL{3} ignored EOL					: liftValue
+	title2			: EQUAL{2} inline EQUAL{2} ignored EOL					: liftValue
+	title1			: EQUAL{1} inline EQUAL{1} ignored EOL					: liftValue
+
+	pre			: SPACE inline								: liftValue
+	title			: title6 / title5 / title4 / title3 / title2 / title1
+
+	paragraph		: !(BULLET/HASH/SPACE) inline EOL					: liftValue
+	paragraphs		: paragraph+
+
+	bulletListFinalItem	: BULLET inline EOL							: liftValue
+	bulletSubList		: BULLET bulletListItem							: @
+	bulletListItem		: bulletSubList / bulletListFinalItem					: @
+	bulletList		: bulletListItem+
+
+	numberListFinalItem	: HASH inline EOL							: liftValue
+	numberSubList		: HASH numberListItem							: @
+	numberListItem		: numberSubList / numberListFinalItem					: @
+	numberList		: numberListItem+
+
+	preformated		: SPACE inline EOL							: liftValue
+	preformatedParagraph	: preformated+
+	body			: (bulletList / numberList / preformatedParagraph / title / paragraphs / blankLine)+

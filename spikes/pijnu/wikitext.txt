@@ -1,0 +1,57 @@
+= Title 1 = this should be dropped
+Normal paragraph.
+
+== Lists ==
+
+* list item 1
+* list item 2
+** list item 2.1
+** list item 2.2
+*** list item 2.2.1
+*** list item 2.2.2
+**** list item 2.2.2.1
+*** list item 2.2.3
+** list item 2.3
+* list item 3
+# list item 3
+## list item 3.1
+### list item 3.1.1
+# list item 4
+
+== Unicode support ==
+
+This sentence "你好" is in Chinese and means "Hello!".
+
+== Preformatted text ==
+ Source code
+ Some text ''in italic''
+
+== Links and apostrophes ==
+=== Apostrophes jungle ===
+
+This should be in ''italic'', '''bold'''...
+
+And this is '''''bold and italic'''''...
+
+Here, it's ''italic and '''bold and italic'''''.
+
+Here, it's '''bold and ''bold and italic'''''.
+
+Mabye more complicated: ''italic and '''bold and italic''' and italic only'' (currently fails).
+
+Mabye more complicated: '''bold and ''bold and italic'' and bold only''' (currently fails).
+
+=== Verification === ...
+This is Peter's test for the apostrophe.
+
+=== Links ===
+An URL: ftp://mozilla.org inside a paragraph.
+
+This paragraph contains an first [[internal]] link and a [[internal link|second one]].
+
+This one an [http://www.mozilla.org external] link.
+
+=== Templates ===
+Here, we insert a simple {{template}}.
+
+Here, we insert a {{template|with|some=3|parameters|color = #0000ff}}.
