@@ -47,6 +47,7 @@ PLY
 PyParsing
 ---------
 * (.) Recursive descent (LL) of PEGs
+* (+) Packrat, so O(n)
 * (+) Easy to write
 * (-) "[An LL(k) parser] may defer error detection to a different branch of the grammar due to backtracking, often making errors harder to localize across disjunctions with long common prefixes."—Wikipedia. I had that problem when writing a simple italics/bold parser: you have to keep the recursion stack in your head to make any sense of the debug info. I eventually gave up trying to fix it.
 
@@ -91,6 +92,8 @@ Pijnu (http://spir.wikidot.com/pijnu)
 * (+) Great docs: http://spir.wikidot.com/pijnu-user-guide
 * (+) Great error feedback
 * (+) The generated code looks like what you have to hand-write for PyParsing (see the user guide).
+* (+) Can handle having Unicode chars in the input.
+* (.) Can it handle having Unicode chars as part of parse rules? We might need guillemets.
 
 PyMeta (https://launchpad.net/pymeta)
 -------------------------------------
