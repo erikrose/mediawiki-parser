@@ -1,8 +1,15 @@
 wikitext
+<toolset>
+def setNullValue(node):
+	node.value = ''
 <definition>
 # codes
-	BOLD			: "\'\'\'"								: drop
-	ITALIC			: "\'\'"								: drop
+	LF			: '
+'
+	CR			: '
+'
+	EOL			: LF / CR								: drop
+	APOSTROPHE		: "\'"									: drop
 	L_BRACKET		: "["									: drop
 	R_BRACKET		: "\]"									: drop
 	L_BRACE			: "{"									: drop
@@ -17,21 +24,35 @@ wikitext
 	FTP			: "ftp://"								: liftValue
 	protocole		: HTTP / FTP								: liftValue
 
+	NOWIKI_BEGIN		: "<nowiki>"								: drop
+	NOWIKI_END		: "</nowiki>"								: drop
+	BOLD_BEGIN		: "<b>" / "<strong>"							: drop
+	BOLD_END		: "</b>" / "</strong>"							: drop
+	ITALIC_BEGIN		: "<i>" / "<em>"							: drop
+	ITALIC_END		: "</i>" / "</em>"							: drop
+	tag			: NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END
+
 # character expression
-	escChar			: BOLD/ITALIC/L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE/EQUAL
+	escChar			: L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE/EQUAL/tag
 	rawChar			: !escChar [\x20..\xff]
 	rawText			: rawChar+								: join
+	anyChar			: [\x20..\xff]
+	anyText			: anyChar+								: join
+
 # text
 	pageName		: rawChar+								: join
+	templateName		: rawChar+								: join
 	address			: !SPACE [\x21..\xff]+							: liftValue
 	url			: protocole address							: join
-	boldText		: BOLD inline BOLD							: liftValue
-	italicText		: ITALIC inline ITALIC							: liftValue
+	boldText		: BOLD_BEGIN inline BOLD_END						: liftValue
+	italicText		: ITALIC_BEGIN inline ITALIC_END					: liftValue
 	value			: EQUAL inline								: join
-	parameter		: PIPE rawText value*							: liftValue
-	parameters		: parameter+
-	simpleInternalLink	: L_BRACKET L_BRACKET pageName R_BRACKET R_BRACKET			: liftValue
-	advancedInternalLink	: L_BRACKET L_BRACKET pageName PIPE inline R_BRACKET R_BRACKET		: liftValue
+	optionalValue		: value*								: join
+	parameter		: PIPE rawText optionalValue						: liftValue
+	ignoredInParameters	: EOL/SPACE								: drop
+	parameters		: (parameter/ignoredInParameters)+
+	simpleInternalLink	: L_BRACKET L_BRACKET templateName R_BRACKET R_BRACKET			: liftValue
+	advancedInternalLink	: L_BRACKET L_BRACKET templateName PIPE inline R_BRACKET R_BRACKET	: liftValue
 	internalLink		: simpleInternalLink / advancedInternalLink				: liftValue
 	externalLink		: L_BRACKET url SPACE inline R_BRACKET					: liftValue
 	link			: internalLink / externalLink
@@ -39,39 +60,41 @@ wikitext
 	advancedTemplate	: L_BRACE L_BRACE pageName parameters R_BRACE R_BRACE			: liftValue
 	template		: simpleTemplate / advancedTemplate
 	styledText		: boldText / italicText / link / url / template
-	inline			: (styledText / rawText)+						: @
-# line types
-	LF			: '
-'
-	CR			: '
-'
-	EOL			: (LF/CR)+								: drop
-	blankLine		: LF{2}/CR{2}
-	ignored			: [\x20..\xff]*								: drop
+	ignoredInNowiki		: (!(NOWIKI_END) [\x20..\xff])+						: join
+	nowiki			: NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END				: liftValue
+	inline			: (styledText / rawText / nowiki)+					: @
 
-	title6			: EQUAL{6} inline EQUAL{6} ignored EOL					: liftValue
-	title5			: EQUAL{5} inline EQUAL{5} ignored EOL					: liftValue
-	title4			: EQUAL{4} inline EQUAL{4} ignored EOL					: liftValue
-	title3			: EQUAL{3} inline EQUAL{3} ignored EOL					: liftValue
-	title2			: EQUAL{2} inline EQUAL{2} ignored EOL					: liftValue
-	title1			: EQUAL{1} inline EQUAL{1} ignored EOL					: liftValue
+# line types
+	ignoredAfterTitle	: anyText*								: drop
+	title6			: EQUAL{6} inline EQUAL{6} ignoredAfterTitle EOL			: liftValue
+	title5			: EQUAL{5} inline EQUAL{5} ignoredAfterTitle EOL			: liftValue
+	title4			: EQUAL{4} inline EQUAL{4} ignoredAfterTitle EOL			: liftValue
+	title3			: EQUAL{3} inline EQUAL{3} ignoredAfterTitle EOL			: liftValue
+	title2			: EQUAL{2} inline EQUAL{2} ignoredAfterTitle EOL			: liftValue
+	title1			: EQUAL{1} inline EQUAL{1} ignoredAfterTitle EOL			: liftValue
 
 	pre			: SPACE inline								: liftValue
 	title			: title6 / title5 / title4 / title3 / title2 / title1
 
-	paragraph		: !(BULLET/HASH/SPACE) inline EOL					: liftValue
-	paragraphs		: paragraph+
+	line			: inline EOL								: liftValue
+	blankParagraph		: EOL{2}								: setNullValue
+	paragraph		: line+									: liftValue
+	paragraphs		: (blankParagraph/EOL/paragraph)+
 
-	bulletListFinalItem	: BULLET inline EOL							: liftValue
+	bulletListLeaf		: BULLET inline EOL							: liftValue
 	bulletSubList		: BULLET bulletListItem							: @
-	bulletListItem		: bulletSubList / bulletListFinalItem					: @
+	bulletListItem		: bulletSubList / bulletListLeaf					: @
 	bulletList		: bulletListItem+
 
-	numberListFinalItem	: HASH inline EOL							: liftValue
+	numberListLeaf		: HASH inline EOL							: liftValue
 	numberSubList		: HASH numberListItem							: @
-	numberListItem		: numberSubList / numberListFinalItem					: @
+	numberListItem		: numberSubList / numberListLeaf					: @
 	numberList		: numberListItem+
 
-	preformated		: SPACE inline EOL							: liftValue
-	preformatedParagraph	: preformated+
-	body			: (bulletList / numberList / preformatedParagraph / title / paragraphs / blankLine)+
+	preformatedLine		: SPACE inline EOL							: liftValue
+	preformatedParagraph	: preformatedLine+
+
+	invalidLine		: anyText EOL								: liftValue
+
+	#body			: (bulletList / numberList / preformatedParagraph / title / paragraphs / invalidLine)+
+	body			: (bulletList / numberList / preformatedParagraph / title / EOL / paragraphs / invalidLine / EOL)+
