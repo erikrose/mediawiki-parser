@@ -2,6 +2,11 @@ wikitext
 <toolset>
 def setNullValue(node):
 	node.value = ''
+def parseAllQuotes(node):
+	from apostropheParser import parseQuotes
+	oldValue = node.value.decode("utf-8")
+	newValue = parseQuotes(oldValue)
+	node.value = newValue.encode("utf-8")
 <definition>
 # codes
 	LF			: '
@@ -19,6 +24,7 @@ def setNullValue(node):
 	EQUAL			: "="									: drop
 	BULLET			: "*"									: drop
 	HASH			: "#"									: drop
+	COLON			: ":"									: drop
 
 	HTTP			: "http://"								: liftValue
 	FTP			: "ftp://"								: liftValue
@@ -33,9 +39,9 @@ def setNullValue(node):
 	tag			: NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END
 
 # character expression
-	escChar			: L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE/EQUAL/tag
+	escChar			: L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE{2}/R_BRACE{2}/EQUAL/tag
 	rawChar			: !escChar [\x20..\xff]
-	rawText			: rawChar+								: join
+	rawText			: rawChar+								: join parseAllQuotes
 	anyChar			: [\x20..\xff]
 	anyText			: anyChar+								: join
 

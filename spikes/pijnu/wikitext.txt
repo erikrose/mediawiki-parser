@@ -40,7 +40,7 @@ This sentence "你好" is in Chinese and means "Hello!".
  Source code
  Some text ''in italic''
 
-== Links and apostrophes ==
+== [[Links]] and ''apostrophes'' ==
 === Apostrophes jungle ===
 
 This should be in ''italic'', '''bold'''.
@@ -56,7 +56,9 @@ Mabye more complicated: ''italic and '''bold and italic''' and italic only''!
 Mabye more complicated: '''bold and ''bold and italic'' and bold only'''!
 
 === Verification === ...
-This is Peter's test for the apostrophe.
+This: is Peter's test for { the apostrophe and } several # other [[characters]].
+
+This is [correct] text.
 
 === Links ===
 An URL: ftp://mozilla.org inside a paragraph.
@@ -70,7 +72,7 @@ This should [[be plain text
 === Templates ===
 Here, we insert a simple {{template}}.
 
-Here, we insert a {{template|with|some=3|parameters|color = #0000ff}}.
+Here, we insert a {{template|with|some=3|parameters|color = #0000ff|formattedText=''test''}}.
 
 {{Template which
  | is = test
@@ -78,7 +80,11 @@ Here, we insert a {{template|with|some=3|parameters|color = #0000ff}}.
  | lines = test
 }}
 
-<test> this should be normal text since ''test'' is not a valid markup; TODO: replace < and > with &lt; and &gt;
+Here, we put ''italic around a {{template|2}}...'' (fails)
+
+<test> this should be normal text since ''test'' is not a valid markup;
+
+This: < and this: > should be replaced by &lt; and &gt;...
 
 <nowiki>This http://fr.wikipedia.org/ is not an URL</nowiki>
 
