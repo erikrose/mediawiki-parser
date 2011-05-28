@@ -59,11 +59,55 @@ mediawikiParser.inline.test("Some Unicode characters: 你好.")
 mediawikiParser.inline.test("This # should pass.")
 mediawikiParser.inline.test("This { should pass.")
 mediawikiParser.inline.test("This } should pass.")
-mediawikiParser.inline.test("This < should pass.") #Fails
-mediawikiParser.inline.test("This > should pass.") #Fails
+mediawikiParser.inline.test("This < should pass.")
+mediawikiParser.inline.test("This > should pass.")
 mediawikiParser.inline.test("This [ should pass.") #Fails
 mediawikiParser.inline.test("This ] should pass.") #Fails
 mediawikiParser.inline.test("This = should pass.") #Fails
+mediawikiParser.inline.test("This - should pass.")
+
+mediawikiParser.wikiTableLine.test("| style=\"color:red\" | cell 1\n")
+mediawikiParser.wikiTableFirstCell.test("style=\"color:red\" | cell 1")
+mediawikiParser.wikiTableLine.test("| cell 1\n")
+mediawikiParser.wikiTableLine.test("|data L2-B\n")
+mediawikiParser.wikiTableOtherCell.test("|| cell 1")
+mediawikiParser.wikiTableLine.test("| cell 1 || cell 2\n")
+mediawikiParser.wikiTableLine.test("| cell 1 || style=\"color:red\" | cell 2\n")
+mediawikiParser.wikiTableLine.test("| style=\"color:red\" | cell 1 || cell 2\n")
+mediawikiParser.wikiTableLine.test("! scope=row | Line 1\n")
+mediawikiParser.wikiTableSpecialLine.test("|-\n")
+mediawikiParser.wikiTableLine.test("|- style=\"color:red\"\n")
+mediawikiParser.wikiTable.test("""{|
+! cellA
+! cellB
+|- style="color:red"
+| cell C
+| cell D
+|}
+""")
+mediawikiParser.wikiTable.test("""{|
+|+ Table {{title}}
+| cell 1 || cell 2
+|-
+| cell 3 || cell 4
+|}
+""")
+mediawikiParser.wikiTable.test("""{| class="wikitable" {{prettyTable}}
+|+ style="color:red" | Table {{title}}
+|-
+|
+! scope=col | Title A
+! scope=col | Title B
+|-
+! scope=row | Line 1
+|data L1.A
+|data L1.B
+|-
+! scope=row | Line 2
+|data L2.A
+|data L2.B
+|}
+""")
 
 source = file("wikitext.txt").read()
 

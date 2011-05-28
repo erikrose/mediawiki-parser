@@ -14,17 +14,23 @@ def parseAllQuotes(node):
 	CR			: '
 '
 	EOL			: LF / CR								: drop
-	APOSTROPHE		: "\'"									: drop
 	L_BRACKET		: "["									: drop
 	R_BRACKET		: "\]"									: drop
 	L_BRACE			: "{"									: drop
 	R_BRACE			: "}"									: drop
 	SPACE			: " "									: drop
 	PIPE			: "|"									: drop
+	BANG			: "!"									: drop
 	EQUAL			: "="									: drop
 	BULLET			: "*"									: drop
 	HASH			: "#"									: drop
 	COLON			: ":"									: drop
+	SEMICOLON		: ";"									: drop
+	DASH			: "-"									: drop
+	TABLE_BEGIN		: "{|"									: drop
+	TABLE_END		: "|}"									: drop
+	TABLE_NEWLINE		: "|-"									: drop
+	TABLE_TITLE		: "|+"									: drop
 
 	HTTP			: "http://"								: liftValue
 	FTP			: "ftp://"								: liftValue
@@ -39,7 +45,7 @@ def parseAllQuotes(node):
 	tag			: NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END
 
 # character expression
-	escChar			: L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE{2}/R_BRACE{2}/EQUAL/tag
+	escChar			: L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE{2}/R_BRACE{2}/tag/EQUAL
 	rawChar			: !escChar [\x20..\xff]
 	rawText			: rawChar+								: join parseAllQuotes
 	anyChar			: [\x20..\xff]
@@ -57,13 +63,13 @@ def parseAllQuotes(node):
 	parameter		: PIPE rawText optionalValue						: liftValue
 	ignoredInParameters	: EOL/SPACE								: drop
 	parameters		: (parameter/ignoredInParameters)+
-	simpleInternalLink	: L_BRACKET L_BRACKET templateName R_BRACKET R_BRACKET			: liftValue
-	advancedInternalLink	: L_BRACKET L_BRACKET templateName PIPE inline R_BRACKET R_BRACKET	: liftValue
+	simpleInternalLink	: L_BRACKET{2} templateName R_BRACKET{2}				: liftValue
+	advancedInternalLink	: L_BRACKET{2} templateName PIPE inline R_BRACKET{2}			: liftValue
 	internalLink		: simpleInternalLink / advancedInternalLink				: liftValue
 	externalLink		: L_BRACKET url SPACE inline R_BRACKET					: liftValue
 	link			: internalLink / externalLink
-	simpleTemplate		: L_BRACE L_BRACE pageName R_BRACE R_BRACE				: liftValue
-	advancedTemplate	: L_BRACE L_BRACE pageName parameters R_BRACE R_BRACE			: liftValue
+	simpleTemplate		: L_BRACE{2} pageName R_BRACE{2}					: liftValue
+	advancedTemplate	: L_BRACE{2} pageName parameters R_BRACE{2}				: liftValue
 	template		: simpleTemplate / advancedTemplate
 	styledText		: boldText / italicText / link / url / template
 	ignoredInNowiki		: (!(NOWIKI_END) [\x20..\xff])+						: join
@@ -71,6 +77,8 @@ def parseAllQuotes(node):
 	inline			: (styledText / rawText / nowiki)+					: @
 
 # line types
+	specialLineBegin	: SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
+
 	ignoredAfterTitle	: anyText*								: drop
 	title6			: EQUAL{6} inline EQUAL{6} ignoredAfterTitle EOL			: liftValue
 	title5			: EQUAL{5} inline EQUAL{5} ignoredAfterTitle EOL			: liftValue
@@ -79,12 +87,11 @@ def parseAllQuotes(node):
 	title2			: EQUAL{2} inline EQUAL{2} ignoredAfterTitle EOL			: liftValue
 	title1			: EQUAL{1} inline EQUAL{1} ignoredAfterTitle EOL			: liftValue
 
-	pre			: SPACE inline								: liftValue
 	title			: title6 / title5 / title4 / title3 / title2 / title1
 
-	line			: inline EOL								: liftValue
+	paragraphLine		: !specialLineBegin inline EOL						: liftValue
 	blankParagraph		: EOL{2}								: setNullValue
-	paragraph		: line+									: liftValue
+	paragraph		: paragraphLine+							: liftValue
 	paragraphs		: (blankParagraph/EOL/paragraph)+
 
 	bulletListLeaf		: BULLET inline EOL							: liftValue
@@ -97,10 +104,42 @@ def parseAllQuotes(node):
 	numberListItem		: numberSubList / numberListLeaf					: @
 	numberList		: numberListItem+
 
+	colonListLeaf		: COLON inline EOL							: liftValue
+	colonSubList		: COLON colonListItem							: @
+	colonListItem		: colonSubList / colonListLeaf						: @
+	colonList		: colonListItem+
+
+	semiColonListLeaf	: SEMICOLON inline EOL							: liftValue
+	semiColonSubList	: SEMICOLON semiColonListItem						: @
+	semiColonListItem	: semiColonSubList / semiColonListLeaf					: @
+	semiColonList		: semiColonListItem+
+
+	list			: bulletList / numberList / colonList / semiColonList
+
 	preformatedLine		: SPACE inline EOL							: liftValue
 	preformatedParagraph	: preformatedLine+
 
+	horizontalRule		: DASH{4} DASH* inline EOL						: liftValue
+
 	invalidLine		: anyText EOL								: liftValue
 
-	#body			: (bulletList / numberList / preformatedParagraph / title / paragraphs / invalidLine)+
-	body			: (bulletList / numberList / preformatedParagraph / title / EOL / paragraphs / invalidLine / EOL)+
+	CSS_chars		: !(PIPE/BANG/L_BRACE) anyChar
+	CSS_text		: CSS_chars+								: join
+	CSS_attributes		: CSS_text+ PIPE !PIPE							: liftValue
+	wikiTableParameters	: CSS_text / inline							: liftValue
+	wikiTableFirstCell	: CSS_attributes{0..1} inline* 						: liftValue
+	wikiTableOtherCell	: PIPE{2} wikiTableFirstCell						: liftValue
+	wikiTableLineCells	: PIPE wikiTableFirstCell wikiTableOtherCell* EOL			: liftValue
+	wikiTableLineHeader	: BANG wikiTableFirstCell wikiTableOtherCell* EOL			: liftValue
+	wikiTableEmptyCell	: PIPE EOL								: setNullValue
+	wikiTableParamLineBreak	: TABLE_NEWLINE wikiTableParameters* EOL				: liftValue
+	wikiTableLineBreak	: TABLE_NEWLINE EOL							: setNullValue
+	wikiTableTitle		: TABLE_TITLE CSS_attributes{0..1} inline* EOL				: liftValue
+	wikiTableSpecialLine	: wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
+	wikiTableNormalLine	: wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
+	wikiTableLine		: !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)
+	wikiTableContent	: wikiTableLine / EOL
+	wikiTableBegin		: TABLE_BEGIN wikiTableParameters*					: liftValue
+	wikiTable		: wikiTableBegin EOL* wikiTableContent* TABLE_END EOL			: liftValue
+
+	body			: (list / horizontalRule / preformatedParagraph / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+
