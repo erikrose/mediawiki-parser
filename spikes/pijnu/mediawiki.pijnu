@@ -1,145 +1,145 @@
 wikitext
 <toolset>
 def setNullValue(node):
-	node.value = ''
+    node.value = ''
 def parseAllQuotes(node):
-	from apostropheParser import parseQuotes
-	oldValue = node.value.decode("utf-8")
-	newValue = parseQuotes(oldValue)
-	node.value = newValue.encode("utf-8")
+    from apostropheParser import parseQuotes
+    oldValue = node.value.decode("utf-8")
+    newValue = parseQuotes(oldValue)
+    node.value = newValue.encode("utf-8")
 <definition>
 # codes
-	LF			: '
+    LF                      : '
 '
-	CR			: '
+    CR                      : '
 '
-	EOL			: LF / CR								: drop
-	L_BRACKET		: "["									: drop
-	R_BRACKET		: "\]"									: drop
-	L_BRACE			: "{"									: drop
-	R_BRACE			: "}"									: drop
-	SPACE			: " "									: drop
-	PIPE			: "|"									: drop
-	BANG			: "!"									: drop
-	EQUAL			: "="									: drop
-	BULLET			: "*"									: drop
-	HASH			: "#"									: drop
-	COLON			: ":"									: drop
-	SEMICOLON		: ";"									: drop
-	DASH			: "-"									: drop
-	TABLE_BEGIN		: "{|"									: drop
-	TABLE_END		: "|}"									: drop
-	TABLE_NEWLINE		: "|-"									: drop
-	TABLE_TITLE		: "|+"									: drop
+    EOL                     : LF / CR                                                               : drop
+    L_BRACKET               : "["                                                                   : drop
+    R_BRACKET               : "\]"                                                                  : drop
+    L_BRACE                 : "{"                                                                   : drop
+    R_BRACE                 : "}"                                                                   : drop
+    SPACE                   : " "                                                                   : drop
+    PIPE                    : "|"                                                                   : drop
+    BANG                    : "!"                                                                   : drop
+    EQUAL                   : "="                                                                   : drop
+    BULLET                  : "*"                                                                   : drop
+    HASH                    : "#"                                                                   : drop
+    COLON                   : ":"                                                                   : drop
+    SEMICOLON               : ";"                                                                   : drop
+    DASH                    : "-"                                                                   : drop
+    TABLE_BEGIN             : "{|"                                                                  : drop
+    TABLE_END               : "|}"                                                                  : drop
+    TABLE_NEWLINE           : "|-"                                                                  : drop
+    TABLE_TITLE             : "|+"                                                                  : drop
 
-	HTTP			: "http://"								: liftValue
-	FTP			: "ftp://"								: liftValue
-	protocole		: HTTP / FTP								: liftValue
+    HTTP                    : "http://"                                                             : liftValue
+    FTP                     : "ftp://"                                                              : liftValue
+    protocole               : HTTP / FTP                                                            : liftValue
 
-	NOWIKI_BEGIN		: "<nowiki>"								: drop
-	NOWIKI_END		: "</nowiki>"								: drop
-	BOLD_BEGIN		: "<b>" / "<strong>"							: drop
-	BOLD_END		: "</b>" / "</strong>"							: drop
-	ITALIC_BEGIN		: "<i>" / "<em>"							: drop
-	ITALIC_END		: "</i>" / "</em>"							: drop
-	tag			: NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END
+    NOWIKI_BEGIN            : "<nowiki>"                                                            : drop
+    NOWIKI_END              : "</nowiki>"                                                           : drop
+    BOLD_BEGIN              : "<b>" / "<strong>"                                                    : drop
+    BOLD_END                : "</b>" / "</strong>"                                                  : drop
+    ITALIC_BEGIN            : "<i>" / "<em>"                                                        : drop
+    ITALIC_END              : "</i>" / "</em>"                                                      : drop
+    tag                     : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END
 
 # character expression
-	escChar			: L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE{2}/R_BRACE{2}/tag/EQUAL
-	rawChar			: !escChar [\x20..\xff]
-	rawText			: rawChar+								: join parseAllQuotes
-	anyChar			: [\x20..\xff]
-	anyText			: anyChar+								: join
+    escChar                 : L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE{2}/R_BRACE{2}/tag/EQUAL
+    rawChar                 : !escChar [\x20..\xff]
+    rawText                 : rawChar+                                                              : join parseAllQuotes
+    anyChar                 : [\x20..\xff]
+    anyText                 : anyChar+                                                              : join
 
 # text
-	pageName		: rawChar+								: join
-	templateName		: rawChar+								: join
-	address			: !SPACE [\x21..\xff]+							: liftValue
-	url			: protocole address							: join
-	boldText		: BOLD_BEGIN inline BOLD_END						: liftValue
-	italicText		: ITALIC_BEGIN inline ITALIC_END					: liftValue
-	value			: EQUAL inline								: join
-	optionalValue		: value*								: join
-	parameter		: PIPE rawText optionalValue						: liftValue
-	ignoredInParameters	: EOL/SPACE								: drop
-	parameters		: (parameter/ignoredInParameters)+
-	simpleInternalLink	: L_BRACKET{2} templateName R_BRACKET{2}				: liftValue
-	advancedInternalLink	: L_BRACKET{2} templateName PIPE inline R_BRACKET{2}			: liftValue
-	internalLink		: simpleInternalLink / advancedInternalLink				: liftValue
-	externalLink		: L_BRACKET url SPACE inline R_BRACKET					: liftValue
-	link			: internalLink / externalLink
-	simpleTemplate		: L_BRACE{2} pageName R_BRACE{2}					: liftValue
-	advancedTemplate	: L_BRACE{2} pageName parameters R_BRACE{2}				: liftValue
-	template		: simpleTemplate / advancedTemplate
-	styledText		: boldText / italicText / link / url / template
-	ignoredInNowiki		: (!(NOWIKI_END) [\x20..\xff])+						: join
-	nowiki			: NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END				: liftValue
-	inline			: (styledText / rawText / nowiki)+					: @
+    pageName                : rawChar+                                                              : join
+    templateName            : rawChar+                                                              : join
+    address                 : !SPACE [\x21..\xff]+                                                  : liftValue
+    url                     : protocole address                                                     : join
+    boldText                : BOLD_BEGIN inline BOLD_END                                            : liftValue
+    italicText              : ITALIC_BEGIN inline ITALIC_END                                        : liftValue
+    value                   : EQUAL inline                                                          : join
+    optionalValue           : value*                                                                : join
+    parameter               : PIPE rawText optionalValue                                            : liftValue
+    ignoredInParameters     : EOL/SPACE                                                             : drop
+    parameters              : (parameter/ignoredInParameters)+
+    simpleInternalLink      : L_BRACKET{2} templateName R_BRACKET{2}                                : liftValue
+    advancedInternalLink    : L_BRACKET{2} templateName PIPE inline R_BRACKET{2}                    : liftValue
+    internalLink            : simpleInternalLink / advancedInternalLink                             : liftValue
+    externalLink            : L_BRACKET url SPACE inline R_BRACKET                                  : liftValue
+    link                    : internalLink / externalLink
+    simpleTemplate          : L_BRACE{2} pageName R_BRACE{2}                                        : liftValue
+    advancedTemplate        : L_BRACE{2} pageName parameters R_BRACE{2}                             : liftValue
+    template                : simpleTemplate / advancedTemplate
+    styledText              : boldText / italicText / link / url / template
+    ignoredInNowiki         : (!(NOWIKI_END) [\x20..\xff])+                                         : join
+    nowiki                  : NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END                              : liftValue
+    inline                  : (styledText / rawText / nowiki)+                                      : @
 
 # line types
-	specialLineBegin	: SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
+    specialLineBegin        : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
 
-	ignoredAfterTitle	: anyText*								: drop
-	title6			: EQUAL{6} inline EQUAL{6} ignoredAfterTitle EOL			: liftValue
-	title5			: EQUAL{5} inline EQUAL{5} ignoredAfterTitle EOL			: liftValue
-	title4			: EQUAL{4} inline EQUAL{4} ignoredAfterTitle EOL			: liftValue
-	title3			: EQUAL{3} inline EQUAL{3} ignoredAfterTitle EOL			: liftValue
-	title2			: EQUAL{2} inline EQUAL{2} ignoredAfterTitle EOL			: liftValue
-	title1			: EQUAL{1} inline EQUAL{1} ignoredAfterTitle EOL			: liftValue
+    ignoredAfterTitle       : anyText*                                                              : drop
+    title6                  : EQUAL{6} inline EQUAL{6} ignoredAfterTitle EOL                        : liftValue
+    title5                  : EQUAL{5} inline EQUAL{5} ignoredAfterTitle EOL                        : liftValue
+    title4                  : EQUAL{4} inline EQUAL{4} ignoredAfterTitle EOL                        : liftValue
+    title3                  : EQUAL{3} inline EQUAL{3} ignoredAfterTitle EOL                        : liftValue
+    title2                  : EQUAL{2} inline EQUAL{2} ignoredAfterTitle EOL                        : liftValue
+    title1                  : EQUAL{1} inline EQUAL{1} ignoredAfterTitle EOL                        : liftValue
 
-	title			: title6 / title5 / title4 / title3 / title2 / title1
+    title                   : title6 / title5 / title4 / title3 / title2 / title1
 
-	paragraphLine		: !specialLineBegin inline EOL						: liftValue
-	blankParagraph		: EOL{2}								: setNullValue
-	paragraph		: paragraphLine+							: liftValue
-	paragraphs		: (blankParagraph/EOL/paragraph)+
+    paragraphLine           : !specialLineBegin inline EOL                                          : liftValue
+    blankParagraph          : EOL{2}                                                                : setNullValue
+    paragraph               : paragraphLine+                                                        : liftValue
+    paragraphs              : (blankParagraph/EOL/paragraph)+
 
-	bulletListLeaf		: BULLET inline EOL							: liftValue
-	bulletSubList		: BULLET bulletListItem							: @
-	bulletListItem		: bulletSubList / bulletListLeaf					: @
-	bulletList		: bulletListItem+
+    bulletListLeaf          : BULLET inline EOL                                                     : liftValue
+    bulletSubList           : BULLET bulletListItem                                                 : @
+    bulletListItem          : bulletSubList / bulletListLeaf                                        : @
+    bulletList              : bulletListItem+
 
-	numberListLeaf		: HASH inline EOL							: liftValue
-	numberSubList		: HASH numberListItem							: @
-	numberListItem		: numberSubList / numberListLeaf					: @
-	numberList		: numberListItem+
+    numberListLeaf          : HASH inline EOL                                                       : liftValue
+    numberSubList           : HASH numberListItem                                                   : @
+    numberListItem          : numberSubList / numberListLeaf                                        : @
+    numberList              : numberListItem+
 
-	colonListLeaf		: COLON inline EOL							: liftValue
-	colonSubList		: COLON colonListItem							: @
-	colonListItem		: colonSubList / colonListLeaf						: @
-	colonList		: colonListItem+
+    colonListLeaf           : COLON inline EOL                                                      : liftValue
+    colonSubList            : COLON colonListItem                                                   : @
+    colonListItem           : colonSubList / colonListLeaf                                          : @
+    colonList               : colonListItem+
 
-	semiColonListLeaf	: SEMICOLON inline EOL							: liftValue
-	semiColonSubList	: SEMICOLON semiColonListItem						: @
-	semiColonListItem	: semiColonSubList / semiColonListLeaf					: @
-	semiColonList		: semiColonListItem+
+    semiColonListLeaf       : SEMICOLON inline EOL                                                  : liftValue
+    semiColonSubList        : SEMICOLON semiColonListItem                                           : @
+    semiColonListItem       : semiColonSubList / semiColonListLeaf                                  : @
+    semiColonList           : semiColonListItem+
 
-	list			: bulletList / numberList / colonList / semiColonList
+    list                    : bulletList / numberList / colonList / semiColonList
 
-	preformatedLine		: SPACE inline EOL							: liftValue
-	preformatedParagraph	: preformatedLine+
+    preformatedLine         : SPACE inline EOL                                                      : liftValue
+    preformatedParagraph    : preformatedLine+
 
-	horizontalRule		: DASH{4} DASH* inline EOL						: liftValue
+    horizontalRule          : DASH{4} DASH* inline EOL                                              : liftValue
 
-	invalidLine		: anyText EOL								: liftValue
+    invalidLine             : anyText EOL                                                           : liftValue
 
-	CSS_chars		: !(PIPE/BANG/L_BRACE) anyChar
-	CSS_text		: CSS_chars+								: join
-	CSS_attributes		: CSS_text+ PIPE !PIPE							: liftValue
-	wikiTableParameters	: CSS_text / inline							: liftValue
-	wikiTableFirstCell	: CSS_attributes{0..1} inline* 						: liftValue
-	wikiTableOtherCell	: PIPE{2} wikiTableFirstCell						: liftValue
-	wikiTableLineCells	: PIPE wikiTableFirstCell wikiTableOtherCell* EOL			: liftValue
-	wikiTableLineHeader	: BANG wikiTableFirstCell wikiTableOtherCell* EOL			: liftValue
-	wikiTableEmptyCell	: PIPE EOL								: setNullValue
-	wikiTableParamLineBreak	: TABLE_NEWLINE wikiTableParameters* EOL				: liftValue
-	wikiTableLineBreak	: TABLE_NEWLINE EOL							: setNullValue
-	wikiTableTitle		: TABLE_TITLE CSS_attributes{0..1} inline* EOL				: liftValue
-	wikiTableSpecialLine	: wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
-	wikiTableNormalLine	: wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
-	wikiTableLine		: !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)
-	wikiTableContent	: wikiTableLine / EOL
-	wikiTableBegin		: TABLE_BEGIN wikiTableParameters*					: liftValue
-	wikiTable		: wikiTableBegin EOL* wikiTableContent* TABLE_END EOL			: liftValue
+    CSS_chars               : !(PIPE/BANG/L_BRACE) anyChar
+    CSS_text                : CSS_chars+                                                            : join
+    CSS_attributes          : CSS_text+ PIPE !PIPE                                                  : liftValue
+    wikiTableParameters     : CSS_text / inline                                                     : liftValue
+    wikiTableFirstCell      : CSS_attributes{0..1} inline*                                          : liftValue
+    wikiTableOtherCell      : PIPE{2} wikiTableFirstCell                                            : liftValue
+    wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
+    wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
+    wikiTableEmptyCell      : PIPE EOL                                                              : setNullValue
+    wikiTableParamLineBreak : TABLE_NEWLINE wikiTableParameters* EOL                                : liftValue
+    wikiTableLineBreak      : TABLE_NEWLINE EOL                                                     : setNullValue
+    wikiTableTitle          : TABLE_TITLE CSS_attributes{0..1} inline* EOL                          : liftValue
+    wikiTableSpecialLine    : wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
+    wikiTableNormalLine     : wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
+    wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)
+    wikiTableContent        : wikiTableLine / EOL
+    wikiTableBegin          : TABLE_BEGIN wikiTableParameters*                                      : liftValue
+    wikiTable               : wikiTableBegin EOL* wikiTableContent* TABLE_END EOL                   : liftValue
 
-	body			: (list / horizontalRule / preformatedParagraph / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+
+    body                    : (list / horizontalRule / preformatedParagraph / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+
