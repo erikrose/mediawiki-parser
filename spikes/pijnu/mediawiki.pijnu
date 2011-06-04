@@ -95,25 +95,25 @@ def parseAllQuotes(node):
     paragraphs              : (blankParagraph/EOL/paragraph)+
 
 
-	listChar				: BULLET / HASH / COLON / SEMICOLON
-	listLeafContent			: !listChar inline EOL													: liftValue
+    listChar                : BULLET / HASH / COLON / SEMICOLON
+    listLeafContent         : !listChar inline EOL                                                  : liftValue
 
     bulletListLeaf          : BULLET listLeafContent                                                : liftValue
-    bulletSubList           : BULLET listItem                                  		                : @
+    bulletSubList           : BULLET listItem                                                       : @
 
     numberListLeaf          : HASH listLeafContent                                                  : liftValue
-    numberSubList           : HASH listItem                                           		        : @
+    numberSubList           : HASH listItem                                                         : @
 
     colonListLeaf           : COLON listLeafContent                                                 : liftValue
-    colonSubList            : COLON listItem                                                   		: @
+    colonSubList            : COLON listItem                                                        : @
 
-    semiColonListLeaf       : SEMICOLON listLeafContent                                           	: liftValue
-    semiColonSubList        : SEMICOLON listItem                                           			: @
+    semiColonListLeaf       : SEMICOLON listLeafContent                                             : liftValue
+    semiColonSubList        : SEMICOLON listItem                                                    : @
 
-	listLeaf				: semiColonListLeaf / colonListLeaf / numberListLeaf / bulletListLeaf  	: @
-	subList					: semiColonSubList / colonSubList / numberSubList / bulletSubList  		: @
-	listItem				: subList / listLeaf												  	: @
-    list					: listItem+
+    listLeaf                : semiColonListLeaf / colonListLeaf / numberListLeaf / bulletListLeaf   : @
+    subList                 : semiColonSubList / colonSubList / numberSubList / bulletSubList       : @
+    listItem                : subList / listLeaf                                                    : @
+    list                    : listItem+
 
 
     preformatedLine         : SPACE inline EOL                                                      : liftValue
