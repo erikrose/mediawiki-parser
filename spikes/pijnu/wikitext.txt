@@ -44,6 +44,14 @@ A discussion in bold (rarely used):
 ;;; test
 ; test
 
+A mix of different list types:
+;* point 1
+:** point 1.1
+*:*: Strange syntax
+*::*#;##*:*;; Weird but correct
+*:*#*: First item
+*:*#*: Second item of the same list
+
 == Unicode support ==
 
 This sentence "你好" is in Chinese and means "Hello!".
