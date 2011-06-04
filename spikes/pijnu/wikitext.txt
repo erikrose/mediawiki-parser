@@ -76,7 +76,7 @@ Mabye more complicated: ''italic and '''bold and italic''' and italic only''!
 Mabye more complicated: '''bold and ''bold and italic'' and bold only'''!
 
 === Verification === ...
-This: is Peter's test for { the apostrophe and } several # other [[characters]].
+This: is Peter's test for { the "apostrophe" and } several # other [[characters]].
 
 This is [correct] text.
 
@@ -88,6 +88,8 @@ This paragraph contains an first [[internal]] link and a [[internal link|second 
 This one an [http://www.mozilla.org external] link.
 
 This should [[be plain text
+
+HTML links <a href="http://some.url">such as this one</a> are NOT allowed and should be treated as text and URL.
 
 == Templates ==
 Here, we insert a simple {{template}}.

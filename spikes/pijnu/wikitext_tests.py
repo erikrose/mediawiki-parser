@@ -10,16 +10,19 @@ print "\n\n== Testing titles and nowiki sections =="
 test_suite_dict = {
     '=Title 1=\n' : "[title1:[rawText:'Title 1']]",
     '== Title 2 ==\n' : "[title2:[rawText:' Title 2 ']]",
-    '===Title 3===text to be ignored\n' : "[title3:[rawText:'Title 3']]",
+    '===Title 3===                    \n' : "[title3:[rawText:'Title 3']]", # Ignore extra spaces and tabs
     '==== Title 4 ====\n' : "[title4:[rawText:' Title 4 ']]",
     '===== Title 5 =====\n' : "[title5:[rawText:' Title 5 ']]",
     '====== Title 6 ======\n' : "[title6:[rawText:' Title 6 ']]",
+    '======= Title 6 =======\n' : "[title6:[rawText:'= Title 6 =']]",
     '= [[a link]] =\n' : "[title1:[rawText:' '  simpleInternalLink:'a link'  rawText:' ']]",
     "== ''italic text'' ==\n" : "[title2:[rawText:' <em>italic text</em> ']]",
     "=== '''bold text''' ===\n" : "[title3:[rawText:' <strong>bold text</strong> ']]",
     "==== ''[[Title 4|formatted link]]'' ====\n" : "[title4:[rawText:' <em></em>'  advancedInternalLink:[templateName:'Title 4'  @inline@:[rawText:'formatted link']]  rawText:'<em> </em>']]",
     '===== {{Title 5}} =====\n' : "[title5:[rawText:' '  simpleTemplate:'Title 5'  rawText:' ']]",
     '====== { Title 6} ======\n' : "[title6:[rawText:' { Title 6} ']]",
+    '== Title = title ==\n' : "[title2:[rawText:' Title = title ']]",
+    '== Title == title ==\n' : "[title2:[rawText:' Title == title ']]", # Allow =* in titles
     '<nowiki>some [[text]] that should {{not}} be changed</nowiki>\n' : "[paragraphs:[paragraph:[nowiki:[ignoredInNowiki:'some [[text]] that should {{not}} be changed']]]]",
     'This should [[be plain text\n' : "[invalidLine:'This should [[be plain text']"
 }
@@ -34,7 +37,7 @@ test_suite_dict = {
     '[[article|alternate]]' : "[advancedInternalLink:[templateName:'article'  @inline@:[rawText:'alternate']]]",
     'An URL: http://www.mozilla.org' : "[rawText:'An URL: '  url:'http://www.mozilla.org']",
     "[http://www.mozilla.org this is an ''external'' link]" : "[externalLink:[url:'http://www.mozilla.org'  @inline@:[rawText:'this is an <em>external</em> link']]]",
-    '<a href="http://www.mozilla.org">this is an \'\'external\'\' link</a>' : "[externalLink:[url:'http://www.mozilla.org'  @inline@:[rawText:'this is an <em>external</em> link']]]"
+    '<a href="http://www.mozilla.org">this is an \'\'external\'\' link</a>' : "[rawText:'<a href=\"'  url:'http://www.mozilla.org'  rawText:'\">this is an <em>external</em> link</a>']"
 }
 
 mediawikiParser.inline.testSuite(test_suite_dict)
@@ -127,6 +130,7 @@ test_suite_dict = {
     'This [ should pass.' : "[rawText:'This [ should pass.']",
     'This ] should pass.' : "[rawText:'This ] should pass.']",
     'This = should pass.' : "[rawText:'This = should pass.']",
+    'This "should" pass.' : "[rawText:'This \"should\" pass.']",
     'This - should pass.' : "[rawText:'This - should pass.']"
 }
 

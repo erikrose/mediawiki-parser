@@ -19,6 +19,7 @@ def parseAllQuotes(node):
     L_BRACE                 : "{"                                                                   : drop
     R_BRACE                 : "}"                                                                   : drop
     SPACE                   : " "                                                                   : drop
+    TAB                     : "	"                                                                   : drop
     PIPE                    : "|"                                                                   : drop
     BANG                    : "!"                                                                   : drop
     EQUAL                   : "="                                                                   : drop
@@ -31,6 +32,19 @@ def parseAllQuotes(node):
     TABLE_END               : "|}"                                                                  : drop
     TABLE_NEWLINE           : "|-"                                                                  : drop
     TABLE_TITLE             : "|+"                                                                  : drop
+    QUOTE                   : "\""                                                                  : drop
+    TITLE6_BEGIN            : EQUAL{6}                                                              : drop
+    TITLE5_BEGIN            : EQUAL{5}                                                              : drop
+    TITLE4_BEGIN            : EQUAL{4}                                                              : drop
+    TITLE3_BEGIN            : EQUAL{3}                                                              : drop
+    TITLE2_BEGIN            : EQUAL{2}                                                              : drop
+    TITLE1_BEGIN            : EQUAL{1}                                                              : drop
+    TITLE6_END              : EQUAL{6} (SPACE / TAB)* EOL                                           : drop
+    TITLE5_END              : EQUAL{5} (SPACE / TAB)* EOL                                           : drop
+    TITLE4_END              : EQUAL{4} (SPACE / TAB)* EOL                                           : drop
+    TITLE3_END              : EQUAL{3} (SPACE / TAB)* EOL                                           : drop
+    TITLE2_END              : EQUAL{2} (SPACE / TAB)* EOL                                           : drop
+    TITLE1_END              : EQUAL{1} (SPACE / TAB)* EOL                                           : drop
 
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
@@ -43,9 +57,10 @@ def parseAllQuotes(node):
     ITALIC_BEGIN            : "<i>" / "<em>"                                                        : drop
     ITALIC_END              : "</i>" / "</em>"                                                      : drop
     tag                     : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END
+    titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
 
 # character expression
-    escChar                 : L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE{2}/R_BRACE{2}/tag/EQUAL
+    escChar                 : L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE{2}/R_BRACE{2}/tag/titleEnd
     rawChar                 : !escChar [\x20..\xff]
     rawText                 : rawChar+                                                              : join parseAllQuotes
     anyChar                 : [\x20..\xff]
@@ -54,13 +69,14 @@ def parseAllQuotes(node):
 # text
     pageName                : rawChar+                                                              : join
     templateName            : rawChar+                                                              : join
-    address                 : !SPACE [\x21..\xff]+                                                  : liftValue
+    address                 : (!(SPACE/QUOTE) [\x21..\xff])+                                        : liftValue
     url                     : protocole address                                                     : join
     boldText                : BOLD_BEGIN inline BOLD_END                                            : liftValue
     italicText              : ITALIC_BEGIN inline ITALIC_END                                        : liftValue
     value                   : EQUAL inline                                                          : join
-    optionalValue           : value*                                                                : join
-    parameter               : PIPE rawText optionalValue                                            : liftValue
+    optionalValue           : value*                                                                : liftValue
+    parameterName           : (!EQUAL rawChar)+                                                     : join
+    parameter               : PIPE parameterName optionalValue                                      : liftValue
     ignoredInParameters     : EOL/SPACE                                                             : drop
     parameters              : (parameter/ignoredInParameters)+
     simpleInternalLink      : L_BRACKET{2} templateName R_BRACKET{2}                                : liftValue
@@ -79,14 +95,12 @@ def parseAllQuotes(node):
 # line types
     specialLineBegin        : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
 
-    ignoredAfterTitle       : anyText*                                                              : drop
-    title6                  : EQUAL{6} inline EQUAL{6} ignoredAfterTitle EOL                        : liftValue
-    title5                  : EQUAL{5} inline EQUAL{5} ignoredAfterTitle EOL                        : liftValue
-    title4                  : EQUAL{4} inline EQUAL{4} ignoredAfterTitle EOL                        : liftValue
-    title3                  : EQUAL{3} inline EQUAL{3} ignoredAfterTitle EOL                        : liftValue
-    title2                  : EQUAL{2} inline EQUAL{2} ignoredAfterTitle EOL                        : liftValue
-    title1                  : EQUAL{1} inline EQUAL{1} ignoredAfterTitle EOL                        : liftValue
-
+    title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue
+    title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
+    title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue
+    title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue
+    title2                  : TITLE2_BEGIN inline TITLE2_END                                        : liftValue
+    title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue
     title                   : title6 / title5 / title4 / title3 / title2 / title1
 
     paragraphLine           : !specialLineBegin inline EOL                                          : liftValue
