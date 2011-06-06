@@ -61,15 +61,16 @@ mediawikiParser.inline.testSuite(test_suite_dict)
 
 print "\n\n== Testing templates =="
 
-mediawikiParser.advancedTemplate.test("{{Template whith|1=parameter| 2 = parameters }}")
+mediawikiParser.advancedTemplate.test("{{Template with|1=parameter| 2 = parameters }}")
 mediawikiParser.advancedTemplate.test("""{{Template which
  | is = test
  | multi = test
  | lines = test
 }}""")
-mediawikiParser.inline.test("A template {{Template whith|1=parameter| 2 = parameters }} inside a text.")
-mediawikiParser.inline.test("Formatted arguments in a template {{Template whith|1='''parameter'''| 2 = ''parameters'' }}.")
-mediawikiParser.inline.test("A '''template {{Template whith|1=parameter| 2 = parameters }} inside formatted''' text.") #Fails
+mediawikiParser.inline.test("A template {{Template with|1=parameter| 2 = parameters }} inside a text.")
+mediawikiParser.inline.test("Formatted arguments in a template {{Template with|1='''parameter'''| 2 = ''parameters'' }}.")
+mediawikiParser.inline.test("A {{Template with|{{other}} |1={{templates}}| 2 = {{nested|inside=1}} }}.")
+mediawikiParser.inline.test("A '''template {{Template with|1=parameter| 2 = parameters }} inside formatted''' text.") #Fails
 
 
 print "\n\n== Testing tables =="
@@ -94,14 +95,14 @@ mediawikiParser.wikiTable.test("""{|
 |}
 """)
 mediawikiParser.wikiTable.test("""{|
-|+ Table {{title}}
+|+ Table {{title|parameter=yes}}
 | cell 1 || cell 2
 |-
 | cell 3 || cell 4
 |}
 """)
 mediawikiParser.wikiTable.test("""{| class="wikitable" {{prettyTable}}
-|+ style="color:red" | Table {{title}}
+|+ style="color:red" | Table {{title|parameter}}
 |-
 |
 ! scope=col | Title A
@@ -113,7 +114,30 @@ mediawikiParser.wikiTable.test("""{| class="wikitable" {{prettyTable}}
 |-
 ! scope=row | Line 2
 |data L2.A
+|data {{template|with|parameters=L2.B}}
+|}
+""")
+
+mediawikiParser.wikiTable.test("""{| class="wikitable" {{prettyTable|1=true}}
+|+ style="color:red" | Table {{title}}
+|-
+! scope=col | First (mother)
+! scope=col | table
+|
+{| class="wikitable" {{prettyTable}}
+|-
+! scope=row | Second (daughter) table
+|data L1.A
+|data L1.B
+|-
+! scope=row | in the first one
+|data L2.A
 |data L2.B
+|}
+|-
+| first
+| table
+| again
 |}
 """)
 

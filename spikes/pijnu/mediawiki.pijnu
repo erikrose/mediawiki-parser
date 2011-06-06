@@ -20,6 +20,7 @@ def parseAllQuotes(node):
     R_BRACE                 : "}"                                                                   : drop
     SPACE                   : " "                                                                   : drop
     TAB                     : "	"                                                                   : drop
+    SPACETAB                : SPACE / TAB                                                           : drop
     PIPE                    : "|"                                                                   : drop
     BANG                    : "!"                                                                   : drop
     EQUAL                   : "="                                                                   : drop
@@ -39,12 +40,12 @@ def parseAllQuotes(node):
     TITLE3_BEGIN            : EQUAL{3}                                                              : drop
     TITLE2_BEGIN            : EQUAL{2}                                                              : drop
     TITLE1_BEGIN            : EQUAL{1}                                                              : drop
-    TITLE6_END              : EQUAL{6} (SPACE / TAB)* EOL                                           : drop
-    TITLE5_END              : EQUAL{5} (SPACE / TAB)* EOL                                           : drop
-    TITLE4_END              : EQUAL{4} (SPACE / TAB)* EOL                                           : drop
-    TITLE3_END              : EQUAL{3} (SPACE / TAB)* EOL                                           : drop
-    TITLE2_END              : EQUAL{2} (SPACE / TAB)* EOL                                           : drop
-    TITLE1_END              : EQUAL{1} (SPACE / TAB)* EOL                                           : drop
+    TITLE6_END              : EQUAL{6} SPACETAB* EOL                                                : drop
+    TITLE5_END              : EQUAL{5} SPACETAB* EOL                                                : drop
+    TITLE4_END              : EQUAL{4} SPACETAB* EOL                                                : drop
+    TITLE3_END              : EQUAL{3} SPACETAB* EOL                                                : drop
+    TITLE2_END              : EQUAL{2} SPACETAB* EOL                                                : drop
+    TITLE1_END              : EQUAL{1} SPACETAB* EOL                                                : drop
 
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
@@ -73,10 +74,11 @@ def parseAllQuotes(node):
     url                     : protocole address                                                     : join
     boldText                : BOLD_BEGIN inline BOLD_END                                            : liftValue
     italicText              : ITALIC_BEGIN inline ITALIC_END                                        : liftValue
-    value                   : EQUAL inline                                                          : join
+    value                   : EQUAL inline
     optionalValue           : value*                                                                : liftValue
     parameterName           : (!EQUAL rawChar)+                                                     : join
-    parameter               : PIPE parameterName optionalValue                                      : liftValue
+    parameterWithValue      : parameterName optionalValue											: liftValue
+    parameter               : PIPE SPACETAB* (parameterWithValue / inline)                          : liftValue
     ignoredInParameters     : EOL/SPACE                                                             : drop
     parameters              : (parameter/ignoredInParameters)+
     simpleInternalLink      : L_BRACKET{2} templateName R_BRACKET{2}                                : liftValue
@@ -140,7 +142,7 @@ def parseAllQuotes(node):
     CSS_chars               : !(PIPE/BANG/L_BRACE) anyChar
     CSS_text                : CSS_chars+                                                            : join
     CSS_attributes          : CSS_text+ PIPE !PIPE                                                  : liftValue
-    wikiTableParameters     : CSS_text / inline                                                     : liftValue
+    wikiTableParameters     : (CSS_text / inline)+                                                  : liftValue
     wikiTableFirstCell      : CSS_attributes{0..1} inline*                                          : liftValue
     wikiTableOtherCell      : PIPE{2} wikiTableFirstCell                                            : liftValue
     wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
@@ -152,8 +154,8 @@ def parseAllQuotes(node):
     wikiTableSpecialLine    : wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
     wikiTableNormalLine     : wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
     wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)
-    wikiTableContent        : wikiTableLine / EOL
+    wikiTableContent        : wikiTableLine / wikiTable / EOL
     wikiTableBegin          : TABLE_BEGIN wikiTableParameters*                                      : liftValue
-    wikiTable               : wikiTableBegin EOL* wikiTableContent* TABLE_END EOL                   : liftValue
+    wikiTable               : wikiTableBegin EOL* wikiTableContent* TABLE_END EOL                   : @ liftValue
 
     body                    : (list / horizontalRule / preformatedParagraph / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+
