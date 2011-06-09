@@ -59,49 +59,241 @@ test_suite_dict = {
 
 mediawikiParser.inline.testSuite(test_suite_dict)
 
+
 print "\n\n== Testing templates =="
 
-mediawikiParser.advancedTemplate.test("{{Template with|1=parameter| 2 = parameters }}")
-mediawikiParser.advancedTemplate.test("""{{Template which
+source0 = """{{Template with|1=parameter| 2 = parameters }}"""
+result0 = """@inline@:
+   advancedTemplate:
+      pageName:Template with
+      parameters:
+         parameter:
+            parameterName:1
+            optionalValue:
+               @inline@:
+                  rawText:parameter
+         parameter:
+            parameterName:2 
+            optionalValue:
+               @inline@:
+                  rawText: parameters """
+source1 = """{{Template which
  | is = test
  | multi = test
  | lines = test
-}}""")
-mediawikiParser.inline.test("A template {{Template with|1=parameter| 2 = parameters }} inside a text.")
-mediawikiParser.inline.test("Formatted arguments in a template {{Template with|1='''parameter'''| 2 = ''parameters'' }}.")
-mediawikiParser.inline.test("A {{Template with|{{other}} |1={{templates}}| 2 = {{nested|inside=1}} }}.")
-mediawikiParser.inline.test("A '''template {{Template with|1=parameter| 2 = parameters }} inside formatted''' text.") #Fails
+}}"""
+result1 = """@inline@:
+   advancedTemplate:
+      pageName:Template which
+      parameters:
+         parameter:
+            parameterName:is 
+            optionalValue:
+               @inline@:
+                  rawText: test
+         parameter:
+            parameterName:multi 
+            optionalValue:
+               @inline@:
+                  rawText: test
+         parameter:
+            parameterName:lines 
+            optionalValue:
+               @inline@:
+                  rawText: test"""
+source2 = """A template {{Template with|1=parameter| 2 = parameters }} inside a text."""
+result2 = """@inline@:
+   rawText:A template 
+   advancedTemplate:
+      pageName:Template with
+      parameters:
+         parameter:
+            parameterName:1
+            optionalValue:
+               @inline@:
+                  rawText:parameter
+         parameter:
+            parameterName:2 
+            optionalValue:
+               @inline@:
+                  rawText: parameters 
+   rawText: inside a text."""
+source3 = """Formatted arguments in a template {{Template with|1='''parameter'''| 2 = ''parameters'' }}."""
+result3 = """@inline@:
+   rawText:Formatted arguments in a template 
+   advancedTemplate:
+      pageName:Template with
+      parameters:
+         parameter:
+            parameterName:1
+            optionalValue:
+               @inline@:
+                  rawText:<strong>parameter</strong>
+         parameter:
+            parameterName:2 
+            optionalValue:
+               @inline@:
+                  rawText: <em>parameters</em> 
+   rawText:."""
+source4 = """A {{Template with|{{other}} |1={{templates}}| 2 = {{nested|inside=1}} }}."""
+result4 = """@inline@:
+   rawText:A 
+   advancedTemplate:
+      pageName:Template with
+      parameters:
+         parameter:
+            simpleTemplate:other
+            rawText: 
+         parameter:
+            parameterName:1
+            optionalValue:
+               @inline@:
+                  simpleTemplate:templates
+         parameter:
+            parameterName:2 
+            optionalValue:
+               @inline@:
+                  rawText: 
+                  advancedTemplate:
+                     pageName:nested
+                     parameters:
+                        parameter:
+                           parameterName:inside
+                           optionalValue:
+                              @inline@:
+                                 rawText:1
+                  rawText: 
+   rawText:."""
+source5 = """A '''template {{Template with|1=parameter| 2 = parameters }} inside formatted''' text."""
+result5 = """@inline@:
+   rawText:A <strong>template 
+   advancedTemplate:
+      pageName:Template with
+      parameters:
+         parameter:
+            parameterName:1
+            optionalValue:
+               @inline@:
+                  rawText:parameter
+         parameter:
+            parameterName:2 
+            optionalValue:
+               @inline@:
+                  rawText: parameters 
+   rawText: inside formatted</strong> text."""
+sources = [ source0, source1, source2, source3, source4, source5 ]
+results = [ result0, result1, result2, result3, result4, result5 ]
+
+mediawikiParser.inline.testSuiteMultiline(sources, results)
+
+
+print "\n\n== Testing table lines =="
+
+test_suite_dict = {
+    'style="color:red" | cell 1' : "[<?>:[CSS_attributes:[CSS_text:'style=\"color:red\" ']]  <?>:[@inline@:[rawText:' cell 1']]]"
+}
+mediawikiParser.wikiTableFirstCell.testSuite(test_suite_dict)
+
+test_suite_dict = {
+    '|| cell 1' : "[@inline@:[rawText:' cell 1']]"
+}
+mediawikiParser.wikiTableOtherCell.testSuite(test_suite_dict)
+
+test_suite_dict = {
+    '|-\n' : ""
+}
+mediawikiParser.wikiTableSpecialLine.testSuite(test_suite_dict)
+
+test_suite_dict = {
+    '| style="color:red" | cell 1\n': "[wikiTableLineCells:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@inline@:[rawText:' cell 1']]]]",
+    '| cell 1\n': "[wikiTableLineCells:[@inline@:[rawText:' cell 1']]]",
+    '|data L2-B\n': "[wikiTableLineCells:[@inline@:[rawText:'data L2-B']]]",
+    '| cell 1 || cell 2\n': "[wikiTableLineCells:[wikiTableFirstCell:[@inline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[@inline@:[rawText:' cell 2']]]]]",
+    '| cell 1 || style="color:red" | cell 2\n': "[wikiTableLineCells:[wikiTableFirstCell:[@inline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@inline@:[rawText:' cell 2']]]]]]",
+    '| style="color:red" | cell 1 || cell 2\n': "[wikiTableLineCells:[wikiTableFirstCell:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@inline@:[rawText:' cell 1 ']]]  <?>:[wikiTableOtherCell:[@inline@:[rawText:' cell 2']]]]]",
+    '! scope=row | Line 1\n': "[wikiTableLineHeader:[<?>:[CSS_attributes:[CSS_text:' scope=row ']]  <?>:[@inline@:[rawText:' Line 1']]]]",
+    '|- style="color:red"\n': "[wikiTableParamLineBreak:[wikiTableParameters:' style=\"color:red\"']]",
+}
+mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
 
 
 print "\n\n== Testing tables =="
 
-mediawikiParser.wikiTableLine.test("| style=\"color:red\" | cell 1\n")
-mediawikiParser.wikiTableFirstCell.test("style=\"color:red\" | cell 1")
-mediawikiParser.wikiTableLine.test("| cell 1\n")
-mediawikiParser.wikiTableLine.test("|data L2-B\n")
-mediawikiParser.wikiTableOtherCell.test("|| cell 1")
-mediawikiParser.wikiTableLine.test("| cell 1 || cell 2\n")
-mediawikiParser.wikiTableLine.test("| cell 1 || style=\"color:red\" | cell 2\n")
-mediawikiParser.wikiTableLine.test("| style=\"color:red\" | cell 1 || cell 2\n")
-mediawikiParser.wikiTableLine.test("! scope=row | Line 1\n")
-mediawikiParser.wikiTableSpecialLine.test("|-\n")
-mediawikiParser.wikiTableLine.test("|- style=\"color:red\"\n")
-mediawikiParser.wikiTable.test("""{|
+source0 = """{|
 ! cellA
 ! cellB
 |- style="color:red"
 | cell C
 | cell D
 |}
-""")
-mediawikiParser.wikiTable.test("""{|
+"""
+result0 = """@wikiTable@:
+   <?>:
+
+   <?>:
+      wikiTableLine:
+         wikiTableLineHeader:
+            @inline@:
+               rawText: cellA
+      wikiTableLine:
+         wikiTableLineHeader:
+            @inline@:
+               rawText: cellB
+      wikiTableLine:
+         wikiTableParamLineBreak:
+            wikiTableParameters: style="color:red"
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText: cell C
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText: cell D"""
+source1 = """{|
 |+ Table {{title|parameter=yes}}
 | cell 1 || cell 2
 |-
 | cell 3 || cell 4
 |}
-""")
-mediawikiParser.wikiTable.test("""{| class="wikitable" {{prettyTable}}
+"""
+result1 = """@wikiTable@:
+   <?>:
+
+   <?>:
+      wikiTableLine:
+         wikiTableTitle:
+            @inline@:
+               rawText: Table 
+               advancedTemplate:
+                  pageName:title
+                  parameters:
+                     parameter:
+                        parameterName:parameter
+                        optionalValue:
+                           @inline@:
+                              rawText:yes
+      wikiTableLine:
+         wikiTableLineCells:
+            wikiTableFirstCell:
+               @inline@:
+                  rawText: cell 1 
+            <?>:
+               wikiTableOtherCell:
+                  @inline@:
+                     rawText: cell 2
+      wikiTableLine:
+         wikiTableLineBreak:
+      wikiTableLine:
+         wikiTableLineCells:
+            wikiTableFirstCell:
+               @inline@:
+                  rawText: cell 3 
+            <?>:
+               wikiTableOtherCell:
+                  @inline@:
+                     rawText: cell 4"""
+source2 = """{| class="wikitable" {{prettyTable}}
 |+ style="color:red" | Table {{title|parameter}}
 |-
 |
@@ -116,9 +308,92 @@ mediawikiParser.wikiTable.test("""{| class="wikitable" {{prettyTable}}
 |data L2.A
 |data {{template|with|parameters=L2.B}}
 |}
-""")
+"""
+result2 = """@wikiTable@:
+   wikiTableBegin:
+      wikiTableParameters:
+         CSS_text: class="wikitable" 
+         @inline@:
+            simpleTemplate:prettyTable
+   <?>:
 
-mediawikiParser.wikiTable.test("""{| class="wikitable" {{prettyTable|1=true}}
+   <?>:
+      wikiTableLine:
+         wikiTableTitle:
+            <?>:
+               CSS_attributes:
+                  CSS_text: style="color:red" 
+            <?>:
+               @inline@:
+                  rawText: Table 
+                  advancedTemplate:
+                     pageName:title
+                     parameters:
+                        parameter:parameter
+      wikiTableLine:
+         wikiTableLineBreak:
+      wikiTableLine:
+         wikiTableLineHeader:
+            <?>:
+               CSS_attributes:
+                  CSS_text: scope=col 
+            <?>:
+               @inline@:
+                  rawText: Title A
+      wikiTableLine:
+         wikiTableLineHeader:
+            <?>:
+               CSS_attributes:
+                  CSS_text: scope=col 
+            <?>:
+               @inline@:
+                  rawText: Title B
+      wikiTableLine:
+         wikiTableLineBreak:
+      wikiTableLine:
+         wikiTableLineHeader:
+            <?>:
+               CSS_attributes:
+                  CSS_text: scope=row 
+            <?>:
+               @inline@:
+                  rawText: Line 1
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText:data L1.A
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText:data L1.B
+      wikiTableLine:
+         wikiTableLineBreak:
+      wikiTableLine:
+         wikiTableLineHeader:
+            <?>:
+               CSS_attributes:
+                  CSS_text: scope=row 
+            <?>:
+               @inline@:
+                  rawText: Line 2
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText:data L2.A
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText:data 
+               advancedTemplate:
+                  pageName:template
+                  parameters:
+                     parameter:with
+                     parameter:
+                        parameterName:parameters
+                        optionalValue:
+                           @inline@:
+                              rawText:L2.B"""
+source3 = """{| class="wikitable" {{prettyTable|1=true}}
 |+ style="color:red" | Table {{title}}
 |-
 ! scope=col | First (mother)
@@ -139,7 +414,114 @@ mediawikiParser.wikiTable.test("""{| class="wikitable" {{prettyTable|1=true}}
 | table
 | again
 |}
-""")
+"""
+result3 = """@wikiTable@:
+   wikiTableBegin:
+      wikiTableParameters:
+         CSS_text: class="wikitable" 
+         @inline@:
+            advancedTemplate:
+               pageName:prettyTable
+               parameters:
+                  parameter:
+                     parameterName:1
+                     optionalValue:
+                        @inline@:
+                           rawText:true
+   <?>:
+
+   <?>:
+      wikiTableLine:
+         wikiTableTitle:
+            <?>:
+               CSS_attributes:
+                  CSS_text: style="color:red" 
+            <?>:
+               @inline@:
+                  rawText: Table 
+                  simpleTemplate:title
+      wikiTableLine:
+         wikiTableLineBreak:
+      wikiTableLine:
+         wikiTableLineHeader:
+            <?>:
+               CSS_attributes:
+                  CSS_text: scope=col 
+            <?>:
+               @inline@:
+                  rawText: First (mother)
+      wikiTableLine:
+         wikiTableLineHeader:
+            <?>:
+               CSS_attributes:
+                  CSS_text: scope=col 
+            <?>:
+               @inline@:
+                  rawText: table
+      @wikiTable@:
+         wikiTableBegin:
+            wikiTableParameters:
+               CSS_text: class="wikitable" 
+               @inline@:
+                  simpleTemplate:prettyTable
+         <?>:
+
+         <?>:
+            wikiTableLine:
+               wikiTableLineBreak:
+            wikiTableLine:
+               wikiTableLineHeader:
+                  <?>:
+                     CSS_attributes:
+                        CSS_text: scope=row 
+                  <?>:
+                     @inline@:
+                        rawText: Second (daughter) table
+            wikiTableLine:
+               wikiTableLineCells:
+                  @inline@:
+                     rawText:data L1.A
+            wikiTableLine:
+               wikiTableLineCells:
+                  @inline@:
+                     rawText:data L1.B
+            wikiTableLine:
+               wikiTableLineBreak:
+            wikiTableLine:
+               wikiTableLineHeader:
+                  <?>:
+                     CSS_attributes:
+                        CSS_text: scope=row 
+                  <?>:
+                     @inline@:
+                        rawText: in the first one
+            wikiTableLine:
+               wikiTableLineCells:
+                  @inline@:
+                     rawText:data L2.A
+            wikiTableLine:
+               wikiTableLineCells:
+                  @inline@:
+                     rawText:data L2.B
+      wikiTableLine:
+         wikiTableLineBreak:
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText: first
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText: table
+      wikiTableLine:
+         wikiTableLineCells:
+            @inline@:
+               rawText: again"""
+sources = [ source0, source1, source2, source3 ]
+results = [ result0, result1, result2, result3 ]
+
+
+mediawikiParser.wikiTable.testSuiteMultiline(sources, results)
 
 
 print "\n\n== Testing special characters =="

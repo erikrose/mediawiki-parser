@@ -1,7 +1,6 @@
 ===================================================================  ==============  =======================================================
 Syntax type (example)                                                Implementation  Remark
 ===================================================================  ==============  =======================================================
-Redirection (#REDIRECT[])                                            .
 Titles, levels 1 to 6 (==Title==)                                    ¤¤¤
 Paragraphs (correctly combine inline text)                           ¤
 Bold and italic (<i>, <b>, "''", "'''")                              ¤¤
@@ -19,10 +18,12 @@ Definition lists (<dl>, <dt>, <dd>, ":", ";")                        ¤
 Templates ({{template|parameter=value}})                             ¤¤
 Template parameter placeholders ({{{1}}, {{{param_name}}...)         .
 WikiTables                                                           ¤¤
-Magic links (ISBN, RFC...)                                           .               Is that really needed?
 Horizontal rules (----)                                              ¤
-Galleries                                                            .
-Behavior switches (__toc__, __notoc__...)                            .
+Redirection (#REDIRECT[])                                            .               Low priority
+Parsing functions                                                    .               Not needed for the moment
+Magic links (ISBN, RFC...)                                           .               Not needed for the moment
+Galleries                                                            .               Not needed for the moment
+Behavior switches (__toc__, __notoc__...)                            .               Not needed for the moment
 ===================================================================  ==============  =======================================================
 
 =======  ==============================
