@@ -564,3 +564,52 @@ test_suite_dict = {
 }
 
 mediawikiParser.testSuite(test_suite_dict)
+
+print "\n\n== Testing paragraphs =="
+
+source0 = """This is a paragraph.
+"""
+result0 = """body:
+   paragraphs:
+      paragraph:
+         rawText:This is a paragraph."""
+source1 = """This is a paragraph.
+With a newline in the middle.
+"""
+result1 = """body:
+   paragraphs:
+      paragraph:
+         paragraphLine:
+            rawText:This is a paragraph.
+         paragraphLine:
+            rawText:With a newline in the middle."""
+source2 = """This is a paragraph.
+
+Followed by another one.
+"""
+result2 = """body:
+   paragraphs:
+      paragraph:
+         rawText:This is a paragraph.
+      paragraph:
+         rawText:Followed by another one."""
+source3 = """This is a paragraph.
+
+
+Followed a blank line and another paragraph.
+"""
+result3 = """body:
+   paragraphs:
+      paragraph:
+         rawText:This is a paragraph.
+      blankParagraph:
+      paragraph:
+         rawText:Followed a blank line and another paragraph."""
+
+sources = [source0, source1, source2, source3]
+results = [result0, result1, result2, result3]
+
+mediawikiParser.testSuiteMultiline(sources, results)
+
+#sources = [source1, source2, source3, source4]
+#mediawikiParser.testSuiteDict(sources, method_name="parse", multiline=True)
