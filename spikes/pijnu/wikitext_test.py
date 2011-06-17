@@ -10,16 +10,14 @@ fileObj = codecs.open("wikitext.txt", "r", "utf-8")
 source = fileObj.read()
 #source = parseAllQuotes(source)
 
-# reconvert it back to bytes for Pijnu
-backToBytes = source.encode("utf-8")
-mediawikiParser.test(backToBytes)
+mediawikiParser.test(source)
 
 
 print "\nLet's get all the external links of the article:"
-print mediawikiParser.url.findAll(backToBytes)
+print mediawikiParser.url.findAll(source)
 
 print "\nLet's get all the internal links of the article:"
-print mediawikiParser.internalLink.findAll(backToBytes)
+print mediawikiParser.internalLink.findAll(source)
 
 print "\nLet's get all the templates of the article:" # Fails
-print mediawikiParser.templateName.findAll(backToBytes)
+print mediawikiParser.templateName.findAll(source)

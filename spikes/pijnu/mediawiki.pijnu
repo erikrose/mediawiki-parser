@@ -4,9 +4,7 @@ def setNullValue(node):
     node.value = ''
 def parseAllQuotes(node):
     from apostropheParser import parseQuotes
-    oldValue = node.value.decode("utf-8")
-    newValue = parseQuotes(oldValue)
-    node.value = newValue.encode("utf-8")
+    node.value = parseQuotes(node.value)
 <definition>
 # codes
     LF                      : '

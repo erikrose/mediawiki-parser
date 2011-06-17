@@ -180,9 +180,9 @@ result5 = """@inline@:
             optionalValue:
                @inline@:
                   rawText: parameters 
-   rawText: inside formatted</strong> text."""
-sources = [ source0, source1, source2, source3, source4, source5 ]
-results = [ result0, result1, result2, result3, result4, result5 ]
+   rawText: inside formatted</strong> text.""" # Fails
+sources = [source0, source1, source2, source3, source4, source5]
+results = [result0, result1, result2, result3, result4, result5]
 
 mediawikiParser.inline.testSuiteMultiline(sources, results)
 
@@ -192,16 +192,19 @@ print "\n\n== Testing table lines =="
 test_suite_dict = {
     'style="color:red" | cell 1' : "[<?>:[CSS_attributes:[CSS_text:'style=\"color:red\" ']]  <?>:[@inline@:[rawText:' cell 1']]]"
 }
+
 mediawikiParser.wikiTableFirstCell.testSuite(test_suite_dict)
 
 test_suite_dict = {
     '|| cell 1' : "[@inline@:[rawText:' cell 1']]"
 }
+
 mediawikiParser.wikiTableOtherCell.testSuite(test_suite_dict)
 
 test_suite_dict = {
     '|-\n' : ""
 }
+
 mediawikiParser.wikiTableSpecialLine.testSuite(test_suite_dict)
 
 test_suite_dict = {
@@ -214,6 +217,7 @@ test_suite_dict = {
     '! scope=row | Line 1\n': "[wikiTableLineHeader:[<?>:[CSS_attributes:[CSS_text:' scope=row ']]  <?>:[@inline@:[rawText:' Line 1']]]]",
     '|- style="color:red"\n': "[wikiTableParamLineBreak:[wikiTableParameters:' style=\"color:red\"']]",
 }
+
 mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
 
 
@@ -517,9 +521,8 @@ result3 = """@wikiTable@:
          wikiTableLineCells:
             @inline@:
                rawText: again"""
-sources = [ source0, source1, source2, source3 ]
-results = [ result0, result1, result2, result3 ]
-
+sources = [source0, source1, source2, source3]
+results = [result0, result1, result2, result3]
 
 mediawikiParser.wikiTable.testSuiteMultiline(sources, results)
 
@@ -527,14 +530,14 @@ mediawikiParser.wikiTable.testSuiteMultiline(sources, results)
 print "\n\n== Testing special characters =="
 
 test_suite_dict = {
-    "Some Unicode characters: 你好." : "[rawText:'Some Unicode characters: 你好.']",
+    u"Some Unicode characters: 你好." : u"[rawText:'Some Unicode characters: 你好.']",
     'This # should pass.' : "[rawText:'This # should pass.']",
     'This { should pass.' : "[rawText:'This { should pass.']",
     'This } should pass.' : "[rawText:'This } should pass.']",
     'This < should pass.' : "[rawText:'This < should pass.']",
     'This > should pass.' : "[rawText:'This > should pass.']",
-    'This [ should pass.' : "[rawText:'This [ should pass.']",
-    'This ] should pass.' : "[rawText:'This ] should pass.']",
+    'This [ should pass.' : "[rawText:'This [ should pass.']", # Fails
+    'This ] should pass.' : "[rawText:'This ] should pass.']", # Fails
     'This = should pass.' : "[rawText:'This = should pass.']",
     'This "should" pass.' : "[rawText:'This \"should\" pass.']",
     'This - should pass.' : "[rawText:'This - should pass.']"
