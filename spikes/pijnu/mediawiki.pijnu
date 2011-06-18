@@ -55,7 +55,9 @@ def parseAllQuotes(node):
     BOLD_END                : "</b>" / "</strong>"                                                  : drop
     ITALIC_BEGIN            : "<i>" / "<em>"                                                        : drop
     ITALIC_END              : "</i>" / "</em>"                                                      : drop
-    tag                     : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END
+    PRE_BEGIN               : "<pre>"                                                               : drop
+    PRE_END                 : "</pre>"                                                              : drop
+    tag                     : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END/PRE_BEGIN/PRE_END
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
 
 # character expression
@@ -87,7 +89,8 @@ def parseAllQuotes(node):
     simpleTemplate          : L_BRACE{2} pageName R_BRACE{2}                                        : liftValue
     advancedTemplate        : L_BRACE{2} pageName parameters R_BRACE{2}                             : liftValue
     template                : simpleTemplate / advancedTemplate
-    styledText              : boldText / italicText / link / url / template
+    preformatted            : PRE_BEGIN inline PRE_END                                              : liftValue
+    styledText              : boldText / italicText / link / url / template / preformatted
     ignoredInNowiki         : (!(NOWIKI_END) [\x20..\xff])+                                         : join
     nowiki                  : NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END                              : liftValue
     inline                  : (styledText / rawText / nowiki)+                                      : @
@@ -130,8 +133,12 @@ def parseAllQuotes(node):
     list                    : listItem+
 
 
-    preformatedLine         : SPACE inline EOL                                                      : liftValue
-    preformatedParagraph    : preformatedLine+
+    EOL_or_not              : EOL{0..1}                                                             : drop
+    preformattedLine        : SPACE inline EOL                                                      : liftValue
+    preformattedLines       : preformattedLine+
+    preformattedText        : inline EOL_or_not                                                     : liftValue
+    preformattedParagraph   : PRE_BEGIN EOL preformattedText PRE_END EOL
+    preformattedGroup       : preformattedParagraph / preformattedLines
 
     horizontalRule          : DASH{4} DASH* inline EOL                                              : liftValue
 
@@ -156,4 +163,4 @@ def parseAllQuotes(node):
     wikiTableBegin          : TABLE_BEGIN wikiTableParameters*                                      : liftValue
     wikiTable               : wikiTableBegin EOL* wikiTableContent* TABLE_END EOL                   : @ liftValue
 
-    body                    : (list / horizontalRule / preformatedParagraph / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+
+    body                    : (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+

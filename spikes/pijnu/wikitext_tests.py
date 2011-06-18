@@ -605,9 +605,93 @@ result3 = """body:
       blankParagraph:
       paragraph:
          rawText:Followed a blank line and another paragraph."""
+source4 = """Styled text such as ''italic'', '''bold''', {{templates}} also work.
+"""
+result4 = """body:
+   paragraphs:
+      paragraph:
+         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
+         simpleTemplate:templates
+         rawText: also work."""
 
-sources = [source0, source1, source2, source3]
-results = [result0, result1, result2, result3]
+sources = [source0, source1, source2, source3, source4]
+results = [result0, result1, result2, result3, result4]
+
+mediawikiParser.testSuiteMultiline(sources, results)
+
+print "\n\n== Testing preformatted paragraphs =="
+
+source0 = """ This is a preformatted paragraph.
+"""
+result0 = """body:
+   preformattedLines:
+      preformattedLine:
+         rawText:This is a preformatted paragraph."""
+source1 = """ This is a preformatted paragraph.
+Followed by a "normal" one.
+"""
+result1 = """body:
+   preformattedLines:
+      preformattedLine:
+         rawText:This is a preformatted paragraph.
+   paragraphs:
+      paragraph:
+         rawText:Followed by a "normal" one."""
+source2 = """ This is a multiline
+ preformatted paragraph.
+"""
+result2 = """body:
+   preformattedLines:
+      preformattedLine:
+         rawText:This is a multiline
+      preformattedLine:
+         rawText:preformatted paragraph."""
+source3 = """ Styled text such as ''italic'', '''bold''', {{templates}} also work.
+"""
+result3 = """body:
+   preformattedLines:
+      preformattedLine:
+         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
+         simpleTemplate:templates
+         rawText: also work."""
+source4 = """<pre>
+Preformatted paragraph.
+</pre>
+"""
+result4 = """body:
+   preformattedParagraph:
+      preformattedText:
+         rawText:Preformatted paragraph."""
+source5 = """Normal paragraph <pre>Preformatted one</pre> Normal one.
+"""
+result5 = """body:
+   paragraphs:
+      paragraph:
+         rawText:Normal paragraph 
+         preformatted:
+            rawText:Preformatted one
+         rawText: Normal one."""
+source6 = """{|
+|-
+! <pre>Text</pre>
+|}
+"""  # Preformatted "paragraphs" should also be allowed in other structures.
+result6 = """body:
+   @wikiTable@:
+      <?>:
+
+      <?>:
+         wikiTableLine:
+            wikiTableLineBreak:
+         wikiTableLine:
+            wikiTableLineHeader:
+               @inline@:
+                  rawText: 
+                  preformatted:
+                     rawText:Text"""
+
+sources = [source0, source1, source2, source3, source4, source5, source6]
+results = [result0, result1, result2, result3, result4, result5, result6]
 
 mediawikiParser.testSuiteMultiline(sources, results)
 
