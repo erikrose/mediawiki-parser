@@ -44,11 +44,16 @@ def parseAllQuotes(node):
     TITLE3_END              : EQUAL{3} SPACETAB* EOL                                                : drop
     TITLE2_END              : EQUAL{2} SPACETAB* EOL                                                : drop
     TITLE1_END              : EQUAL{1} SPACETAB* EOL                                                : drop
+    TEMPLATE_BEGIN          : L_BRACE{2}                                                            : drop
+    TEMPLATE_END            : R_BRACE{2}                                                            : drop
+    LINK_BEGIN              : L_BRACKET{2}                                                          : drop
+    LINK_END                : R_BRACKET{2}                                                          : drop
 
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
     protocole               : HTTP / FTP                                                            : liftValue
 
+# tags
     NOWIKI_BEGIN            : "<nowiki>"                                                            : drop
     NOWIKI_END              : "</nowiki>"                                                           : drop
     BOLD_BEGIN              : "<b>" / "<strong>"                                                    : drop
@@ -58,11 +63,13 @@ def parseAllQuotes(node):
     PRE_BEGIN               : "<pre>"                                                               : drop
     PRE_END                 : "</pre>"                                                              : drop
     tag                     : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END/PRE_BEGIN/PRE_END
+
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
 
 # character expression
-    escChar                 : L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE{2}/R_BRACE{2}/tag/titleEnd
-    rawChar                 : !escChar [\x20..\xff]
+    escChar                 : L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE
+    escSeq                  : escChar / tag / titleEnd
+    rawChar                 : !escSeq [\x20..\xff]
     rawText                 : rawChar+                                                              : join parseAllQuotes
     anyChar                 : [\x20..\xff]
     anyText                 : anyChar+                                                              : join
@@ -74,26 +81,29 @@ def parseAllQuotes(node):
     url                     : protocole address                                                     : join
     boldText                : BOLD_BEGIN inline BOLD_END                                            : liftValue
     italicText              : ITALIC_BEGIN inline ITALIC_END                                        : liftValue
-    value                   : EQUAL inline
+    value                   : EQUAL cleanInline                                                     : liftValue
     optionalValue           : value*                                                                : liftValue
     parameterName           : (!EQUAL rawChar)+                                                     : join
-    parameterWithValue      : parameterName optionalValue											: liftValue
-    parameter               : PIPE SPACETAB* (parameterWithValue / inline)                          : liftValue
+    parameterWithValue      : parameterName optionalValue                                           : liftValue
+    parameter               : PIPE SPACETAB* (parameterWithValue / cleanInline)                     : liftValue
     ignoredInParameters     : EOL/SPACE                                                             : drop
     parameters              : (parameter/ignoredInParameters)+
-    simpleInternalLink      : L_BRACKET{2} templateName R_BRACKET{2}                                : liftValue
-    advancedInternalLink    : L_BRACKET{2} templateName PIPE inline R_BRACKET{2}                    : liftValue
+    simpleInternalLink      : LINK_BEGIN templateName LINK_END                                      : liftValue
+    advancedInternalLink    : LINK_BEGIN templateName PIPE cleanInline LINK_END                     : liftValue
     internalLink            : simpleInternalLink / advancedInternalLink                             : liftValue
-    externalLink            : L_BRACKET url SPACE inline R_BRACKET                                  : liftValue
+    externalLink            : L_BRACKET url SPACE cleanInline R_BRACKET                             : liftValue
     link                    : internalLink / externalLink
-    simpleTemplate          : L_BRACE{2} pageName R_BRACE{2}                                        : liftValue
-    advancedTemplate        : L_BRACE{2} pageName parameters R_BRACE{2}                             : liftValue
+    simpleTemplate          : TEMPLATE_BEGIN pageName TEMPLATE_END                                  : liftValue
+    advancedTemplate        : TEMPLATE_BEGIN pageName parameters TEMPLATE_END                       : liftValue
     template                : simpleTemplate / advancedTemplate
     preformatted            : PRE_BEGIN inline PRE_END                                              : liftValue
     styledText              : boldText / italicText / link / url / template / preformatted
     ignoredInNowiki         : (!(NOWIKI_END) [\x20..\xff])+                                         : join
     nowiki                  : NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END                              : liftValue
-    inline                  : (styledText / rawText / nowiki)+                                      : @
+    allowedChar             : escChar{1}                                                            : restore liftValue
+    allowedText             : rawText / allowedChar
+    cleanInline             : (styledText / nowiki / rawText)+                                      : @
+    inline                  : (styledText / nowiki / allowedText)+                                  : @
 
 # line types
     specialLineBegin        : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
@@ -147,8 +157,8 @@ def parseAllQuotes(node):
     CSS_chars               : !(PIPE/BANG/L_BRACE) anyChar
     CSS_text                : CSS_chars+                                                            : join
     CSS_attributes          : CSS_text+ PIPE !PIPE                                                  : liftValue
-    wikiTableParameters     : (CSS_text / inline)+                                                  : liftValue
-    wikiTableFirstCell      : CSS_attributes{0..1} inline*                                          : liftValue
+    wikiTableParameters     : (CSS_text / cleanInline)+                                             : liftValue
+    wikiTableFirstCell      : CSS_attributes{0..1} cleanInline*                                     : liftValue
     wikiTableOtherCell      : PIPE{2} wikiTableFirstCell                                            : liftValue
     wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
     wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
