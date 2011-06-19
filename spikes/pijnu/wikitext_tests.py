@@ -547,11 +547,14 @@ print "\n\n== Testing lists =="
 test_suite_dict = {
     '* text\n' : "[list:[bulletListLeaf:[rawText:' text']]]",
     '** other text\n' : "[list:[@bulletSubList@:[bulletListLeaf:[rawText:' other text']]]]",
+    '*** other text\n' : "[list:[@bulletSubList@:[@bulletSubList@:[bulletListLeaf:[rawText:' other text']]]]]",
     '# text\n' : "[list:[numberListLeaf:[rawText:' text']]]",
     "## ''more text''\n" : "[list:[@numberSubList@:[numberListLeaf:[rawText:' <em>more text</em>']]]]",
     "### ''other text''\n" : "[list:[@numberSubList@:[@numberSubList@:[numberListLeaf:[rawText:' <em>other text</em>']]]]]",
     ": '''more text'''\n" : "[list:[colonListLeaf:[rawText:' <strong>more text</strong>']]]",
+    ":::: '''more text'''\n" : "[list:[@colonSubList@:[@colonSubList@:[@colonSubList@:[colonListLeaf:[rawText:' <strong>more text</strong>']]]]]]",    
     '; still more [[text]]\n' : "[list:[semiColonListLeaf:[rawText:' still more '  simpleInternalLink:'text']]]",
+    ';; still more [[text]]\n' : "[list:[@semiColonSubList@:[semiColonListLeaf:[rawText:' still more '  simpleInternalLink:'text']]]]",
     ':* more complicated case\n' : "[list:[@colonSubList@:[bulletListLeaf:[rawText:' more complicated case']]]]",
     ';* same as previous line\n' : "[list:[@semiColonSubList@:[bulletListLeaf:[rawText:' same as previous line']]]]",
     '::** another complicated case\n' : "[list:[@colonSubList@:[@colonSubList@:[@bulletSubList@:[bulletListLeaf:[rawText:' another complicated case']]]]]]",
@@ -560,6 +563,32 @@ test_suite_dict = {
 }
 
 mediawikiParser.testSuite(test_suite_dict)
+
+source0 = """* This example...
+** shows the shape...
+*** of the resulting ...
+** AST
+"""
+result0 = """body:
+   list:
+      bulletListLeaf:
+         rawText: This example...
+      @bulletSubList@:
+         bulletListLeaf:
+            rawText: shows the shape...
+      @bulletSubList@:
+         @bulletSubList@:
+            bulletListLeaf:
+               rawText: of the resulting ...
+      @bulletSubList@:
+         bulletListLeaf:
+            rawText: AST"""
+
+sources = [source0]
+results = [result0]
+
+mediawikiParser.testSuiteMultiline(sources, results)
+
 
 print "\n\n== Testing paragraphs =="
 
