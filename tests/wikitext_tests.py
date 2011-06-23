@@ -1,8 +1,8 @@
 # -*- coding: utf8 -*-
 
-from mediawiki_parser import wikitextParser
-print wikitextParser
-#mediawikiParser = wikitextParser
+import wikitextParser
+
+mediawikiParser = wikitextParser.wikitextParser
 
 print "\n\n== Testing titles =="
 
