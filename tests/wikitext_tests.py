@@ -1,7 +1,8 @@
 # -*- coding: utf8 -*-
 
-from .. import wikitextParser
-mediawikiParser = wikitextParser.wikitextParser
+from mediawiki_parser import wikitextParser
+print wikitextParser
+#mediawikiParser = wikitextParser
 
 print "\n\n== Testing titles =="
 
@@ -23,8 +24,7 @@ test_suite_dict = {
     '== Title == title ==\n' : "[title2:[rawText:' Title == title ']]", # Allow =* in titles
 }
 
-def test():
-    mediawikiParser.testSuite(test_suite_dict)
+mediawikiParser.testSuite(test_suite_dict)
 
 
 print "\n\n== Testing nowiki sections =="
@@ -78,7 +78,7 @@ result0 = """@inline@:
             optionalValue:
                rawText:parameter
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
                rawText: parameters """
 source1 = """{{Template which
@@ -91,20 +91,20 @@ result1 = """@inline@:
       pageName:Template which
       parameters:
          parameter:
-            parameterName:is
+            parameterName:is 
             optionalValue:
                rawText: test
          parameter:
-            parameterName:multi
+            parameterName:multi 
             optionalValue:
                rawText: test
          parameter:
-            parameterName:lines
+            parameterName:lines 
             optionalValue:
                rawText: test"""
 source2 = """A template {{Template with|1=parameter| 2 = parameters }} inside a text."""
 result2 = """@inline@:
-   rawText:A template
+   rawText:A template 
    advancedTemplate:
       pageName:Template with
       parameters:
@@ -113,13 +113,13 @@ result2 = """@inline@:
             optionalValue:
                rawText:parameter
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
-               rawText: parameters
+               rawText: parameters 
    rawText: inside a text."""
 source3 = """Formatted arguments in a template {{Template with|1='''parameter'''| 2 = ''parameters'' }}."""
 result3 = """@inline@:
-   rawText:Formatted arguments in a template
+   rawText:Formatted arguments in a template 
    advancedTemplate:
       pageName:Template with
       parameters:
@@ -128,27 +128,27 @@ result3 = """@inline@:
             optionalValue:
                rawText:<strong>parameter</strong>
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
-               rawText: <em>parameters</em>
+               rawText: <em>parameters</em> 
    rawText:."""
 source4 = """A {{Template with|{{other}} |1={{templates}}| 2 = {{nested|inside=1}} }}."""
 result4 = """@inline@:
-   rawText:A
+   rawText:A 
    advancedTemplate:
       pageName:Template with
       parameters:
          parameter:
             simpleTemplate:other
-            rawText:
+            rawText: 
          parameter:
             parameterName:1
             optionalValue:
                simpleTemplate:templates
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
-               rawText:
+               rawText: 
                advancedTemplate:
                   pageName:nested
                   parameters:
@@ -156,11 +156,11 @@ result4 = """@inline@:
                         parameterName:inside
                         optionalValue:
                            rawText:1
-               rawText:
+               rawText: 
    rawText:."""
 source5 = """A '''template {{Template with|1=parameter| 2 = parameters }} inside formatted''' text."""
 result5 = """@inline@:
-   rawText:A <strong>template
+   rawText:A <strong>template 
    advancedTemplate:
       pageName:Template with
       parameters:
@@ -169,9 +169,9 @@ result5 = """@inline@:
             optionalValue:
                rawText:parameter
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
-               rawText: parameters
+               rawText: parameters 
    rawText: inside formatted</strong> text.""" # Fails
 sources = [source0, source1, source2, source3, source4, source5]
 results = [result0, result1, result2, result3, result4, result5]
@@ -260,7 +260,7 @@ result1 = """@wikiTable@:
       wikiTableLine:
          wikiTableTitle:
             @inline@:
-               rawText: Table
+               rawText: Table 
                advancedTemplate:
                   pageName:title
                   parameters:
@@ -272,7 +272,7 @@ result1 = """@wikiTable@:
          wikiTableLineCells:
             wikiTableFirstCell:
                @cleanInline@:
-                  rawText: cell 1
+                  rawText: cell 1 
             <?>:
                wikiTableOtherCell:
                   @cleanInline@:
@@ -283,7 +283,7 @@ result1 = """@wikiTable@:
          wikiTableLineCells:
             wikiTableFirstCell:
                @cleanInline@:
-                  rawText: cell 3
+                  rawText: cell 3 
             <?>:
                wikiTableOtherCell:
                   @cleanInline@:
@@ -307,7 +307,7 @@ source2 = """{| class="wikitable" {{prettyTable}}
 result2 = """@wikiTable@:
    wikiTableBegin:
       wikiTableParameters:
-         CSS_text: class="wikitable"
+         CSS_text: class="wikitable" 
          @cleanInline@:
             simpleTemplate:prettyTable
    <?>:
@@ -317,10 +317,10 @@ result2 = """@wikiTable@:
          wikiTableTitle:
             <?>:
                CSS_attributes:
-                  CSS_text: style="color:red"
+                  CSS_text: style="color:red" 
             <?>:
                @inline@:
-                  rawText: Table
+                  rawText: Table 
                   advancedTemplate:
                      pageName:title
                      parameters:
@@ -331,7 +331,7 @@ result2 = """@wikiTable@:
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=col
+                  CSS_text: scope=col 
             <?>:
                @cleanInline@:
                   rawText: Title A
@@ -339,7 +339,7 @@ result2 = """@wikiTable@:
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=col
+                  CSS_text: scope=col 
             <?>:
                @cleanInline@:
                   rawText: Title B
@@ -349,7 +349,7 @@ result2 = """@wikiTable@:
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=row
+                  CSS_text: scope=row 
             <?>:
                @cleanInline@:
                   rawText: Line 1
@@ -367,7 +367,7 @@ result2 = """@wikiTable@:
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=row
+                  CSS_text: scope=row 
             <?>:
                @cleanInline@:
                   rawText: Line 2
@@ -378,7 +378,7 @@ result2 = """@wikiTable@:
       wikiTableLine:
          wikiTableLineCells:
             @cleanInline@:
-               rawText:data
+               rawText:data 
                advancedTemplate:
                   pageName:template
                   parameters:
@@ -412,7 +412,7 @@ source3 = """{| class="wikitable" {{prettyTable|1=true}}
 result3 = """@wikiTable@:
    wikiTableBegin:
       wikiTableParameters:
-         CSS_text: class="wikitable"
+         CSS_text: class="wikitable" 
          @cleanInline@:
             advancedTemplate:
                pageName:prettyTable
@@ -428,10 +428,10 @@ result3 = """@wikiTable@:
          wikiTableTitle:
             <?>:
                CSS_attributes:
-                  CSS_text: style="color:red"
+                  CSS_text: style="color:red" 
             <?>:
                @inline@:
-                  rawText: Table
+                  rawText: Table 
                   simpleTemplate:title
       wikiTableLine:
          wikiTableLineBreak:
@@ -439,7 +439,7 @@ result3 = """@wikiTable@:
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=col
+                  CSS_text: scope=col 
             <?>:
                @cleanInline@:
                   rawText: First (mother)
@@ -447,14 +447,14 @@ result3 = """@wikiTable@:
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=col
+                  CSS_text: scope=col 
             <?>:
                @cleanInline@:
                   rawText: table
       @wikiTable@:
          wikiTableBegin:
             wikiTableParameters:
-               CSS_text: class="wikitable"
+               CSS_text: class="wikitable" 
                @cleanInline@:
                   simpleTemplate:prettyTable
          <?>:
@@ -466,7 +466,7 @@ result3 = """@wikiTable@:
                wikiTableLineHeader:
                   <?>:
                      CSS_attributes:
-                        CSS_text: scope=row
+                        CSS_text: scope=row 
                   <?>:
                      @cleanInline@:
                         rawText: Second (daughter) table
@@ -484,7 +484,7 @@ result3 = """@wikiTable@:
                wikiTableLineHeader:
                   <?>:
                      CSS_attributes:
-                        CSS_text: scope=row
+                        CSS_text: scope=row 
                   <?>:
                      @cleanInline@:
                         rawText: in the first one
@@ -551,7 +551,7 @@ test_suite_dict = {
     "## ''more text''\n" : "[list:[@numberSubList@:[numberListLeaf:[rawText:' <em>more text</em>']]]]",
     "### ''other text''\n" : "[list:[@numberSubList@:[@numberSubList@:[numberListLeaf:[rawText:' <em>other text</em>']]]]]",
     ": '''more text'''\n" : "[list:[colonListLeaf:[rawText:' <strong>more text</strong>']]]",
-    ":::: '''more text'''\n" : "[list:[@colonSubList@:[@colonSubList@:[@colonSubList@:[colonListLeaf:[rawText:' <strong>more text</strong>']]]]]]",
+    ":::: '''more text'''\n" : "[list:[@colonSubList@:[@colonSubList@:[@colonSubList@:[colonListLeaf:[rawText:' <strong>more text</strong>']]]]]]",    
     '; still more [[text]]\n' : "[list:[semiColonListLeaf:[rawText:' still more '  simpleInternalLink:'text']]]",
     ';; still more [[text]]\n' : "[list:[@semiColonSubList@:[semiColonListLeaf:[rawText:' still more '  simpleInternalLink:'text']]]]",
     ':* more complicated case\n' : "[list:[@colonSubList@:[bulletListLeaf:[rawText:' more complicated case']]]]",
@@ -634,7 +634,7 @@ source4 = """Styled text such as ''italic'', '''bold''', {{templates}} also work
 result4 = """body:
    paragraphs:
       paragraph:
-         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>,
+         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
          simpleTemplate:templates
          rawText: also work."""
 
@@ -675,7 +675,7 @@ source3 = """ Styled text such as ''italic'', '''bold''', {{templates}} also wor
 result3 = """body:
    preformattedLines:
       preformattedLine:
-         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>,
+         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
          simpleTemplate:templates
          rawText: also work."""
 source4 = """<pre>
@@ -691,7 +691,7 @@ source5 = """Normal paragraph <pre>Preformatted one</pre> Normal one.
 result5 = """body:
    paragraphs:
       paragraph:
-         rawText:Normal paragraph
+         rawText:Normal paragraph 
          preformatted:
             rawText:Preformatted one
          rawText: Normal one."""
@@ -710,7 +710,7 @@ result6 = """body:
          wikiTableLine:
             wikiTableLineHeader:
                @cleanInline@:
-                  rawText:
+                  rawText: 
                   preformatted:
                      rawText:Text"""
 
