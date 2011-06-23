@@ -3,7 +3,7 @@ wikitext
 def setNullValue(node):
     node.value = ''
 def parseAllQuotes(node):
-    from apostropheParser import parseQuotes
+    from apostrophes import parseQuotes
     node.value = parseQuotes(node.value)
 <definition>
 # codes
@@ -51,7 +51,7 @@ def parseAllQuotes(node):
 
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
-    protocole               : HTTP / FTP                                                            : liftValue
+    protocol                : HTTP / FTP                                                            : liftValue
 
 # tags
     NOWIKI_BEGIN            : "<nowiki>"                                                            : drop
@@ -67,7 +67,7 @@ def parseAllQuotes(node):
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
 
 # character expression
-    escChar                 : L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE
+    escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE
     escSeq                  : escChar / tag / titleEnd
     rawChar                 : !escSeq [\x20..\xff]
     rawText                 : rawChar+                                                              : join parseAllQuotes
@@ -78,7 +78,7 @@ def parseAllQuotes(node):
     pageName                : rawChar+                                                              : join
     templateName            : rawChar+                                                              : join
     address                 : (!(SPACE/QUOTE) [\x21..\xff])+                                        : liftValue
-    url                     : protocole address                                                     : join
+    url                     : protocol address                                                      : join
     boldText                : BOLD_BEGIN inline BOLD_END                                            : liftValue
     italicText              : ITALIC_BEGIN inline ITALIC_END                                        : liftValue
     value                   : EQUAL cleanInline                                                     : liftValue

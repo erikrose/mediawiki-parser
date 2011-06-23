@@ -24,6 +24,7 @@ Parsing functions                                                    .          
 Magic links (ISBN, RFC...)                                           .               Not needed for the moment
 Galleries                                                            .               Not needed for the moment
 Behavior switches (__toc__, __notoc__...)                            .               Not needed for the moment
+Signatures (~~, ~~~, ~~~~...)                                        .               Not needed for the moment
 ===================================================================  ==============  =======================================================
 
 =======  ==============================

@@ -1,4 +1,5 @@
-= Title 1 = this should be dropped
+# -*- coding: utf8 -*-
+source = u"""= Title 1 = this should be dropped
 Normal paragraph.
 
 This
@@ -148,3 +149,13 @@ This: < and this: > should be replaced by &lt; and &gt;...
 
 == Others ==
 ---- the above line is an '''horizonal rule'''
+"""
+
+from mediawiki_parser import wikitextParser
+mediawikiParser = wikitextParser
+
+mediawikiParser.url.findAll(source)
+
+mediawikiParser.internalLink.findAll(source)
+
+mediawikiParser.templateName.findAll(source)
