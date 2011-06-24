@@ -8,31 +8,31 @@ from unittest import TestCase
 
 class LinkTests(TestCase):
     def test_simple_internal_link(self):
-        test_suite_dict = {
-                '[[article]]': "[simpleInternalLink:'article']"
-        }
-        mediawikiParser.inline.testSuite(test_suite_dict)
+        source = '[[article]]'
+        exp_result = "[simpleInternalLink:'article']"
+        got_result = unicode(mediawikiParser.inline.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_advanced_internal_link(self):
-        test_suite_dict = {
-                '[[article|alternate]]': "[advancedInternalLink:[templateName:'article'  @cleanInline@:[rawText:'alternate']]]"
-        }
-        mediawikiParser.inline.testSuite(test_suite_dict)
+        source = '[[article|alternate]]'
+        exp_result = "[advancedInternalLink:[templateName:'article'  @cleanInline@:[rawText:'alternate']]]"
+        got_result = unicode(mediawikiParser.inline.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_url(self):
-        test_suite_dict = {
-                'An URL: http://www.mozilla.org': "[rawText:'An URL: '  url:'http://www.mozilla.org']"
-        }
-        mediawikiParser.inline.testSuite(test_suite_dict)
+        source = 'An URL: http://www.mozilla.org'
+        exp_result = "[rawText:'An URL: '  url:'http://www.mozilla.org']"
+        got_result = unicode(mediawikiParser.inline.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_external_link(self):
-        test_suite_dict = {
-                "[http://www.mozilla.org this is an ''external'' link]": "[externalLink:[url:'http://www.mozilla.org'  @cleanInline@:[rawText:'this is an <em>external</em> link']]]"
-        }
-        mediawikiParser.inline.testSuite(test_suite_dict)
+        source = "[http://www.mozilla.org this is an ''external'' link]"
+        exp_result = "[externalLink:[url:'http://www.mozilla.org'  @cleanInline@:[rawText:'this is an <em>external</em> link']]]"
+        got_result = unicode(mediawikiParser.inline.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_formatted_external_link(self):
-        test_suite_dict = {
-                '<a href="http://www.mozilla.org">this is an \'\'external\'\' link</a>': "[rawText:'<a href=\"'  url:'http://www.mozilla.org'  rawText:'\">this is an <em>external</em> link</a>']"
-        }
-        mediawikiParser.inline.testSuite(test_suite_dict)
+        source = '<a href="http://www.mozilla.org">this is an \'\'external\'\' link</a>'
+        exp_result = "[rawText:'<a href=\"'  url:'http://www.mozilla.org'  rawText:'\">this is an <em>external</em> link</a>']"
+        got_result = unicode(mediawikiParser.inline.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)

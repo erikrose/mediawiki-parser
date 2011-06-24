@@ -8,70 +8,70 @@ from unittest import TestCase
 
 class NowikiTests(TestCase):
     def test_table_first_cell(self):
-        test_suite_dict = {
-                'style="color:red" | cell 1': "[<?>:[CSS_attributes:[CSS_text:'style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1']]]"
-        }
-        mediawikiParser.wikiTableFirstCell.testSuite(test_suite_dict)
+        source = 'style="color:red" | cell 1'
+        exp_result = "[<?>:[CSS_attributes:[CSS_text:'style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1']]]"
+        got_result = unicode(mediawikiParser.wikiTableFirstCell.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_other_cell(self):
-        test_suite_dict = {
-                '|| cell 1': "[@cleanInline@:[rawText:' cell 1']]"
-        }
-        mediawikiParser.wikiTableOtherCell.testSuite(test_suite_dict)
+        source = '|| cell 1'
+        exp_result = "[@cleanInline@:[rawText:' cell 1']]"
+        got_result = unicode(mediawikiParser.wikiTableOtherCell.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_special_line(self):
-        test_suite_dict = {
-                '|-\n': ""
-        }
-        mediawikiParser.wikiTableSpecialLine.testSuite(test_suite_dict)
+        source = '|-\n'
+        exp_result = ""
+        got_result = unicode(mediawikiParser.wikiTableSpecialLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_line_with_css(self):
-        test_suite_dict = {
-                '| style="color:red" | cell 1\n': "[wikiTableLineCells:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1']]]]"
-        }
-        mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
+        source = '| style="color:red" | cell 1\n'
+        exp_result = "[wikiTableLineCells:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1']]]]"
+        got_result = unicode(mediawikiParser.wikiTableLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_line_without_css(self):
-        test_suite_dict = {
-                '| cell 1\n': "[wikiTableLineCells:[@cleanInline@:[rawText:' cell 1']]]"
-        }
-        mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
+        source = '| cell 1\n'
+        exp_result = "[wikiTableLineCells:[@cleanInline@:[rawText:' cell 1']]]"
+        got_result = unicode(mediawikiParser.wikiTableLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_line_with_dash(self):
-        test_suite_dict = {
-                '|data L2-B\n': "[wikiTableLineCells:[@cleanInline@:[rawText:'data L2-B']]]"
-        }
-        mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
+        source = '|data L2-B\n'
+        exp_result = "[wikiTableLineCells:[@cleanInline@:[rawText:'data L2-B']]]"
+        got_result = unicode(mediawikiParser.wikiTableLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_line_with_2_cells(self):
-        test_suite_dict = {
-                '| cell 1 || cell 2\n': "[wikiTableLineCells:[wikiTableFirstCell:[@cleanInline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[@cleanInline@:[rawText:' cell 2']]]]]"
-        }
-        mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
+        source = '| cell 1 || cell 2\n'
+        exp_result = "[wikiTableLineCells:[wikiTableFirstCell:[@cleanInline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[@cleanInline@:[rawText:' cell 2']]]]]"
+        got_result = unicode(mediawikiParser.wikiTableLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_line_with_css_in_1st_cell(self):
-        test_suite_dict = {
-                '| style="color:red" | cell 1 || cell 2\n': "[wikiTableLineCells:[wikiTableFirstCell:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1 ']]]  <?>:[wikiTableOtherCell:[@cleanInline@:[rawText:' cell 2']]]]]"
-        }
-        mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
+        source = '| style="color:red" | cell 1 || cell 2\n'
+        exp_result = "[wikiTableLineCells:[wikiTableFirstCell:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1 ']]]  <?>:[wikiTableOtherCell:[@cleanInline@:[rawText:' cell 2']]]]]"
+        got_result = unicode(mediawikiParser.wikiTableLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_line_with_css_in_2nd_cell(self):
-        test_suite_dict = {
-                '| cell 1 || style="color:red" | cell 2\n': "[wikiTableLineCells:[wikiTableFirstCell:[@cleanInline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 2']]]]]]"
-        }
-        mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
+        source = '| cell 1 || style="color:red" | cell 2\n'
+        exp_result = "[wikiTableLineCells:[wikiTableFirstCell:[@cleanInline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 2']]]]]]"
+        got_result = unicode(mediawikiParser.wikiTableLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table__header_with_css(self):
-        test_suite_dict = {
-                '! scope=row | Line 1\n': "[wikiTableLineHeader:[<?>:[CSS_attributes:[CSS_text:' scope=row ']]  <?>:[@cleanInline@:[rawText:' Line 1']]]]"
-        }
-        mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
+        source = '! scope=row | Line 1\n'
+        exp_result = "[wikiTableLineHeader:[<?>:[CSS_attributes:[CSS_text:' scope=row ']]  <?>:[@cleanInline@:[rawText:' Line 1']]]]"
+        got_result = unicode(mediawikiParser.wikiTableLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_line_with_global_css(self):
-        test_suite_dict = {
-                '|- style="color:red"\n': "[wikiTableParamLineBreak:[wikiTableParameters:' style=\"color:red\"']]"
-        }
-        mediawikiParser.wikiTableLine.testSuite(test_suite_dict)
+        source = '|- style="color:red"\n'
+        exp_result = "[wikiTableParamLineBreak:[wikiTableParameters:' style=\"color:red\"']]"
+        got_result = unicode(mediawikiParser.wikiTableLine.parseTest(source).value)
+        self.assertEquals(exp_result, got_result)
 
     def test_table_with_css(self):
         source = """{|
@@ -82,7 +82,7 @@ class NowikiTests(TestCase):
 | cell D
 |}
 """
-        result = """@wikiTable@:
+        exp_result = """@wikiTable@:
    <?>:
 
    <?>:
@@ -105,9 +105,10 @@ class NowikiTests(TestCase):
          wikiTableLineCells:
             @cleanInline@:
                rawText: cell D"""
-        mediawikiParser.wikiTable.testSuiteMultiline([source], [result])
+        got_result = mediawikiParser.wikiTable.parseTest(source).treeView()
+        self.assertEquals(exp_result, got_result)
 
-    def test_table_with_css(self):
+    def test_table_with_template(self):
         source = """{|
 |+ Table {{title|parameter=yes}}
 | cell 1 || cell 2
@@ -115,14 +116,14 @@ class NowikiTests(TestCase):
 | cell 3 || cell 4
 |}
 """
-        result = """@wikiTable@:
+        exp_result = """@wikiTable@:
    <?>:
 
    <?>:
       wikiTableLine:
          wikiTableTitle:
             @inline@:
-               rawText: Table
+               rawText: Table 
                advancedTemplate:
                   pageName:title
                   parameters:
@@ -134,7 +135,7 @@ class NowikiTests(TestCase):
          wikiTableLineCells:
             wikiTableFirstCell:
                @cleanInline@:
-                  rawText: cell 1
+                  rawText: cell 1 
             <?>:
                wikiTableOtherCell:
                   @cleanInline@:
@@ -145,14 +146,15 @@ class NowikiTests(TestCase):
          wikiTableLineCells:
             wikiTableFirstCell:
                @cleanInline@:
-                  rawText: cell 3
+                  rawText: cell 3 
             <?>:
                wikiTableOtherCell:
                   @cleanInline@:
                      rawText: cell 4"""
-        mediawikiParser.wikiTable.testSuiteMultiline([source], [result])
+        got_result = mediawikiParser.wikiTable.parseTest(source).treeView()
+        self.assertEquals(exp_result, got_result)
 
-    def test_table_with_template(self):
+    def test_table_with_css_and_template(self):
         source = """{| class="wikitable" {{prettyTable}}
 |+ style="color:red" | Table {{title|parameter}}
 |-
@@ -169,10 +171,10 @@ class NowikiTests(TestCase):
 |data {{template|with|parameters=L2.B}}
 |}
 """
-        result = """@wikiTable@:
+        exp_result = """@wikiTable@:
    wikiTableBegin:
       wikiTableParameters:
-         CSS_text: class="wikitable"
+         CSS_text: class="wikitable" 
          @cleanInline@:
             simpleTemplate:prettyTable
    <?>:
@@ -182,10 +184,10 @@ class NowikiTests(TestCase):
          wikiTableTitle:
             <?>:
                CSS_attributes:
-                  CSS_text: style="color:red"
+                  CSS_text: style="color:red" 
             <?>:
                @inline@:
-                  rawText: Table
+                  rawText: Table 
                   advancedTemplate:
                      pageName:title
                      parameters:
@@ -196,7 +198,7 @@ class NowikiTests(TestCase):
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=col
+                  CSS_text: scope=col 
             <?>:
                @cleanInline@:
                   rawText: Title A
@@ -204,7 +206,7 @@ class NowikiTests(TestCase):
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=col
+                  CSS_text: scope=col 
             <?>:
                @cleanInline@:
                   rawText: Title B
@@ -214,7 +216,7 @@ class NowikiTests(TestCase):
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=row
+                  CSS_text: scope=row 
             <?>:
                @cleanInline@:
                   rawText: Line 1
@@ -232,7 +234,7 @@ class NowikiTests(TestCase):
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=row
+                  CSS_text: scope=row 
             <?>:
                @cleanInline@:
                   rawText: Line 2
@@ -243,7 +245,7 @@ class NowikiTests(TestCase):
       wikiTableLine:
          wikiTableLineCells:
             @cleanInline@:
-               rawText:data
+               rawText:data 
                advancedTemplate:
                   pageName:template
                   parameters:
@@ -252,7 +254,8 @@ class NowikiTests(TestCase):
                         parameterName:parameters
                         optionalValue:
                            rawText:L2.B"""
-        mediawikiParser.wikiTable.testSuiteMultiline([source], [result])
+        got_result = mediawikiParser.wikiTable.parseTest(source).treeView()
+        self.assertEquals(exp_result, got_result)
 
     def test_nested_tables(self):
         source = """{| class="wikitable" {{prettyTable|1=true}}
@@ -277,10 +280,10 @@ class NowikiTests(TestCase):
 | again
 |}
 """
-        result = """@wikiTable@:
+        exp_result = """@wikiTable@:
    wikiTableBegin:
       wikiTableParameters:
-         CSS_text: class="wikitable"
+         CSS_text: class="wikitable" 
          @cleanInline@:
             advancedTemplate:
                pageName:prettyTable
@@ -296,10 +299,10 @@ class NowikiTests(TestCase):
          wikiTableTitle:
             <?>:
                CSS_attributes:
-                  CSS_text: style="color:red"
+                  CSS_text: style="color:red" 
             <?>:
                @inline@:
-                  rawText: Table
+                  rawText: Table 
                   simpleTemplate:title
       wikiTableLine:
          wikiTableLineBreak:
@@ -307,7 +310,7 @@ class NowikiTests(TestCase):
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=col
+                  CSS_text: scope=col 
             <?>:
                @cleanInline@:
                   rawText: First (mother)
@@ -315,14 +318,14 @@ class NowikiTests(TestCase):
          wikiTableLineHeader:
             <?>:
                CSS_attributes:
-                  CSS_text: scope=col
+                  CSS_text: scope=col 
             <?>:
                @cleanInline@:
                   rawText: table
       @wikiTable@:
          wikiTableBegin:
             wikiTableParameters:
-               CSS_text: class="wikitable"
+               CSS_text: class="wikitable" 
                @cleanInline@:
                   simpleTemplate:prettyTable
          <?>:
@@ -334,7 +337,7 @@ class NowikiTests(TestCase):
                wikiTableLineHeader:
                   <?>:
                      CSS_attributes:
-                        CSS_text: scope=row
+                        CSS_text: scope=row 
                   <?>:
                      @cleanInline@:
                         rawText: Second (daughter) table
@@ -352,7 +355,7 @@ class NowikiTests(TestCase):
                wikiTableLineHeader:
                   <?>:
                      CSS_attributes:
-                        CSS_text: scope=row
+                        CSS_text: scope=row 
                   <?>:
                      @cleanInline@:
                         rawText: in the first one
@@ -378,4 +381,5 @@ class NowikiTests(TestCase):
          wikiTableLineCells:
             @cleanInline@:
                rawText: again"""
-        mediawikiParser.wikiTable.testSuiteMultiline([source], [result])
+        got_result = mediawikiParser.wikiTable.parseTest(source).treeView()
+        self.assertEquals(exp_result, got_result)
