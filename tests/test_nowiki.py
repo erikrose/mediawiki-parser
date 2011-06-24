@@ -1,9 +1,10 @@
 # -*- coding: utf8 -*-
 
-import wikitextParser
-mediawikiParser = wikitextParser.wikitextParser
+from mediawiki_parser.tests import ParserTestCase
 
-test_suite_dict = {
-        '<nowiki>some [[text]] that should {{not}} be changed</nowiki>\n' : "[paragraphs:[paragraph:[nowiki:[ignoredInNowiki:'some [[text]] that should {{not}} be changed']]]]"
-}
-mediawikiParser.testSuite(test_suite_dict)
+
+class Nowiki_tests(ParserTestCase):
+    def test_nowiki_section(self):
+        source = '<nowiki>some [[text]] that should {{not}} be changed</nowiki>\n'
+        result = "[paragraphs:[paragraph:[nowiki:[ignoredInNowiki:'some [[text]] that should {{not}} be changed']]]]"
+        self.parsed_equal_string(source, result, None)

@@ -45,7 +45,7 @@
 
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
-    protocole               : HTTP / FTP                                                            : liftValue
+    protocol                : HTTP / FTP                                                            : liftValue
 
 # tags
     NOWIKI_BEGIN            : "<nowiki>"                                                            : drop
@@ -61,7 +61,7 @@
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
 
 # character expression
-    escChar                 : L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE
+    escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE
     escSeq                  : escChar / tag / titleEnd
     rawChar                 : !escSeq [\x20..\xff]
     rawText                 : rawChar+                                                              : join parseAllQuotes
@@ -72,7 +72,7 @@
     pageName                : rawChar+                                                              : join
     templateName            : rawChar+                                                              : join
     address                 : (!(SPACE/QUOTE) [\x21..\xff])+                                        : liftValue
-    url                     : protocole address                                                     : join
+    url                     : protocol address                                                      : join
     boldText                : BOLD_BEGIN inline BOLD_END                                            : liftValue
     italicText              : ITALIC_BEGIN inline ITALIC_END                                        : liftValue
     value                   : EQUAL cleanInline                                                     : liftValue
@@ -245,7 +245,7 @@ LINK_END = Repetition(R_BRACKET, numMin=2, numMax=2, expression='R_BRACKET{2}', 
 
 HTTP = Word('http://', expression='"http://"', name='HTTP')(liftValue)
 FTP = Word('ftp://', expression='"ftp://"', name='FTP')(liftValue)
-protocole = Choice([HTTP, FTP], expression='HTTP / FTP', name='protocole')(liftValue)
+protocol = Choice([HTTP, FTP], expression='HTTP / FTP', name='protocol')(liftValue)
 
 # tags
 NOWIKI_BEGIN = Word('<nowiki>', expression='"<nowiki>"', name='NOWIKI_BEGIN')(drop)
@@ -261,7 +261,7 @@ tag = Choice([NOWIKI_BEGIN, NOWIKI_END, BOLD_BEGIN, BOLD_END, ITALIC_BEGIN, ITAL
 titleEnd = Choice([TITLE6_END, TITLE5_END, TITLE4_END, TITLE3_END, TITLE2_END, TITLE1_END], expression='TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END', name='titleEnd')
 
 # character expression
-escChar = Choice([L_BRACKET, R_BRACKET, protocole, PIPE, L_BRACE, R_BRACE], expression='L_BRACKET/R_BRACKET/protocole/PIPE/L_BRACE/R_BRACE', name='escChar')
+escChar = Choice([L_BRACKET, R_BRACKET, protocol, PIPE, L_BRACE, R_BRACE], expression='L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE', name='escChar')
 escSeq = Choice([escChar, tag, titleEnd], expression='escChar / tag / titleEnd', name='escSeq')
 rawChar = Sequence([NextNot(escSeq, expression='!escSeq'), Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]')], expression='!escSeq [\\x20..\\xff]', name='rawChar')
 rawText = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='rawText')(join, parseAllQuotes)
@@ -272,7 +272,7 @@ anyText = Repetition(anyChar, numMin=1, numMax=False, expression='anyChar+', nam
 pageName = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='pageName')(join)
 templateName = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='templateName')(join)
 address = Repetition(Sequence([NextNot(Choice([SPACE, QUOTE], expression='SPACE/QUOTE'), expression='!(SPACE/QUOTE)'), Klass(u'!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x21..\\xff]')], expression='!(SPACE/QUOTE) [\\x21..\\xff]'), numMin=1, numMax=False, expression='(!(SPACE/QUOTE) [\\x21..\\xff])+', name='address')(liftValue)
-url = Sequence([protocole, address], expression='protocole address', name='url')(join)
+url = Sequence([protocol, address], expression='protocol address', name='url')(join)
 boldText = Sequence([BOLD_BEGIN, inline, BOLD_END], expression='BOLD_BEGIN inline BOLD_END', name='boldText')(liftValue)
 italicText = Sequence([ITALIC_BEGIN, inline, ITALIC_END], expression='ITALIC_BEGIN inline ITALIC_END', name='italicText')(liftValue)
 value = Sequence([EQUAL, cleanInline], expression='EQUAL cleanInline', name='value')(liftValue)

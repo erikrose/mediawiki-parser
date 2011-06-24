@@ -1,12 +1,9 @@
 # -*- coding: utf8 -*-
 
-from mediawiki_parser import wikitextParser
-mediawikiParser = wikitextParser.wikitextParser
-
-from unittest import TestCase
+from mediawiki_parser.tests import ParserTestCase
 
 
-class NowikiTests(TestCase):
+class Templates_tests(ParserTestCase):
     def test_template_with_parameters(self):
         source = """{{Template with|1=parameter| 2 = parameters }}"""
         result = """@inline@:
@@ -18,10 +15,10 @@ class NowikiTests(TestCase):
             optionalValue:
                rawText:parameter
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
                rawText: parameters """
-        mediawikiParser.inline.testSuiteMultiline([source], [result])
+        self.parsed_equal_tree(source, result, 'inline')
 
     def test_template_with_multiline_parameters(self):
         source = """{{Template which
@@ -34,23 +31,23 @@ class NowikiTests(TestCase):
       pageName:Template which
       parameters:
          parameter:
-            parameterName:is
+            parameterName:is 
             optionalValue:
                rawText: test
          parameter:
-            parameterName:multi
+            parameterName:multi 
             optionalValue:
                rawText: test
          parameter:
-            parameterName:lines
+            parameterName:lines 
             optionalValue:
                rawText: test"""
-        mediawikiParser.inline.testSuiteMultiline([source], [result])
+        self.parsed_equal_tree(source, result, 'inline')
 
     def test_template_inside_a_text(self):
         source = """A template {{Template with|1=parameter| 2 = parameters }} inside a text."""
         result = """@inline@:
-   rawText:A template
+   rawText:A template 
    advancedTemplate:
       pageName:Template with
       parameters:
@@ -59,16 +56,16 @@ class NowikiTests(TestCase):
             optionalValue:
                rawText:parameter
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
-               rawText: parameters
+               rawText: parameters 
    rawText: inside a text."""
-        mediawikiParser.inline.testSuiteMultiline([source], [result])
+        self.parsed_equal_tree(source, result, 'inline')
 
     def test_template_with_formatted_parameters(self):
         source = """Formatted arguments in a template {{Template with|1='''parameter'''| 2 = ''parameters'' }}."""
         result = """@inline@:
-   rawText:Formatted arguments in a template
+   rawText:Formatted arguments in a template 
    advancedTemplate:
       pageName:Template with
       parameters:
@@ -77,30 +74,30 @@ class NowikiTests(TestCase):
             optionalValue:
                rawText:<strong>parameter</strong>
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
-               rawText: <em>parameters</em>
+               rawText: <em>parameters</em> 
    rawText:."""
-        mediawikiParser.inline.testSuiteMultiline([source], [result])
+        self.parsed_equal_tree(source, result, 'inline')
 
     def test_nested_templates(self):
         source = """A {{Template with|{{other}} |1={{templates}}| 2 = {{nested|inside=1}} }}."""
         result = """@inline@:
-   rawText:A
+   rawText:A 
    advancedTemplate:
       pageName:Template with
       parameters:
          parameter:
             simpleTemplate:other
-            rawText:
+            rawText: 
          parameter:
             parameterName:1
             optionalValue:
                simpleTemplate:templates
          parameter:
-            parameterName:2
+            parameterName:2 
             optionalValue:
-               rawText:
+               rawText: 
                advancedTemplate:
                   pageName:nested
                   parameters:
@@ -108,6 +105,6 @@ class NowikiTests(TestCase):
                         parameterName:inside
                         optionalValue:
                            rawText:1
-               rawText:
+               rawText: 
    rawText:."""
-        mediawikiParser.inline.testSuiteMultiline([source], [result])
+        self.parsed_equal_tree(source, result, 'inline')
