@@ -19,12 +19,17 @@ def parseAllQuotes(node):
     SPACE                   : " "                                                                   : drop
     TAB                     : "	"                                                                   : drop
     SPACETAB                : SPACE / TAB                                                           : drop
+    SPACETABEOL             : SPACE / TAB / EOL                                                     : drop
+    AMP                     : "&"                                                                   : drop
     PIPE                    : "|"                                                                   : drop
     BANG                    : "!"                                                                   : drop
     EQUAL                   : "="                                                                   : drop
     BULLET                  : "*"                                                                   : drop
     HASH                    : "#"                                                                   : drop
     COLON                   : ":"                                                                   : drop
+    LT                      : "<"                                                                   : drop
+    GT                      : ">"                                                                   : drop
+    SLASH                   : "/"                                                                   : drop
     SEMICOLON               : ";"                                                                   : drop
     DASH                    : "-"                                                                   : drop
     TABLE_BEGIN             : "{|"                                                                  : drop
@@ -32,6 +37,7 @@ def parseAllQuotes(node):
     TABLE_NEWLINE           : "|-"                                                                  : drop
     TABLE_TITLE             : "|+"                                                                  : drop
     QUOTE                   : "\""                                                                  : drop
+    APOSTROPHE              : "\'"                                                                  : drop
     TITLE6_BEGIN            : EQUAL{6}                                                              : drop
     TITLE5_BEGIN            : EQUAL{5}                                                              : drop
     TITLE4_BEGIN            : EQUAL{4}                                                              : drop
@@ -62,17 +68,38 @@ def parseAllQuotes(node):
     ITALIC_END              : "</i>" / "</em>"                                                      : drop
     PRE_BEGIN               : "<pre>"                                                               : drop
     PRE_END                 : "</pre>"                                                              : drop
-    tag                     : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END/PRE_BEGIN/PRE_END
+#TODO: replace this by normal tags
+    special_tag             : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END/PRE_BEGIN/PRE_END
 
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
 
 # character expression
-    escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE
-    escSeq                  : escChar / tag / titleEnd
+    escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON
+    escSeq                  : special_tag / escChar / titleEnd
     rawChar                 : !escSeq [\x20..\xff]
     rawText                 : rawChar+                                                              : join parseAllQuotes
+    alpha_num               : [a..zA..Z0..9]
+    alpha_num_text          : alpha_num+                                                            : join
     anyChar                 : [\x20..\xff]
     anyText                 : anyChar+                                                              : join
+
+# HTML tags
+    value_quote             : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
+    value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
+    value_noquote           : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
+    attribute_value         : value_quote / value_apostrophe / value_noquote                        : liftValue
+    attribute_name          : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
+    tag_name                : (!(SPACE/SLASH) rawChar)+                                             : join
+    tag_attribute           : attribute_name EQUAL attribute_value                                  : liftValue
+    optionalAttribute       : SPACETABEOL+ tag_attribute                                            : liftValue
+    optionalAttributes      : optionalAttribute*                                                    : liftValue
+    tag_open                : LT tag_name optionalAttributes SPACETABEOL* GT
+    tag_close               : LT SLASH tag_name GT
+    tag_autoclose           : LT tag_name optionalAttributes SPACETABEOL* SLASH GT
+    tag                     : tag_autoclose / tag_open / tag_close
+
+# HTML entities
+    entity : AMP alpha_num_text SEMICOLON : liftValue
 
 # text
     pageName                : rawChar+                                                              : join
@@ -97,13 +124,14 @@ def parseAllQuotes(node):
     advancedTemplate        : TEMPLATE_BEGIN pageName parameters TEMPLATE_END                       : liftValue
     template                : simpleTemplate / advancedTemplate
     preformatted            : PRE_BEGIN inline PRE_END                                              : liftValue
-    styledText              : boldText / italicText / link / url / template / preformatted
+    styledText              : preformatted / link / url / template
     ignoredInNowiki         : (!(NOWIKI_END) [\x20..\xff])+                                         : join
     nowiki                  : NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END                              : liftValue
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
-    cleanInline             : (styledText / nowiki / rawText)+                                      : @
-    inline                  : (styledText / nowiki / allowedText)+                                  : @
+    cleanInline             : (nowiki / styledText / rawText)+                                      : @
+#TODO: VERIF priority between nowiki and tags
+    inline                  : (nowiki / styledText / tag / entity / allowedText)+                   : @
 
 # line types
     specialLineBegin        : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
@@ -154,6 +182,7 @@ def parseAllQuotes(node):
 
     invalidLine             : anyText EOL                                                           : liftValue
 
+# TODO: replace CSS attributes with classic tag attributes
     CSS_chars               : !(PIPE/BANG/L_BRACE) anyChar
     CSS_text                : CSS_chars+                                                            : join
     CSS_attributes          : CSS_text+ PIPE !PIPE                                                  : liftValue

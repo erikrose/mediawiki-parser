@@ -14,6 +14,11 @@ class Special_chars_tests(ParserTestCase):
         result = "[rawText:'This # should pass.']"
         self.parsed_equal_string(source, result, 'inline')
 
+    def test_amp(self):
+        source = 'This & should pass.'
+        result = "[rawText:'This & should pass.']"
+        self.parsed_equal_string(source, result, 'inline')
+
     def test_l_brace(self):
         source = 'This { should pass.'
         result = "[rawText:'This '  allowedChar:'{'  rawText:' should pass.']"
