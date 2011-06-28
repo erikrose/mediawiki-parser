@@ -4,19 +4,26 @@ from mediawiki_parser.tests import ParserTestCase
 
 
 class Templates_tests(ParserTestCase):
+    def test_template_without_parameter(self):
+        source = """{{Template}}"""
+        result = """@inline@:
+   template:
+      page_name:Template"""
+        self.parsed_equal_tree(source, result, 'inline')
+
     def test_template_with_parameters(self):
         source = """{{Template with|1=parameter| 2 = parameters }}"""
         result = """@inline@:
-   advancedTemplate:
-      pageName:Template with
+   template:
+      page_name:Template with
       parameters:
          parameter:
-            parameterName:1
-            optionalValue:
+            parameter_name:1
+            optional_value:
                rawText:parameter
          parameter:
-            parameterName:2 
-            optionalValue:
+            parameter_name:2 
+            optional_value:
                rawText: parameters """
         self.parsed_equal_tree(source, result, 'inline')
 
@@ -27,20 +34,20 @@ class Templates_tests(ParserTestCase):
  | lines = test
 }}"""
         result = """@inline@:
-   advancedTemplate:
-      pageName:Template which
+   template:
+      page_name:Template which
       parameters:
          parameter:
-            parameterName:is 
-            optionalValue:
+            parameter_name:is 
+            optional_value:
                rawText: test
          parameter:
-            parameterName:multi 
-            optionalValue:
+            parameter_name:multi 
+            optional_value:
                rawText: test
          parameter:
-            parameterName:lines 
-            optionalValue:
+            parameter_name:lines 
+            optional_value:
                rawText: test"""
         self.parsed_equal_tree(source, result, 'inline')
 
@@ -48,16 +55,16 @@ class Templates_tests(ParserTestCase):
         source = """A template {{Template with|1=parameter| 2 = parameters }} inside a text."""
         result = """@inline@:
    rawText:A template 
-   advancedTemplate:
-      pageName:Template with
+   template:
+      page_name:Template with
       parameters:
          parameter:
-            parameterName:1
-            optionalValue:
+            parameter_name:1
+            optional_value:
                rawText:parameter
          parameter:
-            parameterName:2 
-            optionalValue:
+            parameter_name:2 
+            optional_value:
                rawText: parameters 
    rawText: inside a text."""
         self.parsed_equal_tree(source, result, 'inline')
@@ -66,16 +73,16 @@ class Templates_tests(ParserTestCase):
         source = """Formatted arguments in a template {{Template with|1='''parameter'''| 2 = ''parameters'' }}."""
         result = """@inline@:
    rawText:Formatted arguments in a template 
-   advancedTemplate:
-      pageName:Template with
+   template:
+      page_name:Template with
       parameters:
          parameter:
-            parameterName:1
-            optionalValue:
+            parameter_name:1
+            optional_value:
                rawText:<strong>parameter</strong>
          parameter:
-            parameterName:2 
-            optionalValue:
+            parameter_name:2 
+            optional_value:
                rawText: <em>parameters</em> 
    rawText:."""
         self.parsed_equal_tree(source, result, 'inline')
@@ -84,26 +91,28 @@ class Templates_tests(ParserTestCase):
         source = """A {{Template with|{{other}} |1={{templates}}| 2 = {{nested|inside=1}} }}."""
         result = """@inline@:
    rawText:A 
-   advancedTemplate:
-      pageName:Template with
+   template:
+      page_name:Template with
       parameters:
          parameter:
-            simpleTemplate:other
+            template:
+               page_name:other
             rawText: 
          parameter:
-            parameterName:1
-            optionalValue:
-               simpleTemplate:templates
+            parameter_name:1
+            optional_value:
+               template:
+                  page_name:templates
          parameter:
-            parameterName:2 
-            optionalValue:
+            parameter_name:2 
+            optional_value:
                rawText: 
-               advancedTemplate:
-                  pageName:nested
+               template:
+                  page_name:nested
                   parameters:
                      parameter:
-                        parameterName:inside
-                        optionalValue:
+                        parameter_name:inside
+                        optional_value:
                            rawText:1
                rawText: 
    rawText:."""

@@ -14,11 +14,6 @@ class Special_chars_tests(ParserTestCase):
         result = "[rawText:'This # should pass.']"
         self.parsed_equal_string(source, result, 'inline')
 
-    def test_amp(self):
-        source = 'This & should pass.'
-        result = "[rawText:'This & should pass.']"
-        self.parsed_equal_string(source, result, 'inline')
-
     def test_l_brace(self):
         source = 'This { should pass.'
         result = "[rawText:'This '  allowedChar:'{'  rawText:' should pass.']"
@@ -41,12 +36,12 @@ class Special_chars_tests(ParserTestCase):
 
     def test_lt(self):
         source = 'This < should pass.'
-        result = "[rawText:'This < should pass.']"
+        result = "[rawText:'This '  allowedChar:'<'  rawText:' should pass.']"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_gt(self):
         source = 'This > should pass.'
-        result = "[rawText:'This > should pass.']"
+        result = "[rawText:'This '  allowedChar:'>'  rawText:' should pass.']"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_l_bracket(self):
@@ -86,7 +81,7 @@ class Special_chars_tests(ParserTestCase):
 
     def test_semicolon(self):
         source = 'This; should pass.'
-        result = "[rawText:'This; should pass.']"
+        result = "[rawText:'This'  allowedChar:';'  rawText:' should pass.']"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_quotes(self):
@@ -101,5 +96,5 @@ class Special_chars_tests(ParserTestCase):
 
     def test_double_r_bracket_with_link(self):
         source = 'This should be a [[link]] and [[plain text'
-        result = "[rawText:'This should be a '  simpleInternalLink:'link'  rawText:' and '  allowedChar:'['  allowedChar:'['  rawText:'plain text']"
+        result = "[rawText:'This should be a '  internal_link:'link'  rawText:' and '  allowedChar:'['  allowedChar:'['  rawText:'plain text']"
         self.parsed_equal_string(source, result, 'inline')

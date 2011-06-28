@@ -60,6 +60,7 @@ Followed a blank line and another paragraph.
    paragraphs:
       paragraph:
          rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
-         simpleTemplate:templates
+         template:
+            page_name:templates
          rawText: also work."""
         self.parsed_equal_tree(source, result, None)

@@ -46,12 +46,12 @@ class Lists_tests(ParserTestCase):
 
     def test_1_bullet_list(self):
         source = '; still more [[text]]\n'
-        result = "[list:[semiColonListLeaf:[rawText:' still more '  simpleInternalLink:'text']]]"
+        result = "[list:[semiColonListLeaf:[rawText:' still more '  internal_link:'text']]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_bullet_list(self):
         source = ';; still more [[text]]\n'
-        result = "[list:[@semiColonSubList@:[semiColonListLeaf:[rawText:' still more '  simpleInternalLink:'text']]]]"
+        result = "[list:[@semiColonSubList@:[semiColonListLeaf:[rawText:' still more '  internal_link:'text']]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_bullet_list(self):

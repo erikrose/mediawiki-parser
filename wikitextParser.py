@@ -1,6 +1,7 @@
 """ wikitext
 <definition>
-# codes
+# Codes
+
     LF                      : '
 '
     CR                      : '
@@ -13,12 +14,17 @@
     SPACE                   : " "                                                                   : drop
     TAB                     : "	"                                                                   : drop
     SPACETAB                : SPACE / TAB                                                           : drop
+    SPACETABEOL             : SPACE / TAB / EOL                                                     : drop
+    AMP                     : "&"                                                                   : drop
     PIPE                    : "|"                                                                   : drop
     BANG                    : "!"                                                                   : drop
     EQUAL                   : "="                                                                   : drop
     BULLET                  : "*"                                                                   : drop
     HASH                    : "#"                                                                   : drop
     COLON                   : ":"                                                                   : drop
+    LT                      : "<"                                                                   : drop
+    GT                      : ">"                                                                   : drop
+    SLASH                   : "/"                                                                   : drop
     SEMICOLON               : ";"                                                                   : drop
     DASH                    : "-"                                                                   : drop
     TABLE_BEGIN             : "{|"                                                                  : drop
@@ -26,6 +32,7 @@
     TABLE_NEWLINE           : "|-"                                                                  : drop
     TABLE_TITLE             : "|+"                                                                  : drop
     QUOTE                   : "\""                                                                  : drop
+    APOSTROPHE              : "\'"                                                                  : drop
     TITLE6_BEGIN            : EQUAL{6}                                                              : drop
     TITLE5_BEGIN            : EQUAL{5}                                                              : drop
     TITLE4_BEGIN            : EQUAL{4}                                                              : drop
@@ -43,63 +50,97 @@
     LINK_BEGIN              : L_BRACKET{2}                                                          : drop
     LINK_END                : R_BRACKET{2}                                                          : drop
 
+    HTTPS                   : "https://"                                                            : liftValue
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
-    protocol                : HTTP / FTP                                                            : liftValue
+    protocol                : HTTPS / HTTP / FTP                                                    : liftValue
 
-# tags
+# Predefined tags
+
     NOWIKI_BEGIN            : "<nowiki>"                                                            : drop
     NOWIKI_END              : "</nowiki>"                                                           : drop
-    BOLD_BEGIN              : "<b>" / "<strong>"                                                    : drop
-    BOLD_END                : "</b>" / "</strong>"                                                  : drop
-    ITALIC_BEGIN            : "<i>" / "<em>"                                                        : drop
-    ITALIC_END              : "</i>" / "</em>"                                                      : drop
     PRE_BEGIN               : "<pre>"                                                               : drop
     PRE_END                 : "</pre>"                                                              : drop
-    tag                     : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END/PRE_BEGIN/PRE_END
+    special_tag             : NOWIKI_BEGIN/NOWIKI_END/PRE_BEGIN/PRE_END
 
+# Characters
+
+    escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
-
-# character expression
-    escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE
-    escSeq                  : escChar / tag / titleEnd
+    escSeq                  : special_tag / escChar / titleEnd
     rawChar                 : !escSeq [\x20..\xff]
     rawText                 : rawChar+                                                              : join parseAllQuotes
+    alpha_num               : [a..zA..Z0..9]
+    alpha_num_text          : alpha_num+                                                            : join
     anyChar                 : [\x20..\xff]
     anyText                 : anyChar+                                                              : join
 
-# text
-    pageName                : rawChar+                                                              : join
-    templateName            : rawChar+                                                              : join
-    address                 : (!(SPACE/QUOTE) [\x21..\xff])+                                        : liftValue
+# HTML tags
+
+    value_quote             : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
+    value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
+    value_noquote           : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
+    attribute_value         : value_quote / value_apostrophe / value_noquote
+    attribute_name          : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
+    tag_name                : (!(SPACE/SLASH) rawChar)+                                             : join
+    optional_attribute      : SPACETABEOL+ attribute_name EQUAL attribute_value
+    optional_attributes     : optional_attribute*
+    tag_open                : LT tag_name optional_attributes SPACETABEOL* GT
+    tag_close               : LT SLASH tag_name GT
+    tag_autoclose           : LT tag_name optional_attributes SPACETABEOL* SLASH GT
+    tag                     : tag_autoclose / tag_open / tag_close
+
+# HTML entities
+
+    entity                  : AMP alpha_num_text SEMICOLON                                          : liftValue
+
+# Text
+
+    page_name               : rawChar+                                                              : join
+# TODO: allow IPv6 addresses (http://[::1]/etc)
+    address                 : (!(SPACE/QUOTE/R_BRACKET) [\x21..\xff])+                              : liftValue
     url                     : protocol address                                                      : join
-    boldText                : BOLD_BEGIN inline BOLD_END                                            : liftValue
-    italicText              : ITALIC_BEGIN inline ITALIC_END                                        : liftValue
+
+# Links
+
+    allowed_in_link         : (!(R_BRACKET/PIPE) escChar)+                                          : restore liftValue join
+    link_text               : (cleanInline / allowed_in_link)*                                      : liftValue
+    link_argument           : PIPE link_text
+    link_arguments          : link_argument*
+    internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : liftValue
+    optional_link_text      : SPACETAB+ link_text                                                   : liftValue
+    external_link           : L_BRACKET url optional_link_text? R_BRACKET 
+    link                    : internal_link / external_link
+
+# Templates
+
     value                   : EQUAL cleanInline                                                     : liftValue
-    optionalValue           : value*                                                                : liftValue
-    parameterName           : (!EQUAL rawChar)+                                                     : join
-    parameterWithValue      : parameterName optionalValue                                           : liftValue
-    parameter               : PIPE SPACETAB* (parameterWithValue / cleanInline)                     : liftValue
-    ignoredInParameters     : EOL/SPACE                                                             : drop
-    parameters              : (parameter/ignoredInParameters)+
-    simpleInternalLink      : LINK_BEGIN templateName LINK_END                                      : liftValue
-    advancedInternalLink    : LINK_BEGIN templateName PIPE cleanInline LINK_END                     : liftValue
-    internalLink            : simpleInternalLink / advancedInternalLink                             : liftValue
-    externalLink            : L_BRACKET url SPACE cleanInline R_BRACKET                             : liftValue
-    link                    : internalLink / externalLink
-    simpleTemplate          : TEMPLATE_BEGIN pageName TEMPLATE_END                                  : liftValue
-    advancedTemplate        : TEMPLATE_BEGIN pageName parameters TEMPLATE_END                       : liftValue
-    template                : simpleTemplate / advancedTemplate
-    preformatted            : PRE_BEGIN inline PRE_END                                              : liftValue
-    styledText              : boldText / italicText / link / url / template / preformatted
-    ignoredInNowiki         : (!(NOWIKI_END) [\x20..\xff])+                                         : join
-    nowiki                  : NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END                              : liftValue
+    optional_value          : value*                                                                : liftValue
+    parameter_name          : (!EQUAL rawChar)+                                                     : join
+    parameter_with_value    : parameter_name optional_value                                         : liftValue
+    parameter               : SPACETABEOL* PIPE SPACETABEOL* (parameter_with_value / cleanInline)   : liftValue
+    parameters              : parameter*
+    template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END
+
+# Preformatted and nowiki
+
+    # Preformatted acts like nowiki (disables wikitext parsing)
+    pre_text                : (!PRE_END anyChar)*                                                   : join
+    preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
+    # We allow any char without parsing them as long as the tag is not closed
+    nowiki_text             : (!NOWIKI_END anyChar)*                                                : join
+    nowiki                  : NOWIKI_BEGIN nowiki_text NOWIKI_END                                   : liftValue
+
+# Text types
+
+    styledText              : preformatted / link / url / template
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
-    cleanInline             : (styledText / nowiki / rawText)+                                      : @
-    inline                  : (styledText / nowiki / allowedText)+                                  : @
+    cleanInline             : (nowiki / styledText / rawText)+                                      : @
+    inline                  : (nowiki / styledText / tag / entity / allowedText)+                   : @
 
-# line types
+# Line types
+
     specialLineBegin        : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
 
     title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue
@@ -148,6 +189,9 @@
 
     invalidLine             : anyText EOL                                                           : liftValue
 
+# Tables
+
+# TODO: replace CSS attributes with classic tag attributes
     CSS_chars               : !(PIPE/BANG/L_BRACE) anyChar
     CSS_text                : CSS_chars+                                                            : join
     CSS_attributes          : CSS_text+ PIPE !PIPE                                                  : liftValue
@@ -202,7 +246,8 @@ numberSubList = Recursive(name='numberSubList')
 bulletSubList = Recursive(name='bulletSubList')
 inline = Recursive(name='inline')
 cleanInline = Recursive(name='cleanInline')
-# codes
+# Codes
+
 LF = Char('\n', expression="'\n'", name='LF')
 CR = Char('\n', expression="'\n'", name='CR')
 EOL = Choice([LF, CR], expression='LF / CR', name='EOL')(drop)
@@ -213,12 +258,17 @@ R_BRACE = Word('}', expression='"}"', name='R_BRACE')(drop)
 SPACE = Word(' ', expression='" "', name='SPACE')(drop)
 TAB = Word('\t', expression='"\t"', name='TAB')(drop)
 SPACETAB = Choice([SPACE, TAB], expression='SPACE / TAB', name='SPACETAB')(drop)
+SPACETABEOL = Choice([SPACE, TAB, EOL], expression='SPACE / TAB / EOL', name='SPACETABEOL')(drop)
+AMP = Word('&', expression='"&"', name='AMP')(drop)
 PIPE = Word('|', expression='"|"', name='PIPE')(drop)
 BANG = Word('!', expression='"!"', name='BANG')(drop)
 EQUAL = Word('=', expression='"="', name='EQUAL')(drop)
 BULLET = Word('*', expression='"*"', name='BULLET')(drop)
 HASH = Word('#', expression='"#"', name='HASH')(drop)
 COLON = Word(':', expression='":"', name='COLON')(drop)
+LT = Word('<', expression='"<"', name='LT')(drop)
+GT = Word('>', expression='">"', name='GT')(drop)
+SLASH = Word('/', expression='"/"', name='SLASH')(drop)
 SEMICOLON = Word(';', expression='";"', name='SEMICOLON')(drop)
 DASH = Word('-', expression='"-"', name='DASH')(drop)
 TABLE_BEGIN = Word('{|', expression='"{|"', name='TABLE_BEGIN')(drop)
@@ -226,6 +276,7 @@ TABLE_END = Word('|}', expression='"|}"', name='TABLE_END')(drop)
 TABLE_NEWLINE = Word('|-', expression='"|-"', name='TABLE_NEWLINE')(drop)
 TABLE_TITLE = Word('|+', expression='"|+"', name='TABLE_TITLE')(drop)
 QUOTE = Word('"', expression='"\\""', name='QUOTE')(drop)
+APOSTROPHE = Word("'", expression='"\\\'"', name='APOSTROPHE')(drop)
 TITLE6_BEGIN = Repetition(EQUAL, numMin=6, numMax=6, expression='EQUAL{6}', name='TITLE6_BEGIN')(drop)
 TITLE5_BEGIN = Repetition(EQUAL, numMin=5, numMax=5, expression='EQUAL{5}', name='TITLE5_BEGIN')(drop)
 TITLE4_BEGIN = Repetition(EQUAL, numMin=4, numMax=4, expression='EQUAL{4}', name='TITLE4_BEGIN')(drop)
@@ -243,63 +294,97 @@ TEMPLATE_END = Repetition(R_BRACE, numMin=2, numMax=2, expression='R_BRACE{2}', 
 LINK_BEGIN = Repetition(L_BRACKET, numMin=2, numMax=2, expression='L_BRACKET{2}', name='LINK_BEGIN')(drop)
 LINK_END = Repetition(R_BRACKET, numMin=2, numMax=2, expression='R_BRACKET{2}', name='LINK_END')(drop)
 
+HTTPS = Word('https://', expression='"https://"', name='HTTPS')(liftValue)
 HTTP = Word('http://', expression='"http://"', name='HTTP')(liftValue)
 FTP = Word('ftp://', expression='"ftp://"', name='FTP')(liftValue)
-protocol = Choice([HTTP, FTP], expression='HTTP / FTP', name='protocol')(liftValue)
+protocol = Choice([HTTPS, HTTP, FTP], expression='HTTPS / HTTP / FTP', name='protocol')(liftValue)
 
-# tags
+# Predefined tags
+
 NOWIKI_BEGIN = Word('<nowiki>', expression='"<nowiki>"', name='NOWIKI_BEGIN')(drop)
 NOWIKI_END = Word('</nowiki>', expression='"</nowiki>"', name='NOWIKI_END')(drop)
-BOLD_BEGIN = Choice([Word('<b>', expression='"<b>"'), Word('<strong>', expression='"<strong>"')], expression='"<b>" / "<strong>"', name='BOLD_BEGIN')(drop)
-BOLD_END = Choice([Word('</b>', expression='"</b>"'), Word('</strong>', expression='"</strong>"')], expression='"</b>" / "</strong>"', name='BOLD_END')(drop)
-ITALIC_BEGIN = Choice([Word('<i>', expression='"<i>"'), Word('<em>', expression='"<em>"')], expression='"<i>" / "<em>"', name='ITALIC_BEGIN')(drop)
-ITALIC_END = Choice([Word('</i>', expression='"</i>"'), Word('</em>', expression='"</em>"')], expression='"</i>" / "</em>"', name='ITALIC_END')(drop)
 PRE_BEGIN = Word('<pre>', expression='"<pre>"', name='PRE_BEGIN')(drop)
 PRE_END = Word('</pre>', expression='"</pre>"', name='PRE_END')(drop)
-tag = Choice([NOWIKI_BEGIN, NOWIKI_END, BOLD_BEGIN, BOLD_END, ITALIC_BEGIN, ITALIC_END, PRE_BEGIN, PRE_END], expression='NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END/PRE_BEGIN/PRE_END', name='tag')
+special_tag = Choice([NOWIKI_BEGIN, NOWIKI_END, PRE_BEGIN, PRE_END], expression='NOWIKI_BEGIN/NOWIKI_END/PRE_BEGIN/PRE_END', name='special_tag')
 
+# Characters
+
+escChar = Choice([L_BRACKET, R_BRACKET, protocol, PIPE, L_BRACE, R_BRACE, LT, GT, SLASH, AMP, SEMICOLON], expression='L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON', name='escChar')
 titleEnd = Choice([TITLE6_END, TITLE5_END, TITLE4_END, TITLE3_END, TITLE2_END, TITLE1_END], expression='TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END', name='titleEnd')
-
-# character expression
-escChar = Choice([L_BRACKET, R_BRACKET, protocol, PIPE, L_BRACE, R_BRACE], expression='L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE', name='escChar')
-escSeq = Choice([escChar, tag, titleEnd], expression='escChar / tag / titleEnd', name='escSeq')
+escSeq = Choice([special_tag, escChar, titleEnd], expression='special_tag / escChar / titleEnd', name='escSeq')
 rawChar = Sequence([NextNot(escSeq, expression='!escSeq'), Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]')], expression='!escSeq [\\x20..\\xff]', name='rawChar')
 rawText = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='rawText')(join, parseAllQuotes)
+alpha_num = Klass(u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', expression='[a..zA..Z0..9]', name='alpha_num')
+alpha_num_text = Repetition(alpha_num, numMin=1, numMax=False, expression='alpha_num+', name='alpha_num_text')(join)
 anyChar = Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]', name='anyChar')
 anyText = Repetition(anyChar, numMin=1, numMax=False, expression='anyChar+', name='anyText')(join)
 
-# text
-pageName = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='pageName')(join)
-templateName = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='templateName')(join)
-address = Repetition(Sequence([NextNot(Choice([SPACE, QUOTE], expression='SPACE/QUOTE'), expression='!(SPACE/QUOTE)'), Klass(u'!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x21..\\xff]')], expression='!(SPACE/QUOTE) [\\x21..\\xff]'), numMin=1, numMax=False, expression='(!(SPACE/QUOTE) [\\x21..\\xff])+', name='address')(liftValue)
+# HTML tags
+
+value_quote = Sequence([QUOTE, Repetition(Choice([Sequence([NextNot(Choice([GT, QUOTE], expression='GT/QUOTE'), expression='!(GT/QUOTE)'), anyChar], expression='!(GT/QUOTE) anyChar'), TAB], expression='(!(GT/QUOTE) anyChar) / TAB'), numMin=1, numMax=False, expression='((!(GT/QUOTE) anyChar) / TAB)+'), QUOTE], expression='QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE', name='value_quote')(join)
+value_apostrophe = Sequence([APOSTROPHE, Repetition(Choice([Sequence([NextNot(Choice([GT, APOSTROPHE], expression='GT/APOSTROPHE'), expression='!(GT/APOSTROPHE)'), anyChar], expression='!(GT/APOSTROPHE) anyChar'), TAB], expression='(!(GT/APOSTROPHE) anyChar) / TAB'), numMin=1, numMax=False, expression='((!(GT/APOSTROPHE) anyChar) / TAB)+'), APOSTROPHE], expression='APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE', name='value_apostrophe')(join)
+value_noquote = Repetition(Sequence([NextNot(Choice([GT, SPACETAB, SLASH], expression='GT/SPACETAB/SLASH'), expression='!(GT/SPACETAB/SLASH)'), rawChar], expression='!(GT/SPACETAB/SLASH) rawChar'), numMin=1, numMax=False, expression='(!(GT/SPACETAB/SLASH) rawChar)+', name='value_noquote')(join)
+attribute_value = Choice([value_quote, value_apostrophe, value_noquote], expression='value_quote / value_apostrophe / value_noquote', name='attribute_value')
+attribute_name = Repetition(Sequence([NextNot(Choice([EQUAL, SLASH, SPACETAB], expression='EQUAL/SLASH/SPACETAB'), expression='!(EQUAL/SLASH/SPACETAB)'), rawChar], expression='!(EQUAL/SLASH/SPACETAB) rawChar'), numMin=1, numMax=False, expression='(!(EQUAL/SLASH/SPACETAB) rawChar)+', name='attribute_name')(join)
+tag_name = Repetition(Sequence([NextNot(Choice([SPACE, SLASH], expression='SPACE/SLASH'), expression='!(SPACE/SLASH)'), rawChar], expression='!(SPACE/SLASH) rawChar'), numMin=1, numMax=False, expression='(!(SPACE/SLASH) rawChar)+', name='tag_name')(join)
+optional_attribute = Sequence([Repetition(SPACETABEOL, numMin=1, numMax=False, expression='SPACETABEOL+'), attribute_name, EQUAL, attribute_value], expression='SPACETABEOL+ attribute_name EQUAL attribute_value', name='optional_attribute')
+optional_attributes = Repetition(optional_attribute, numMin=False, numMax=False, expression='optional_attribute*', name='optional_attributes')
+tag_open = Sequence([LT, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), GT], expression='LT tag_name optional_attributes SPACETABEOL* GT', name='tag_open')
+tag_close = Sequence([LT, SLASH, tag_name, GT], expression='LT SLASH tag_name GT', name='tag_close')
+tag_autoclose = Sequence([LT, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), SLASH, GT], expression='LT tag_name optional_attributes SPACETABEOL* SLASH GT', name='tag_autoclose')
+tag = Choice([tag_autoclose, tag_open, tag_close], expression='tag_autoclose / tag_open / tag_close', name='tag')
+
+# HTML entities
+
+entity = Sequence([AMP, alpha_num_text, SEMICOLON], expression='AMP alpha_num_text SEMICOLON', name='entity')(liftValue)
+
+# Text
+
+page_name = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='page_name')(join)
+# TODO: allow IPv6 addresses (http://[::1]/etc)
+address = Repetition(Sequence([NextNot(Choice([SPACE, QUOTE, R_BRACKET], expression='SPACE/QUOTE/R_BRACKET'), expression='!(SPACE/QUOTE/R_BRACKET)'), Klass(u'!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x21..\\xff]')], expression='!(SPACE/QUOTE/R_BRACKET) [\\x21..\\xff]'), numMin=1, numMax=False, expression='(!(SPACE/QUOTE/R_BRACKET) [\\x21..\\xff])+', name='address')(liftValue)
 url = Sequence([protocol, address], expression='protocol address', name='url')(join)
-boldText = Sequence([BOLD_BEGIN, inline, BOLD_END], expression='BOLD_BEGIN inline BOLD_END', name='boldText')(liftValue)
-italicText = Sequence([ITALIC_BEGIN, inline, ITALIC_END], expression='ITALIC_BEGIN inline ITALIC_END', name='italicText')(liftValue)
+
+# Links
+
+allowed_in_link = Repetition(Sequence([NextNot(Choice([R_BRACKET, PIPE], expression='R_BRACKET/PIPE'), expression='!(R_BRACKET/PIPE)'), escChar], expression='!(R_BRACKET/PIPE) escChar'), numMin=1, numMax=False, expression='(!(R_BRACKET/PIPE) escChar)+', name='allowed_in_link')(restore, liftValue, join)
+link_text = Repetition(Choice([cleanInline, allowed_in_link], expression='cleanInline / allowed_in_link'), numMin=False, numMax=False, expression='(cleanInline / allowed_in_link)*', name='link_text')(liftValue)
+link_argument = Sequence([PIPE, link_text], expression='PIPE link_text', name='link_argument')
+link_arguments = Repetition(link_argument, numMin=False, numMax=False, expression='link_argument*', name='link_arguments')
+internal_link = Sequence([LINK_BEGIN, page_name, link_arguments, LINK_END], expression='LINK_BEGIN page_name link_arguments LINK_END', name='internal_link')(liftValue)
+optional_link_text = Sequence([Repetition(SPACETAB, numMin=1, numMax=False, expression='SPACETAB+'), link_text], expression='SPACETAB+ link_text', name='optional_link_text')(liftValue)
+external_link = Sequence([L_BRACKET, url, Option(optional_link_text, expression='optional_link_text?'), R_BRACKET], expression='L_BRACKET url optional_link_text? R_BRACKET', name='external_link')
+link = Choice([internal_link, external_link], expression='internal_link / external_link', name='link')
+
+# Templates
+
 value = Sequence([EQUAL, cleanInline], expression='EQUAL cleanInline', name='value')(liftValue)
-optionalValue = Repetition(value, numMin=False, numMax=False, expression='value*', name='optionalValue')(liftValue)
-parameterName = Repetition(Sequence([NextNot(EQUAL, expression='!EQUAL'), rawChar], expression='!EQUAL rawChar'), numMin=1, numMax=False, expression='(!EQUAL rawChar)+', name='parameterName')(join)
-parameterWithValue = Sequence([parameterName, optionalValue], expression='parameterName optionalValue', name='parameterWithValue')(liftValue)
-parameter = Sequence([PIPE, Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), Choice([parameterWithValue, cleanInline], expression='parameterWithValue / cleanInline')], expression='PIPE SPACETAB* (parameterWithValue / cleanInline)', name='parameter')(liftValue)
-ignoredInParameters = Choice([EOL, SPACE], expression='EOL/SPACE', name='ignoredInParameters')(drop)
-parameters = Repetition(Choice([parameter, ignoredInParameters], expression='parameter/ignoredInParameters'), numMin=1, numMax=False, expression='(parameter/ignoredInParameters)+', name='parameters')
-simpleInternalLink = Sequence([LINK_BEGIN, templateName, LINK_END], expression='LINK_BEGIN templateName LINK_END', name='simpleInternalLink')(liftValue)
-advancedInternalLink = Sequence([LINK_BEGIN, templateName, PIPE, cleanInline, LINK_END], expression='LINK_BEGIN templateName PIPE cleanInline LINK_END', name='advancedInternalLink')(liftValue)
-internalLink = Choice([simpleInternalLink, advancedInternalLink], expression='simpleInternalLink / advancedInternalLink', name='internalLink')(liftValue)
-externalLink = Sequence([L_BRACKET, url, SPACE, cleanInline, R_BRACKET], expression='L_BRACKET url SPACE cleanInline R_BRACKET', name='externalLink')(liftValue)
-link = Choice([internalLink, externalLink], expression='internalLink / externalLink', name='link')
-simpleTemplate = Sequence([TEMPLATE_BEGIN, pageName, TEMPLATE_END], expression='TEMPLATE_BEGIN pageName TEMPLATE_END', name='simpleTemplate')(liftValue)
-advancedTemplate = Sequence([TEMPLATE_BEGIN, pageName, parameters, TEMPLATE_END], expression='TEMPLATE_BEGIN pageName parameters TEMPLATE_END', name='advancedTemplate')(liftValue)
-template = Choice([simpleTemplate, advancedTemplate], expression='simpleTemplate / advancedTemplate', name='template')
-preformatted = Sequence([PRE_BEGIN, inline, PRE_END], expression='PRE_BEGIN inline PRE_END', name='preformatted')(liftValue)
-styledText = Choice([boldText, italicText, link, url, template, preformatted], expression='boldText / italicText / link / url / template / preformatted', name='styledText')
-ignoredInNowiki = Repetition(Sequence([NextNot(NOWIKI_END, expression='!(NOWIKI_END)'), Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]')], expression='!(NOWIKI_END) [\\x20..\\xff]'), numMin=1, numMax=False, expression='(!(NOWIKI_END) [\\x20..\\xff])+', name='ignoredInNowiki')(join)
-nowiki = Sequence([NOWIKI_BEGIN, Repetition(ignoredInNowiki, numMin=1, numMax=False, expression='ignoredInNowiki+'), NOWIKI_END], expression='NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END', name='nowiki')(liftValue)
+optional_value = Repetition(value, numMin=False, numMax=False, expression='value*', name='optional_value')(liftValue)
+parameter_name = Repetition(Sequence([NextNot(EQUAL, expression='!EQUAL'), rawChar], expression='!EQUAL rawChar'), numMin=1, numMax=False, expression='(!EQUAL rawChar)+', name='parameter_name')(join)
+parameter_with_value = Sequence([parameter_name, optional_value], expression='parameter_name optional_value', name='parameter_with_value')(liftValue)
+parameter = Sequence([Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), PIPE, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), Choice([parameter_with_value, cleanInline], expression='parameter_with_value / cleanInline')], expression='SPACETABEOL* PIPE SPACETABEOL* (parameter_with_value / cleanInline)', name='parameter')(liftValue)
+parameters = Repetition(parameter, numMin=False, numMax=False, expression='parameter*', name='parameters')
+template = Sequence([TEMPLATE_BEGIN, page_name, parameters, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), TEMPLATE_END], expression='TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END', name='template')
+
+# Preformatted and nowiki
+
+    # Preformatted acts like nowiki (disables wikitext parsing)
+pre_text = Repetition(Sequence([NextNot(PRE_END, expression='!PRE_END'), anyChar], expression='!PRE_END anyChar'), numMin=False, numMax=False, expression='(!PRE_END anyChar)*', name='pre_text')(join)
+preformatted = Sequence([PRE_BEGIN, pre_text, PRE_END], expression='PRE_BEGIN pre_text PRE_END', name='preformatted')(liftValue)
+    # We allow any char without parsing them as long as the tag is not closed
+nowiki_text = Repetition(Sequence([NextNot(NOWIKI_END, expression='!NOWIKI_END'), anyChar], expression='!NOWIKI_END anyChar'), numMin=False, numMax=False, expression='(!NOWIKI_END anyChar)*', name='nowiki_text')(join)
+nowiki = Sequence([NOWIKI_BEGIN, nowiki_text, NOWIKI_END], expression='NOWIKI_BEGIN nowiki_text NOWIKI_END', name='nowiki')(liftValue)
+
+# Text types
+
+styledText = Choice([preformatted, link, url, template], expression='preformatted / link / url / template', name='styledText')
 allowedChar = Repetition(escChar, numMin=1, numMax=1, expression='escChar{1}', name='allowedChar')(restore, liftValue)
 allowedText = Choice([rawText, allowedChar], expression='rawText / allowedChar', name='allowedText')
-cleanInline **= Repetition(Choice([styledText, nowiki, rawText], expression='styledText / nowiki / rawText'), numMin=1, numMax=False, expression='(styledText / nowiki / rawText)+', name='cleanInline')
-inline **= Repetition(Choice([styledText, nowiki, allowedText], expression='styledText / nowiki / allowedText'), numMin=1, numMax=False, expression='(styledText / nowiki / allowedText)+', name='inline')
+cleanInline **= Repetition(Choice([nowiki, styledText, rawText], expression='nowiki / styledText / rawText'), numMin=1, numMax=False, expression='(nowiki / styledText / rawText)+', name='cleanInline')
+inline **= Repetition(Choice([nowiki, styledText, tag, entity, allowedText], expression='nowiki / styledText / tag / entity / allowedText'), numMin=1, numMax=False, expression='(nowiki / styledText / tag / entity / allowedText)+', name='inline')
 
-# line types
+# Line types
+
 specialLineBegin = Choice([SPACE, EQUAL, BULLET, HASH, COLON, DASH, TABLE_BEGIN, SEMICOLON], expression='SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON', name='specialLineBegin')
 
 title6 = Sequence([TITLE6_BEGIN, inline, TITLE6_END], expression='TITLE6_BEGIN inline TITLE6_END', name='title6')(liftValue)
@@ -348,6 +433,9 @@ horizontalRule = Sequence([Repetition(DASH, numMin=4, numMax=4, expression='DASH
 
 invalidLine = Sequence([anyText, EOL], expression='anyText EOL', name='invalidLine')(liftValue)
 
+# Tables
+
+# TODO: replace CSS attributes with classic tag attributes
 CSS_chars = Sequence([NextNot(Choice([PIPE, BANG, L_BRACE], expression='PIPE/BANG/L_BRACE'), expression='!(PIPE/BANG/L_BRACE)'), anyChar], expression='!(PIPE/BANG/L_BRACE) anyChar', name='CSS_chars')
 CSS_text = Repetition(CSS_chars, numMin=1, numMax=False, expression='CSS_chars+', name='CSS_text')(join)
 CSS_attributes = Sequence([Repetition(CSS_text, numMin=1, numMax=False, expression='CSS_text+'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='CSS_text+ PIPE !PIPE', name='CSS_attributes')(liftValue)

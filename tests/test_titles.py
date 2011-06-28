@@ -43,7 +43,7 @@ class Titles_tests(ParserTestCase):
 
     def test_link_in_title(self):
         source = '= [[a link]] =\n'
-        result = "[title1:[rawText:' '  simpleInternalLink:'a link'  rawText:' ']]"
+        result = "[title1:[rawText:' '  internal_link:'a link'  rawText:' ']]"
         self.parsed_equal_string(source, result, None)
 
     def test_italic_in_title(self):
@@ -56,14 +56,14 @@ class Titles_tests(ParserTestCase):
         result = "[title3:[rawText:' <strong>bold text</strong> ']]"
         self.parsed_equal_string(source, result, None)
 
-    def test_formatted_link_in_title(self):
-        source = "==== ''[[Title 4|formatted link]]'' ====\n"
-        result = "[title4:[rawText:' <em></em>'  advancedInternalLink:[templateName:'Title 4'  @cleanInline@:[rawText:'formatted link']]  rawText:'<em> </em>']]"
+    def test_link_in_title(self):
+        source = "==== [[Title 4|formatted link]] ====\n"
+        result = "[title4:[rawText:' '  internal_link:[page_name:'Title 4'  link_arguments:[link_argument:[link_text:[rawText:'formatted link']]]]  rawText:' ']]"
         self.parsed_equal_string(source, result, None)
 
     def test_simple_template_in_title(self):
         source = '===== {{Title 5}} =====\n'
-        result = "[title5:[rawText:' '  simpleTemplate:'Title 5'  rawText:' ']]"
+        result = "[title5:[rawText:' '  template:[page_name:'Title 5']  rawText:' ']]"
         self.parsed_equal_string(source, result, None)
 
     def test_braces_in_title(self):

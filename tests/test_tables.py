@@ -109,12 +109,12 @@ class Tables_tests(ParserTestCase):
          wikiTableTitle:
             @inline@:
                rawText: Table 
-               advancedTemplate:
-                  pageName:title
+               template:
+                  page_name:title
                   parameters:
                      parameter:
-                        parameterName:parameter
-                        optionalValue:
+                        parameter_name:parameter
+                        optional_value:
                            rawText:yes
       wikiTableLine:
          wikiTableLineCells:
@@ -160,7 +160,8 @@ class Tables_tests(ParserTestCase):
       wikiTableParameters:
          CSS_text: class="wikitable" 
          @cleanInline@:
-            simpleTemplate:prettyTable
+            template:
+               page_name:prettyTable
    <?>:
 
    <?>:
@@ -172,8 +173,8 @@ class Tables_tests(ParserTestCase):
             <?>:
                @inline@:
                   rawText: Table 
-                  advancedTemplate:
-                     pageName:title
+                  template:
+                     page_name:title
                      parameters:
                         parameter:parameter
       wikiTableLine:
@@ -230,13 +231,13 @@ class Tables_tests(ParserTestCase):
          wikiTableLineCells:
             @cleanInline@:
                rawText:data 
-               advancedTemplate:
-                  pageName:template
+               template:
+                  page_name:template
                   parameters:
                      parameter:with
                      parameter:
-                        parameterName:parameters
-                        optionalValue:
+                        parameter_name:parameters
+                        optional_value:
                            rawText:L2.B"""
         self.parsed_equal_tree(source, result, "wikiTable")
 
@@ -268,12 +269,12 @@ class Tables_tests(ParserTestCase):
       wikiTableParameters:
          CSS_text: class="wikitable" 
          @cleanInline@:
-            advancedTemplate:
-               pageName:prettyTable
+            template:
+               page_name:prettyTable
                parameters:
                   parameter:
-                     parameterName:1
-                     optionalValue:
+                     parameter_name:1
+                     optional_value:
                         rawText:true
    <?>:
 
@@ -286,7 +287,8 @@ class Tables_tests(ParserTestCase):
             <?>:
                @inline@:
                   rawText: Table 
-                  simpleTemplate:title
+                  template:
+                     page_name:title
       wikiTableLine:
          wikiTableLineBreak:
       wikiTableLine:
@@ -310,7 +312,8 @@ class Tables_tests(ParserTestCase):
             wikiTableParameters:
                CSS_text: class="wikitable" 
                @cleanInline@:
-                  simpleTemplate:prettyTable
+                  template:
+                     page_name:prettyTable
          <?>:
 
          <?>:

@@ -6,7 +6,8 @@ def parseAllQuotes(node):
     from apostrophes import parseQuotes
     node.value = parseQuotes(node.value)
 <definition>
-# codes
+# Codes
+
     LF                      : '
 '
     CR                      : '
@@ -55,26 +56,23 @@ def parseAllQuotes(node):
     LINK_BEGIN              : L_BRACKET{2}                                                          : drop
     LINK_END                : R_BRACKET{2}                                                          : drop
 
+    HTTPS                   : "https://"                                                            : liftValue
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
-    protocol                : HTTP / FTP                                                            : liftValue
+    protocol                : HTTPS / HTTP / FTP                                                    : liftValue
 
-# tags
+# Predefined tags
+
     NOWIKI_BEGIN            : "<nowiki>"                                                            : drop
     NOWIKI_END              : "</nowiki>"                                                           : drop
-    BOLD_BEGIN              : "<b>" / "<strong>"                                                    : drop
-    BOLD_END                : "</b>" / "</strong>"                                                  : drop
-    ITALIC_BEGIN            : "<i>" / "<em>"                                                        : drop
-    ITALIC_END              : "</i>" / "</em>"                                                      : drop
     PRE_BEGIN               : "<pre>"                                                               : drop
     PRE_END                 : "</pre>"                                                              : drop
-#TODO: replace this by normal tags
-    special_tag             : NOWIKI_BEGIN/NOWIKI_END/BOLD_BEGIN/BOLD_END/ITALIC_BEGIN/ITALIC_END/PRE_BEGIN/PRE_END
+    special_tag             : NOWIKI_BEGIN/NOWIKI_END/PRE_BEGIN/PRE_END
 
-    titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
+# Characters
 
-# character expression
     escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON
+    titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
     escSeq                  : special_tag / escChar / titleEnd
     rawChar                 : !escSeq [\x20..\xff]
     rawText                 : rawChar+                                                              : join parseAllQuotes
@@ -84,56 +82,71 @@ def parseAllQuotes(node):
     anyText                 : anyChar+                                                              : join
 
 # HTML tags
+
     value_quote             : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
     value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
     value_noquote           : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
-    attribute_value         : value_quote / value_apostrophe / value_noquote                        : liftValue
+    attribute_value         : value_quote / value_apostrophe / value_noquote
     attribute_name          : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
     tag_name                : (!(SPACE/SLASH) rawChar)+                                             : join
-    tag_attribute           : attribute_name EQUAL attribute_value                                  : liftValue
-    optionalAttribute       : SPACETABEOL+ tag_attribute                                            : liftValue
-    optionalAttributes      : optionalAttribute*                                                    : liftValue
-    tag_open                : LT tag_name optionalAttributes SPACETABEOL* GT
+    optional_attribute      : SPACETABEOL+ attribute_name EQUAL attribute_value
+    optional_attributes     : optional_attribute*
+    tag_open                : LT tag_name optional_attributes SPACETABEOL* GT
     tag_close               : LT SLASH tag_name GT
-    tag_autoclose           : LT tag_name optionalAttributes SPACETABEOL* SLASH GT
+    tag_autoclose           : LT tag_name optional_attributes SPACETABEOL* SLASH GT
     tag                     : tag_autoclose / tag_open / tag_close
 
 # HTML entities
-    entity : AMP alpha_num_text SEMICOLON : liftValue
 
-# text
-    pageName                : rawChar+                                                              : join
-    templateName            : rawChar+                                                              : join
-    address                 : (!(SPACE/QUOTE) [\x21..\xff])+                                        : liftValue
+    entity                  : AMP alpha_num_text SEMICOLON                                          : liftValue
+
+# Text
+
+    page_name               : rawChar+                                                              : join
+# TODO: allow IPv6 addresses (http://[::1]/etc)
+    address                 : (!(SPACE/QUOTE/R_BRACKET) [\x21..\xff])+                              : liftValue
     url                     : protocol address                                                      : join
-    boldText                : BOLD_BEGIN inline BOLD_END                                            : liftValue
-    italicText              : ITALIC_BEGIN inline ITALIC_END                                        : liftValue
+
+# Links
+
+    allowed_in_link         : (!(R_BRACKET/PIPE) escChar)+                                          : restore liftValue join
+    link_text               : (cleanInline / allowed_in_link)*                                      : liftValue
+    link_argument           : PIPE link_text
+    link_arguments          : link_argument*
+    internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : liftValue
+    optional_link_text      : SPACETAB+ link_text                                                   : liftValue
+    external_link           : L_BRACKET url optional_link_text? R_BRACKET 
+    link                    : internal_link / external_link
+
+# Templates
+
     value                   : EQUAL cleanInline                                                     : liftValue
-    optionalValue           : value*                                                                : liftValue
-    parameterName           : (!EQUAL rawChar)+                                                     : join
-    parameterWithValue      : parameterName optionalValue                                           : liftValue
-    parameter               : PIPE SPACETAB* (parameterWithValue / cleanInline)                     : liftValue
-    ignoredInParameters     : EOL/SPACE                                                             : drop
-    parameters              : (parameter/ignoredInParameters)+
-    simpleInternalLink      : LINK_BEGIN templateName LINK_END                                      : liftValue
-    advancedInternalLink    : LINK_BEGIN templateName PIPE cleanInline LINK_END                     : liftValue
-    internalLink            : simpleInternalLink / advancedInternalLink                             : liftValue
-    externalLink            : L_BRACKET url SPACE cleanInline R_BRACKET                             : liftValue
-    link                    : internalLink / externalLink
-    simpleTemplate          : TEMPLATE_BEGIN pageName TEMPLATE_END                                  : liftValue
-    advancedTemplate        : TEMPLATE_BEGIN pageName parameters TEMPLATE_END                       : liftValue
-    template                : simpleTemplate / advancedTemplate
-    preformatted            : PRE_BEGIN inline PRE_END                                              : liftValue
+    optional_value          : value*                                                                : liftValue
+    parameter_name          : (!EQUAL rawChar)+                                                     : join
+    parameter_with_value    : parameter_name optional_value                                         : liftValue
+    parameter               : SPACETABEOL* PIPE SPACETABEOL* (parameter_with_value / cleanInline)   : liftValue
+    parameters              : parameter*
+    template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END
+
+# Preformatted and nowiki
+
+    # Preformatted acts like nowiki (disables wikitext parsing)
+    pre_text                : (!PRE_END anyChar)*                                                   : join
+    preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
+    # We allow any char without parsing them as long as the tag is not closed
+    nowiki_text             : (!NOWIKI_END anyChar)*                                                : join
+    nowiki                  : NOWIKI_BEGIN nowiki_text NOWIKI_END                                   : liftValue
+
+# Text types
+
     styledText              : preformatted / link / url / template
-    ignoredInNowiki         : (!(NOWIKI_END) [\x20..\xff])+                                         : join
-    nowiki                  : NOWIKI_BEGIN ignoredInNowiki+ NOWIKI_END                              : liftValue
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
     cleanInline             : (nowiki / styledText / rawText)+                                      : @
-#TODO: VERIF priority between nowiki and tags
     inline                  : (nowiki / styledText / tag / entity / allowedText)+                   : @
 
-# line types
+# Line types
+
     specialLineBegin        : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
 
     title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue
@@ -181,6 +194,8 @@ def parseAllQuotes(node):
     horizontalRule          : DASH{4} DASH* inline EOL                                              : liftValue
 
     invalidLine             : anyText EOL                                                           : liftValue
+
+# Tables
 
 # TODO: replace CSS attributes with classic tag attributes
     CSS_chars               : !(PIPE/BANG/L_BRACE) anyChar

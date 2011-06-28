@@ -44,7 +44,8 @@ Followed by a "normal" one.
    preformattedLines:
       preformattedLine:
          rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
-         simpleTemplate:templates
+         template:
+            page_name:templates
          rawText: also work."""
         self.parsed_equal_tree(source, result, None)
 
@@ -59,14 +60,20 @@ Preformatted paragraph.
          rawText:Preformatted paragraph."""
         self.parsed_equal_tree(source, result, None)
 
-    def test_html_pre_paragraph(self):
+    def test_formatted_html_pre_paragraph(self):
+        # <pre> should act like <nowiki>
+        source = "<pre>some [[text]] that should {{not}} be changed</pre>\n"
+        result = "[paragraphs:[paragraph:[preformatted:'some [[text]] that should {{not}} be changed']]]"
+        self.parsed_equal_string(source, result, None)
+
+
+    def test_html_pre_in_paragraph(self):
         source = "Normal paragraph <pre>Preformatted one</pre> Normal one.\n"
         result = """body:
    paragraphs:
       paragraph:
          rawText:Normal paragraph 
-         preformatted:
-            rawText:Preformatted one
+         preformatted:Preformatted one
          rawText: Normal one."""
         self.parsed_equal_tree(source, result, None)
 
@@ -87,6 +94,5 @@ Preformatted paragraph.
             wikiTableLineHeader:
                @cleanInline@:
                   rawText: 
-                  preformatted:
-                     rawText:Text"""
+                  preformatted:Text"""
         self.parsed_equal_tree(source, result, None)

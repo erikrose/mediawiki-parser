@@ -8,11 +8,11 @@ class Tags_tests(ParserTestCase):
         source = '<a href="http://www.mozilla.org" style="color:red">'
         result = """tag_open:
    tag_name:a
-   optionalAttributes:
-      optionalAttribute:
+   optional_attributes:
+      optional_attribute:
          attribute_name:href
          value_quote:http://www.mozilla.org
-      optionalAttribute:
+      optional_attribute:
          attribute_name:style
          value_quote:color:red"""
         self.parsed_equal_tree(source, result, 'tag')
@@ -23,19 +23,20 @@ class Tags_tests(ParserTestCase):
    rawText:a 
    tag_autoclose:
       tag_name:tag
-      optionalAttributes:
-         optionalAttribute:
+      optional_attributes:
+         optional_attribute:
             attribute_name:name
             value_quote:mytag
-         optionalAttribute:
+         optional_attribute:
             attribute_name:attribute
             value_noquote:value
    rawText: and 
    tag_open:
       tag_name:span
-      optionalAttributes:
-         attribute_name:style
-         value_apostrophe:color: red
+      optional_attributes:
+         optional_attribute:
+            attribute_name:style
+            value_apostrophe:color: red
    rawText:text
    tag_close:
       tag_name:span
