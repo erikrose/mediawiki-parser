@@ -50,6 +50,8 @@
     LINK_BEGIN              : L_BRACKET{2}                                                          : drop
     LINK_END                : R_BRACKET{2}                                                          : drop
 
+# Protocols
+
     HTTPS                   : "https://"                                                            : liftValue
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
@@ -129,7 +131,7 @@
     parameters              : parameter*
     template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END
 
-# Preformatted and nowiki
+# Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
     pre_text                : (!PRE_END anyChar)*                                                   : join
@@ -140,15 +142,22 @@
 
 # Text types
 
-    styledText              : preformatted / link / url / template
+    styled_text             : link / url / template / html_comment / tag / entity
+    not_styled_text         : preformatted / nowiki
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
-    cleanInline             : (nowiki / styledText / rawText)+                                      : @
-    inline                  : (nowiki / styledText / html_comment / tag / entity / allowedText)+    : @
+    cleanInline             : (not_styled_text / styled_text / rawText)+                            : @
+    inline                  : (not_styled_text / styled_text / allowedText)+                        : @
 
-# Line types
+# Paragraphs
 
-    specialLineBegin        : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
+    special_line_begin      : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
+    paragraph_line          : !special_line_begin inline EOL                                        : liftValue
+    blank_paragraph         : EOL{2}                                                                : setNullValue
+    paragraph               : paragraph_line+                                                       : liftValue
+    paragraphs              : (blank_paragraph/EOL/paragraph)+
+
+# Titles
 
     title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue
     title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
@@ -158,11 +167,7 @@
     title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue
     title                   : title6 / title5 / title4 / title3 / title2 / title1
 
-    paragraphLine           : !specialLineBegin inline EOL                                          : liftValue
-    blankParagraph          : EOL{2}                                                                : setNullValue
-    paragraph               : paragraphLine+                                                        : liftValue
-    paragraphs              : (blankParagraph/EOL/paragraph)+
-
+# Lists
 
     listChar                : BULLET / HASH / COLON / SEMICOLON
     listLeafContent         : !listChar inline EOL                                                  : liftValue
@@ -184,6 +189,8 @@
     listItem                : subList / listLeaf                                                    : @
     list                    : listItem+
 
+# Preformatted
+
     EOL_or_not              : EOL{0..1}                                                             : drop
     preformattedLine        : SPACE inline EOL                                                      : liftValue
     preformattedLines       : preformattedLine+
@@ -191,25 +198,32 @@
     preformattedParagraph   : PRE_BEGIN EOL preformattedText PRE_END EOL
     preformattedGroup       : preformattedParagraph / preformattedLines
 
+# Special lines
+
     horizontalRule          : DASH{4} DASH* inline EOL                                              : liftValue
 
-    invalidLine             : anyText EOL                                                           : liftValue
+	# This should never happen
+    invalid_line            : anyText EOL                                                           : liftValue
 
 # Tables
 
-# TODO: replace CSS attributes with classic tag attributes
-    CSS_chars               : !(PIPE/BANG/L_BRACE) anyChar
-    CSS_text                : CSS_chars+                                                            : join
-    CSS_attributes          : CSS_text+ PIPE !PIPE                                                  : liftValue
-    wikiTableParameters     : (CSS_text / cleanInline)+                                             : liftValue
-    wikiTableFirstCell      : CSS_attributes{0..1} cleanInline*                                     : liftValue
+    HTML_value_quote         : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                           : join
+    HTML_value_apostrophe    : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE            : join
+    HTML_value_noquote       : (!(GT/SPACETAB/SLASH) rawChar)+                                      : join
+    HTML_value               : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
+    HTML_name                : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                   : join
+	HTML_attribute           : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
+    HTML_attributes          : HTML_attribute*
+    wikiTableParametersPipe : SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE                        : liftValue
+    wikiTableParameters     : (HTML_attribute / cleanInline)+                                       : liftValue
+    wikiTableFirstCell      : wikiTableParametersPipe{0..1} cleanInline*                            : liftValue
     wikiTableOtherCell      : PIPE{2} wikiTableFirstCell                                            : liftValue
     wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
     wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
     wikiTableEmptyCell      : PIPE EOL                                                              : setNullValue
     wikiTableParamLineBreak : TABLE_NEWLINE wikiTableParameters* EOL                                : liftValue
     wikiTableLineBreak      : TABLE_NEWLINE EOL                                                     : setNullValue
-    wikiTableTitle          : TABLE_TITLE CSS_attributes{0..1} inline* EOL                          : liftValue
+    wikiTableTitle          : TABLE_TITLE wikiTableParametersPipe{0..1} inline* EOL                 : liftValue
     wikiTableSpecialLine    : wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
     wikiTableNormalLine     : wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
     wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)
@@ -219,7 +233,7 @@
 
 # Top pattern
 
-    body                    : optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+ : liftValue
+    body                    : optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue
 
 """
 
@@ -302,6 +316,8 @@ TEMPLATE_END = Repetition(R_BRACE, numMin=2, numMax=2, expression='R_BRACE{2}', 
 LINK_BEGIN = Repetition(L_BRACKET, numMin=2, numMax=2, expression='L_BRACKET{2}', name='LINK_BEGIN')(drop)
 LINK_END = Repetition(R_BRACKET, numMin=2, numMax=2, expression='R_BRACKET{2}', name='LINK_END')(drop)
 
+# Protocols
+
 HTTPS = Word('https://', expression='"https://"', name='HTTPS')(liftValue)
 HTTP = Word('http://', expression='"http://"', name='HTTP')(liftValue)
 FTP = Word('ftp://', expression='"ftp://"', name='FTP')(liftValue)
@@ -381,7 +397,7 @@ parameter = Sequence([Repetition(SPACETABEOL, numMin=False, numMax=False, expres
 parameters = Repetition(parameter, numMin=False, numMax=False, expression='parameter*', name='parameters')
 template = Sequence([TEMPLATE_BEGIN, page_name, parameters, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), TEMPLATE_END], expression='TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END', name='template')
 
-# Preformatted and nowiki
+# Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
 pre_text = Repetition(Sequence([NextNot(PRE_END, expression='!PRE_END'), anyChar], expression='!PRE_END anyChar'), numMin=False, numMax=False, expression='(!PRE_END anyChar)*', name='pre_text')(join)
@@ -392,15 +408,22 @@ nowiki = Sequence([NOWIKI_BEGIN, nowiki_text, NOWIKI_END], expression='NOWIKI_BE
 
 # Text types
 
-styledText = Choice([preformatted, link, url, template], expression='preformatted / link / url / template', name='styledText')
+styled_text = Choice([link, url, template, html_comment, tag, entity], expression='link / url / template / html_comment / tag / entity', name='styled_text')
+not_styled_text = Choice([preformatted, nowiki], expression='preformatted / nowiki', name='not_styled_text')
 allowedChar = Repetition(escChar, numMin=1, numMax=1, expression='escChar{1}', name='allowedChar')(restore, liftValue)
 allowedText = Choice([rawText, allowedChar], expression='rawText / allowedChar', name='allowedText')
-cleanInline **= Repetition(Choice([nowiki, styledText, rawText], expression='nowiki / styledText / rawText'), numMin=1, numMax=False, expression='(nowiki / styledText / rawText)+', name='cleanInline')
-inline **= Repetition(Choice([nowiki, styledText, html_comment, tag, entity, allowedText], expression='nowiki / styledText / html_comment / tag / entity / allowedText'), numMin=1, numMax=False, expression='(nowiki / styledText / html_comment / tag / entity / allowedText)+', name='inline')
+cleanInline **= Repetition(Choice([not_styled_text, styled_text, rawText], expression='not_styled_text / styled_text / rawText'), numMin=1, numMax=False, expression='(not_styled_text / styled_text / rawText)+', name='cleanInline')
+inline **= Repetition(Choice([not_styled_text, styled_text, allowedText], expression='not_styled_text / styled_text / allowedText'), numMin=1, numMax=False, expression='(not_styled_text / styled_text / allowedText)+', name='inline')
 
-# Line types
+# Paragraphs
 
-specialLineBegin = Choice([SPACE, EQUAL, BULLET, HASH, COLON, DASH, TABLE_BEGIN, SEMICOLON], expression='SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON', name='specialLineBegin')
+special_line_begin = Choice([SPACE, EQUAL, BULLET, HASH, COLON, DASH, TABLE_BEGIN, SEMICOLON], expression='SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON', name='special_line_begin')
+paragraph_line = Sequence([NextNot(special_line_begin, expression='!special_line_begin'), inline, EOL], expression='!special_line_begin inline EOL', name='paragraph_line')(liftValue)
+blank_paragraph = Repetition(EOL, numMin=2, numMax=2, expression='EOL{2}', name='blank_paragraph')(setNullValue)
+paragraph = Repetition(paragraph_line, numMin=1, numMax=False, expression='paragraph_line+', name='paragraph')(liftValue)
+paragraphs = Repetition(Choice([blank_paragraph, EOL, paragraph], expression='blank_paragraph/EOL/paragraph'), numMin=1, numMax=False, expression='(blank_paragraph/EOL/paragraph)+', name='paragraphs')
+
+# Titles
 
 title6 = Sequence([TITLE6_BEGIN, inline, TITLE6_END], expression='TITLE6_BEGIN inline TITLE6_END', name='title6')(liftValue)
 title5 = Sequence([TITLE5_BEGIN, inline, TITLE5_END], expression='TITLE5_BEGIN inline TITLE5_END', name='title5')(liftValue)
@@ -410,11 +433,7 @@ title2 = Sequence([TITLE2_BEGIN, inline, TITLE2_END], expression='TITLE2_BEGIN i
 title1 = Sequence([TITLE1_BEGIN, inline, TITLE1_END], expression='TITLE1_BEGIN inline TITLE1_END', name='title1')(liftValue)
 title = Choice([title6, title5, title4, title3, title2, title1], expression='title6 / title5 / title4 / title3 / title2 / title1', name='title')
 
-paragraphLine = Sequence([NextNot(specialLineBegin, expression='!specialLineBegin'), inline, EOL], expression='!specialLineBegin inline EOL', name='paragraphLine')(liftValue)
-blankParagraph = Repetition(EOL, numMin=2, numMax=2, expression='EOL{2}', name='blankParagraph')(setNullValue)
-paragraph = Repetition(paragraphLine, numMin=1, numMax=False, expression='paragraphLine+', name='paragraph')(liftValue)
-paragraphs = Repetition(Choice([blankParagraph, EOL, paragraph], expression='blankParagraph/EOL/paragraph'), numMin=1, numMax=False, expression='(blankParagraph/EOL/paragraph)+', name='paragraphs')
-
+# Lists
 
 listChar = Choice([BULLET, HASH, COLON, SEMICOLON], expression='BULLET / HASH / COLON / SEMICOLON', name='listChar')
 listLeafContent = Sequence([NextNot(listChar, expression='!listChar'), inline, EOL], expression='!listChar inline EOL', name='listLeafContent')(liftValue)
@@ -436,6 +455,8 @@ subList **= Choice([semiColonSubList, colonSubList, numberSubList, bulletSubList
 listItem **= Choice([subList, listLeaf], expression='subList / listLeaf', name='listItem')
 list = Repetition(listItem, numMin=1, numMax=False, expression='listItem+', name='list')
 
+# Preformatted
+
 EOL_or_not = Repetition(EOL, numMin=0, numMax=1, expression='EOL{0..1}', name='EOL_or_not')(drop)
 preformattedLine = Sequence([SPACE, inline, EOL], expression='SPACE inline EOL', name='preformattedLine')(liftValue)
 preformattedLines = Repetition(preformattedLine, numMin=1, numMax=False, expression='preformattedLine+', name='preformattedLines')
@@ -443,25 +464,32 @@ preformattedText = Sequence([inline, EOL_or_not], expression='inline EOL_or_not'
 preformattedParagraph = Sequence([PRE_BEGIN, EOL, preformattedText, PRE_END, EOL], expression='PRE_BEGIN EOL preformattedText PRE_END EOL', name='preformattedParagraph')
 preformattedGroup = Choice([preformattedParagraph, preformattedLines], expression='preformattedParagraph / preformattedLines', name='preformattedGroup')
 
+# Special lines
+
 horizontalRule = Sequence([Repetition(DASH, numMin=4, numMax=4, expression='DASH{4}'), Repetition(DASH, numMin=False, numMax=False, expression='DASH*'), inline, EOL], expression='DASH{4} DASH* inline EOL', name='horizontalRule')(liftValue)
 
-invalidLine = Sequence([anyText, EOL], expression='anyText EOL', name='invalidLine')(liftValue)
+	# This should never happen
+invalid_line = Sequence([anyText, EOL], expression='anyText EOL', name='invalid_line')(liftValue)
 
 # Tables
 
-# TODO: replace CSS attributes with classic tag attributes
-CSS_chars = Sequence([NextNot(Choice([PIPE, BANG, L_BRACE], expression='PIPE/BANG/L_BRACE'), expression='!(PIPE/BANG/L_BRACE)'), anyChar], expression='!(PIPE/BANG/L_BRACE) anyChar', name='CSS_chars')
-CSS_text = Repetition(CSS_chars, numMin=1, numMax=False, expression='CSS_chars+', name='CSS_text')(join)
-CSS_attributes = Sequence([Repetition(CSS_text, numMin=1, numMax=False, expression='CSS_text+'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='CSS_text+ PIPE !PIPE', name='CSS_attributes')(liftValue)
-wikiTableParameters = Repetition(Choice([CSS_text, cleanInline], expression='CSS_text / cleanInline'), numMin=1, numMax=False, expression='(CSS_text / cleanInline)+', name='wikiTableParameters')(liftValue)
-wikiTableFirstCell = Sequence([Repetition(CSS_attributes, numMin=0, numMax=1, expression='CSS_attributes{0..1}'), Repetition(cleanInline, numMin=False, numMax=False, expression='cleanInline*')], expression='CSS_attributes{0..1} cleanInline*', name='wikiTableFirstCell')(liftValue)
+HTML_value_quote = Sequence([QUOTE, Repetition(Choice([Sequence([NextNot(Choice([GT, QUOTE], expression='GT/QUOTE'), expression='!(GT/QUOTE)'), anyChar], expression='!(GT/QUOTE) anyChar'), TAB], expression='(!(GT/QUOTE) anyChar) / TAB'), numMin=1, numMax=False, expression='((!(GT/QUOTE) anyChar) / TAB)+'), QUOTE], expression='QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE', name='HTML_value_quote')(join)
+HTML_value_apostrophe = Sequence([APOSTROPHE, Repetition(Choice([Sequence([NextNot(Choice([GT, APOSTROPHE], expression='GT/APOSTROPHE'), expression='!(GT/APOSTROPHE)'), anyChar], expression='!(GT/APOSTROPHE) anyChar'), TAB], expression='(!(GT/APOSTROPHE) anyChar) / TAB'), numMin=1, numMax=False, expression='((!(GT/APOSTROPHE) anyChar) / TAB)+'), APOSTROPHE], expression='APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE', name='HTML_value_apostrophe')(join)
+HTML_value_noquote = Repetition(Sequence([NextNot(Choice([GT, SPACETAB, SLASH], expression='GT/SPACETAB/SLASH'), expression='!(GT/SPACETAB/SLASH)'), rawChar], expression='!(GT/SPACETAB/SLASH) rawChar'), numMin=1, numMax=False, expression='(!(GT/SPACETAB/SLASH) rawChar)+', name='HTML_value_noquote')(join)
+HTML_value = Choice([HTML_value_quote, HTML_value_apostrophe, HTML_value_noquote], expression='HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote', name='HTML_value')
+HTML_name = Repetition(Sequence([NextNot(Choice([EQUAL, SLASH, SPACETAB], expression='EQUAL/SLASH/SPACETAB'), expression='!(EQUAL/SLASH/SPACETAB)'), rawChar], expression='!(EQUAL/SLASH/SPACETAB) rawChar'), numMin=1, numMax=False, expression='(!(EQUAL/SLASH/SPACETAB) rawChar)+', name='HTML_name')(join)
+HTML_attribute = Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), HTML_name, EQUAL, HTML_value, Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*')], expression='SPACETAB* HTML_name EQUAL HTML_value SPACETAB*', name='HTML_attribute')
+HTML_attributes = Repetition(HTML_attribute, numMin=False, numMax=False, expression='HTML_attribute*', name='HTML_attributes')
+wikiTableParametersPipe = Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), Repetition(HTML_attribute, numMin=1, numMax=False, expression='HTML_attribute+'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE', name='wikiTableParametersPipe')(liftValue)
+wikiTableParameters = Repetition(Choice([HTML_attribute, cleanInline], expression='HTML_attribute / cleanInline'), numMin=1, numMax=False, expression='(HTML_attribute / cleanInline)+', name='wikiTableParameters')(liftValue)
+wikiTableFirstCell = Sequence([Repetition(wikiTableParametersPipe, numMin=0, numMax=1, expression='wikiTableParametersPipe{0..1}'), Repetition(cleanInline, numMin=False, numMax=False, expression='cleanInline*')], expression='wikiTableParametersPipe{0..1} cleanInline*', name='wikiTableFirstCell')(liftValue)
 wikiTableOtherCell = Sequence([Repetition(PIPE, numMin=2, numMax=2, expression='PIPE{2}'), wikiTableFirstCell], expression='PIPE{2} wikiTableFirstCell', name='wikiTableOtherCell')(liftValue)
 wikiTableLineCells = Sequence([PIPE, wikiTableFirstCell, Repetition(wikiTableOtherCell, numMin=False, numMax=False, expression='wikiTableOtherCell*'), EOL], expression='PIPE wikiTableFirstCell wikiTableOtherCell* EOL', name='wikiTableLineCells')(liftValue)
 wikiTableLineHeader = Sequence([BANG, wikiTableFirstCell, Repetition(wikiTableOtherCell, numMin=False, numMax=False, expression='wikiTableOtherCell*'), EOL], expression='BANG wikiTableFirstCell wikiTableOtherCell* EOL', name='wikiTableLineHeader')(liftValue)
 wikiTableEmptyCell = Sequence([PIPE, EOL], expression='PIPE EOL', name='wikiTableEmptyCell')(setNullValue)
 wikiTableParamLineBreak = Sequence([TABLE_NEWLINE, Repetition(wikiTableParameters, numMin=False, numMax=False, expression='wikiTableParameters*'), EOL], expression='TABLE_NEWLINE wikiTableParameters* EOL', name='wikiTableParamLineBreak')(liftValue)
 wikiTableLineBreak = Sequence([TABLE_NEWLINE, EOL], expression='TABLE_NEWLINE EOL', name='wikiTableLineBreak')(setNullValue)
-wikiTableTitle = Sequence([TABLE_TITLE, Repetition(CSS_attributes, numMin=0, numMax=1, expression='CSS_attributes{0..1}'), Repetition(inline, numMin=False, numMax=False, expression='inline*'), EOL], expression='TABLE_TITLE CSS_attributes{0..1} inline* EOL', name='wikiTableTitle')(liftValue)
+wikiTableTitle = Sequence([TABLE_TITLE, Repetition(wikiTableParametersPipe, numMin=0, numMax=1, expression='wikiTableParametersPipe{0..1}'), Repetition(inline, numMin=False, numMax=False, expression='inline*'), EOL], expression='TABLE_TITLE wikiTableParametersPipe{0..1} inline* EOL', name='wikiTableTitle')(liftValue)
 wikiTableSpecialLine = Choice([wikiTableTitle, wikiTableLineBreak, wikiTableParamLineBreak], expression='wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak', name='wikiTableSpecialLine')
 wikiTableNormalLine = Choice([wikiTableLineCells, wikiTableLineHeader, wikiTableEmptyCell], expression='wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell', name='wikiTableNormalLine')
 wikiTableLine = Sequence([NextNot(TABLE_END, expression='!TABLE_END'), Choice([wikiTableSpecialLine, wikiTableNormalLine], expression='wikiTableSpecialLine / wikiTableNormalLine')], expression='!TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)', name='wikiTableLine')
@@ -471,7 +499,7 @@ wikiTable **= Sequence([wikiTableBegin, Repetition(EOL, numMin=False, numMax=Fal
 
 # Top pattern
 
-body = Sequence([optional_comment, Repetition(Choice([list, horizontalRule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalidLine, EOL], expression='list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL'), numMin=1, numMax=False, expression='(list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+')], expression='optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+', name='body')(liftValue)
+body = Sequence([optional_comment, Repetition(Choice([list, horizontalRule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalid_line, EOL], expression='list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL'), numMin=1, numMax=False, expression='(list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+')], expression='optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+', name='body')(liftValue)
 
 
 

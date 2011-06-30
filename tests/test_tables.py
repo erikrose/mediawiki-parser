@@ -6,7 +6,7 @@ from mediawiki_parser.tests import ParserTestCase
 class Tables_tests(ParserTestCase):
     def test_table_first_cell(self):
         source = 'style="color:red" | cell 1'
-        result = "[<?>:[CSS_attributes:[CSS_text:'style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1']]]"
+        result = "[<?>:[wikiTableParametersPipe:[HTML_attribute:[HTML_name:'style'  HTML_value_quote:'color:red']]]  <?>:[@cleanInline@:[rawText:' cell 1']]]"
         self.parsed_equal_string(source, result, 'wikiTableFirstCell')
 
     def test_table_other_cell(self):
@@ -21,8 +21,28 @@ class Tables_tests(ParserTestCase):
 
     def test_table_line_with_css(self):
         source = '| style="color:red" | cell 1\n'
-        result = "[wikiTableLineCells:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1']]]]"
+        result = "[wikiTableLineCells:[<?>:[wikiTableParametersPipe:[HTML_attribute:[HTML_name:'style'  HTML_value_quote:'color:red']]]  <?>:[@cleanInline@:[rawText:' cell 1']]]]"
         self.parsed_equal_string(source, result, 'wikiTableLine')
+
+    def test_table_line_with_multiple_attributes(self):
+        source = '| style="color:red" id=\'test\' name=test| cell 1\n'
+        result = """wikiTableLine:
+   wikiTableLineCells:
+      <?>:
+         wikiTableParametersPipe:
+            HTML_attribute:
+               HTML_name:style
+               HTML_value_quote:color:red
+            HTML_attribute:
+               HTML_name:id
+               HTML_value_apostrophe:test
+            HTML_attribute:
+               HTML_name:name
+               HTML_value_noquote:test
+      <?>:
+         @cleanInline@:
+            rawText: cell 1"""
+        self.parsed_equal_tree(source, result, 'wikiTableLine')
 
     def test_table_line_without_css(self):
         source = '| cell 1\n'
@@ -39,24 +59,24 @@ class Tables_tests(ParserTestCase):
         result = "[wikiTableLineCells:[wikiTableFirstCell:[@cleanInline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[@cleanInline@:[rawText:' cell 2']]]]]"
         self.parsed_equal_string(source, result, 'wikiTableLine')
 
-    def test_table_line_with_css_in_1st_cell(self):
+    def test_table_line_with_HTML_in_1st_cell(self):
         source = '| style="color:red" | cell 1 || cell 2\n'
-        result = "[wikiTableLineCells:[wikiTableFirstCell:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 1 ']]]  <?>:[wikiTableOtherCell:[@cleanInline@:[rawText:' cell 2']]]]]"
+        result = "[wikiTableLineCells:[wikiTableFirstCell:[<?>:[wikiTableParametersPipe:[HTML_attribute:[HTML_name:'style'  HTML_value_quote:'color:red']]]  <?>:[@cleanInline@:[rawText:' cell 1 ']]]  <?>:[wikiTableOtherCell:[@cleanInline@:[rawText:' cell 2']]]]]"
         self.parsed_equal_string(source, result, 'wikiTableLine')
 
-    def test_table_line_with_css_in_2nd_cell(self):
+    def test_table_line_with_HTML_in_2nd_cell(self):
         source = '| cell 1 || style="color:red" | cell 2\n'
-        result = "[wikiTableLineCells:[wikiTableFirstCell:[@cleanInline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[<?>:[CSS_attributes:[CSS_text:' style=\"color:red\" ']]  <?>:[@cleanInline@:[rawText:' cell 2']]]]]]"
+        result = "[wikiTableLineCells:[wikiTableFirstCell:[@cleanInline@:[rawText:' cell 1 ']]  <?>:[wikiTableOtherCell:[<?>:[wikiTableParametersPipe:[HTML_attribute:[HTML_name:'style'  HTML_value_quote:'color:red']]]  <?>:[@cleanInline@:[rawText:' cell 2']]]]]]"
         self.parsed_equal_string(source, result, 'wikiTableLine')
 
-    def test_table__header_with_css(self):
+    def test_table_header_with_css(self):
         source = '! scope=row | Line 1\n'
-        result = "[wikiTableLineHeader:[<?>:[CSS_attributes:[CSS_text:' scope=row ']]  <?>:[@cleanInline@:[rawText:' Line 1']]]]"
+        result = "[wikiTableLineHeader:[<?>:[wikiTableParametersPipe:[HTML_attribute:[HTML_name:'scope'  HTML_value_noquote:'row']]]  <?>:[@cleanInline@:[rawText:' Line 1']]]]"
         self.parsed_equal_string(source, result, 'wikiTableLine')
 
     def test_table_line_with_global_css(self):
         source = '|- style="color:red"\n'
-        result = "[wikiTableParamLineBreak:[wikiTableParameters:' style=\"color:red\"']]"
+        result = "[wikiTableParamLineBreak:[wikiTableParameters:[HTML_name:'style'  HTML_value_quote:'color:red']]]"
         self.parsed_equal_string(source, result, 'wikiTableLine')
 
     def test_table_with_css(self):
@@ -82,7 +102,9 @@ class Tables_tests(ParserTestCase):
                rawText: cellB
       wikiTableLine:
          wikiTableParamLineBreak:
-            wikiTableParameters: style="color:red"
+            wikiTableParameters:
+               HTML_name:style
+               HTML_value_quote:color:red
       wikiTableLine:
          wikiTableLineCells:
             @cleanInline@:
@@ -138,7 +160,7 @@ class Tables_tests(ParserTestCase):
                      rawText: cell 4"""
         self.parsed_equal_tree(source, result, "wikiTable")
 
-    def test_table_with_css_and_template(self):
+    def test_table_with_HTML_and_template(self):
         source = """{| class="wikitable" {{prettyTable}}
 |+ style="color:red" | Table {{title|parameter}}
 |-
@@ -158,7 +180,9 @@ class Tables_tests(ParserTestCase):
         result = """@wikiTable@:
    wikiTableBegin:
       wikiTableParameters:
-         CSS_text: class="wikitable" 
+         HTML_attribute:
+            HTML_name:class
+            HTML_value_quote:wikitable
          @cleanInline@:
             template:
                page_name:prettyTable
@@ -168,8 +192,10 @@ class Tables_tests(ParserTestCase):
       wikiTableLine:
          wikiTableTitle:
             <?>:
-               CSS_attributes:
-                  CSS_text: style="color:red" 
+               wikiTableParametersPipe:
+                  HTML_attribute:
+                     HTML_name:style
+                     HTML_value_quote:color:red
             <?>:
                @inline@:
                   rawText: Table 
@@ -182,16 +208,20 @@ class Tables_tests(ParserTestCase):
       wikiTableLine:
          wikiTableLineHeader:
             <?>:
-               CSS_attributes:
-                  CSS_text: scope=col 
+               wikiTableParametersPipe:
+                  HTML_attribute:
+                     HTML_name:scope
+                     HTML_value_noquote:col
             <?>:
                @cleanInline@:
                   rawText: Title A
       wikiTableLine:
          wikiTableLineHeader:
             <?>:
-               CSS_attributes:
-                  CSS_text: scope=col 
+               wikiTableParametersPipe:
+                  HTML_attribute:
+                     HTML_name:scope
+                     HTML_value_noquote:col
             <?>:
                @cleanInline@:
                   rawText: Title B
@@ -200,8 +230,10 @@ class Tables_tests(ParserTestCase):
       wikiTableLine:
          wikiTableLineHeader:
             <?>:
-               CSS_attributes:
-                  CSS_text: scope=row 
+               wikiTableParametersPipe:
+                  HTML_attribute:
+                     HTML_name:scope
+                     HTML_value_noquote:row
             <?>:
                @cleanInline@:
                   rawText: Line 1
@@ -218,8 +250,10 @@ class Tables_tests(ParserTestCase):
       wikiTableLine:
          wikiTableLineHeader:
             <?>:
-               CSS_attributes:
-                  CSS_text: scope=row 
+               wikiTableParametersPipe:
+                  HTML_attribute:
+                     HTML_name:scope
+                     HTML_value_noquote:row
             <?>:
                @cleanInline@:
                   rawText: Line 2
@@ -267,7 +301,9 @@ class Tables_tests(ParserTestCase):
         result = """@wikiTable@:
    wikiTableBegin:
       wikiTableParameters:
-         CSS_text: class="wikitable" 
+         HTML_attribute:
+            HTML_name:class
+            HTML_value_quote:wikitable
          @cleanInline@:
             template:
                page_name:prettyTable
@@ -282,8 +318,10 @@ class Tables_tests(ParserTestCase):
       wikiTableLine:
          wikiTableTitle:
             <?>:
-               CSS_attributes:
-                  CSS_text: style="color:red" 
+               wikiTableParametersPipe:
+                  HTML_attribute:
+                     HTML_name:style
+                     HTML_value_quote:color:red
             <?>:
                @inline@:
                   rawText: Table 
@@ -294,23 +332,29 @@ class Tables_tests(ParserTestCase):
       wikiTableLine:
          wikiTableLineHeader:
             <?>:
-               CSS_attributes:
-                  CSS_text: scope=col 
+               wikiTableParametersPipe:
+                  HTML_attribute:
+                     HTML_name:scope
+                     HTML_value_noquote:col
             <?>:
                @cleanInline@:
                   rawText: First (mother)
       wikiTableLine:
          wikiTableLineHeader:
             <?>:
-               CSS_attributes:
-                  CSS_text: scope=col 
+               wikiTableParametersPipe:
+                  HTML_attribute:
+                     HTML_name:scope
+                     HTML_value_noquote:col
             <?>:
                @cleanInline@:
                   rawText: table
       @wikiTable@:
          wikiTableBegin:
             wikiTableParameters:
-               CSS_text: class="wikitable" 
+               HTML_attribute:
+                  HTML_name:class
+                  HTML_value_quote:wikitable
                @cleanInline@:
                   template:
                      page_name:prettyTable
@@ -322,8 +366,10 @@ class Tables_tests(ParserTestCase):
             wikiTableLine:
                wikiTableLineHeader:
                   <?>:
-                     CSS_attributes:
-                        CSS_text: scope=row 
+                     wikiTableParametersPipe:
+                        HTML_attribute:
+                           HTML_name:scope
+                           HTML_value_noquote:row
                   <?>:
                      @cleanInline@:
                         rawText: Second (daughter) table
@@ -340,8 +386,10 @@ class Tables_tests(ParserTestCase):
             wikiTableLine:
                wikiTableLineHeader:
                   <?>:
-                     CSS_attributes:
-                        CSS_text: scope=row 
+                     wikiTableParametersPipe:
+                        HTML_attribute:
+                           HTML_name:scope
+                           HTML_value_noquote:row
                   <?>:
                      @cleanInline@:
                         rawText: in the first one

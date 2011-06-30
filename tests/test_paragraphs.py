@@ -19,9 +19,9 @@ With a newline in the middle.
         result = """body:
    paragraphs:
       paragraph:
-         paragraphLine:
+         paragraph_line:
             rawText:This is a paragraph.
-         paragraphLine:
+         paragraph_line:
             rawText:With a newline in the middle."""
         self.parsed_equal_tree(source, result, None)
 
@@ -48,7 +48,7 @@ Followed a blank line and another paragraph.
    paragraphs:
       paragraph:
          rawText:This is a paragraph.
-      blankParagraph:
+      blank_paragraph:
       paragraph:
          rawText:Followed a blank line and another paragraph."""
         self.parsed_equal_tree(source, result, None)

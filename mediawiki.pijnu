@@ -56,6 +56,8 @@ def parseAllQuotes(node):
     LINK_BEGIN              : L_BRACKET{2}                                                          : drop
     LINK_END                : R_BRACKET{2}                                                          : drop
 
+# Protocols
+
     HTTPS                   : "https://"                                                            : liftValue
     HTTP                    : "http://"                                                             : liftValue
     FTP                     : "ftp://"                                                              : liftValue
@@ -135,7 +137,7 @@ def parseAllQuotes(node):
     parameters              : parameter*
     template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END
 
-# Preformatted and nowiki
+# Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
     pre_text                : (!PRE_END anyChar)*                                                   : join
@@ -146,15 +148,22 @@ def parseAllQuotes(node):
 
 # Text types
 
-    styledText              : preformatted / link / url / template
+    styled_text             : link / url / template / html_comment / tag / entity
+    not_styled_text         : preformatted / nowiki
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
-    cleanInline             : (nowiki / styledText / rawText)+                                      : @
-    inline                  : (nowiki / styledText / html_comment / tag / entity / allowedText)+    : @
+    cleanInline             : (not_styled_text / styled_text / rawText)+                            : @
+    inline                  : (not_styled_text / styled_text / allowedText)+                        : @
 
-# Line types
+# Paragraphs
 
-    specialLineBegin        : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
+    special_line_begin      : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
+    paragraph_line          : !special_line_begin inline EOL                                        : liftValue
+    blank_paragraph         : EOL{2}                                                                : setNullValue
+    paragraph               : paragraph_line+                                                       : liftValue
+    paragraphs              : (blank_paragraph/EOL/paragraph)+
+
+# Titles
 
     title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue
     title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
@@ -164,11 +173,7 @@ def parseAllQuotes(node):
     title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue
     title                   : title6 / title5 / title4 / title3 / title2 / title1
 
-    paragraphLine           : !specialLineBegin inline EOL                                          : liftValue
-    blankParagraph          : EOL{2}                                                                : setNullValue
-    paragraph               : paragraphLine+                                                        : liftValue
-    paragraphs              : (blankParagraph/EOL/paragraph)+
-
+# Lists
 
     listChar                : BULLET / HASH / COLON / SEMICOLON
     listLeafContent         : !listChar inline EOL                                                  : liftValue
@@ -190,6 +195,8 @@ def parseAllQuotes(node):
     listItem                : subList / listLeaf                                                    : @
     list                    : listItem+
 
+# Preformatted
+
     EOL_or_not              : EOL{0..1}                                                             : drop
     preformattedLine        : SPACE inline EOL                                                      : liftValue
     preformattedLines       : preformattedLine+
@@ -197,25 +204,32 @@ def parseAllQuotes(node):
     preformattedParagraph   : PRE_BEGIN EOL preformattedText PRE_END EOL
     preformattedGroup       : preformattedParagraph / preformattedLines
 
+# Special lines
+
     horizontalRule          : DASH{4} DASH* inline EOL                                              : liftValue
 
-    invalidLine             : anyText EOL                                                           : liftValue
+	# This should never happen
+    invalid_line            : anyText EOL                                                           : liftValue
 
 # Tables
 
-# TODO: replace CSS attributes with classic tag attributes
-    CSS_chars               : !(PIPE/BANG/L_BRACE) anyChar
-    CSS_text                : CSS_chars+                                                            : join
-    CSS_attributes          : CSS_text+ PIPE !PIPE                                                  : liftValue
-    wikiTableParameters     : (CSS_text / cleanInline)+                                             : liftValue
-    wikiTableFirstCell      : CSS_attributes{0..1} cleanInline*                                     : liftValue
+    HTML_value_quote         : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                           : join
+    HTML_value_apostrophe    : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE            : join
+    HTML_value_noquote       : (!(GT/SPACETAB/SLASH) rawChar)+                                      : join
+    HTML_value               : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
+    HTML_name                : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                   : join
+	HTML_attribute           : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
+    HTML_attributes          : HTML_attribute*
+    wikiTableParametersPipe : SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE                        : liftValue
+    wikiTableParameters     : (HTML_attribute / cleanInline)+                                       : liftValue
+    wikiTableFirstCell      : wikiTableParametersPipe{0..1} cleanInline*                            : liftValue
     wikiTableOtherCell      : PIPE{2} wikiTableFirstCell                                            : liftValue
     wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
     wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
     wikiTableEmptyCell      : PIPE EOL                                                              : setNullValue
     wikiTableParamLineBreak : TABLE_NEWLINE wikiTableParameters* EOL                                : liftValue
     wikiTableLineBreak      : TABLE_NEWLINE EOL                                                     : setNullValue
-    wikiTableTitle          : TABLE_TITLE CSS_attributes{0..1} inline* EOL                          : liftValue
+    wikiTableTitle          : TABLE_TITLE wikiTableParametersPipe{0..1} inline* EOL                 : liftValue
     wikiTableSpecialLine    : wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
     wikiTableNormalLine     : wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
     wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)
@@ -225,4 +239,4 @@ def parseAllQuotes(node):
 
 # Top pattern
 
-    body                    : optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+ : liftValue
+    body                    : optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue
