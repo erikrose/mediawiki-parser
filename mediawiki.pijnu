@@ -100,6 +100,13 @@ def parseAllQuotes(node):
 
     entity                  : AMP alpha_num_text SEMICOLON                                          : liftValue
 
+# HTML comments
+
+    # HTML comments are totally ignored and do not appear in the final text
+    comment_content         : ((!(DASH{2} GT) [\x20..\xff])+ / SPACETABEOL)*
+    html_comment            : LT BANG DASH{2} comment_content DASH{2} GT                            : drop
+    optional_comment        : html_comment*
+
 # Text
 
     page_name               : rawChar+                                                              : join
@@ -143,7 +150,7 @@ def parseAllQuotes(node):
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
     cleanInline             : (nowiki / styledText / rawText)+                                      : @
-    inline                  : (nowiki / styledText / tag / entity / allowedText)+                   : @
+    inline                  : (nowiki / styledText / html_comment / tag / entity / allowedText)+    : @
 
 # Line types
 
@@ -166,23 +173,22 @@ def parseAllQuotes(node):
     listChar                : BULLET / HASH / COLON / SEMICOLON
     listLeafContent         : !listChar inline EOL                                                  : liftValue
 
-    bulletListLeaf          : BULLET listLeafContent                                                : liftValue
-    bulletSubList           : BULLET listItem                                                       : @
+    bulletListLeaf          : BULLET optional_comment listLeafContent                               : liftValue
+    bulletSubList           : BULLET optional_comment listItem                                      : @
 
-    numberListLeaf          : HASH listLeafContent                                                  : liftValue
-    numberSubList           : HASH listItem                                                         : @
+    numberListLeaf          : HASH optional_comment listLeafContent                                 : liftValue
+    numberSubList           : HASH optional_comment listItem                                        : @
 
-    colonListLeaf           : COLON listLeafContent                                                 : liftValue
-    colonSubList            : COLON listItem                                                        : @
+    colonListLeaf           : COLON optional_comment listLeafContent                                : liftValue
+    colonSubList            : COLON optional_comment listItem                                       : @
 
-    semiColonListLeaf       : SEMICOLON listLeafContent                                             : liftValue
-    semiColonSubList        : SEMICOLON listItem                                                    : @
+    semiColonListLeaf       : SEMICOLON optional_comment listLeafContent                            : liftValue
+    semiColonSubList        : SEMICOLON optional_comment listItem                                   : @
 
     listLeaf                : semiColonListLeaf / colonListLeaf / numberListLeaf / bulletListLeaf   : @
     subList                 : semiColonSubList / colonSubList / numberSubList / bulletSubList       : @
     listItem                : subList / listLeaf                                                    : @
     list                    : listItem+
-
 
     EOL_or_not              : EOL{0..1}                                                             : drop
     preformattedLine        : SPACE inline EOL                                                      : liftValue
@@ -217,4 +223,6 @@ def parseAllQuotes(node):
     wikiTableBegin          : TABLE_BEGIN wikiTableParameters*                                      : liftValue
     wikiTable               : wikiTableBegin EOL* wikiTableContent* TABLE_END EOL                   : @ liftValue
 
-    body                    : (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+
+# Top pattern
+
+    body                    : optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+ : liftValue

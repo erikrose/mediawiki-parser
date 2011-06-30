@@ -94,6 +94,13 @@
 
     entity                  : AMP alpha_num_text SEMICOLON                                          : liftValue
 
+# HTML comments
+
+    # HTML comments are totally ignored and do not appear in the final text
+    comment_content         : ((!(DASH{2} GT) [\x20..\xff])+ / SPACETABEOL)*
+    html_comment            : LT BANG DASH{2} comment_content DASH{2} GT                            : drop
+    optional_comment        : html_comment*
+
 # Text
 
     page_name               : rawChar+                                                              : join
@@ -137,7 +144,7 @@
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
     cleanInline             : (nowiki / styledText / rawText)+                                      : @
-    inline                  : (nowiki / styledText / tag / entity / allowedText)+                   : @
+    inline                  : (nowiki / styledText / html_comment / tag / entity / allowedText)+    : @
 
 # Line types
 
@@ -160,23 +167,22 @@
     listChar                : BULLET / HASH / COLON / SEMICOLON
     listLeafContent         : !listChar inline EOL                                                  : liftValue
 
-    bulletListLeaf          : BULLET listLeafContent                                                : liftValue
-    bulletSubList           : BULLET listItem                                                       : @
+    bulletListLeaf          : BULLET optional_comment listLeafContent                               : liftValue
+    bulletSubList           : BULLET optional_comment listItem                                      : @
 
-    numberListLeaf          : HASH listLeafContent                                                  : liftValue
-    numberSubList           : HASH listItem                                                         : @
+    numberListLeaf          : HASH optional_comment listLeafContent                                 : liftValue
+    numberSubList           : HASH optional_comment listItem                                        : @
 
-    colonListLeaf           : COLON listLeafContent                                                 : liftValue
-    colonSubList            : COLON listItem                                                        : @
+    colonListLeaf           : COLON optional_comment listLeafContent                                : liftValue
+    colonSubList            : COLON optional_comment listItem                                       : @
 
-    semiColonListLeaf       : SEMICOLON listLeafContent                                             : liftValue
-    semiColonSubList        : SEMICOLON listItem                                                    : @
+    semiColonListLeaf       : SEMICOLON optional_comment listLeafContent                            : liftValue
+    semiColonSubList        : SEMICOLON optional_comment listItem                                   : @
 
     listLeaf                : semiColonListLeaf / colonListLeaf / numberListLeaf / bulletListLeaf   : @
     subList                 : semiColonSubList / colonSubList / numberSubList / bulletSubList       : @
     listItem                : subList / listLeaf                                                    : @
     list                    : listItem+
-
 
     EOL_or_not              : EOL{0..1}                                                             : drop
     preformattedLine        : SPACE inline EOL                                                      : liftValue
@@ -211,7 +217,9 @@
     wikiTableBegin          : TABLE_BEGIN wikiTableParameters*                                      : liftValue
     wikiTable               : wikiTableBegin EOL* wikiTableContent* TABLE_END EOL                   : @ liftValue
 
-    body                    : (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+
+# Top pattern
+
+    body                    : optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+ : liftValue
 
 """
 
@@ -338,6 +346,13 @@ tag = Choice([tag_autoclose, tag_open, tag_close], expression='tag_autoclose / t
 
 entity = Sequence([AMP, alpha_num_text, SEMICOLON], expression='AMP alpha_num_text SEMICOLON', name='entity')(liftValue)
 
+# HTML comments
+
+    # HTML comments are totally ignored and do not appear in the final text
+comment_content = Repetition(Choice([Repetition(Sequence([NextNot(Sequence([Repetition(DASH, numMin=2, numMax=2, expression='DASH{2}'), GT], expression='DASH{2} GT'), expression='!(DASH{2} GT)'), Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]')], expression='!(DASH{2} GT) [\\x20..\\xff]'), numMin=1, numMax=False, expression='(!(DASH{2} GT) [\\x20..\\xff])+'), SPACETABEOL], expression='(!(DASH{2} GT) [\\x20..\\xff])+ / SPACETABEOL'), numMin=False, numMax=False, expression='((!(DASH{2} GT) [\\x20..\\xff])+ / SPACETABEOL)*', name='comment_content')
+html_comment = Sequence([LT, BANG, Repetition(DASH, numMin=2, numMax=2, expression='DASH{2}'), comment_content, Repetition(DASH, numMin=2, numMax=2, expression='DASH{2}'), GT], expression='LT BANG DASH{2} comment_content DASH{2} GT', name='html_comment')(drop)
+optional_comment = Repetition(html_comment, numMin=False, numMax=False, expression='html_comment*', name='optional_comment')
+
 # Text
 
 page_name = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='page_name')(join)
@@ -381,7 +396,7 @@ styledText = Choice([preformatted, link, url, template], expression='preformatte
 allowedChar = Repetition(escChar, numMin=1, numMax=1, expression='escChar{1}', name='allowedChar')(restore, liftValue)
 allowedText = Choice([rawText, allowedChar], expression='rawText / allowedChar', name='allowedText')
 cleanInline **= Repetition(Choice([nowiki, styledText, rawText], expression='nowiki / styledText / rawText'), numMin=1, numMax=False, expression='(nowiki / styledText / rawText)+', name='cleanInline')
-inline **= Repetition(Choice([nowiki, styledText, tag, entity, allowedText], expression='nowiki / styledText / tag / entity / allowedText'), numMin=1, numMax=False, expression='(nowiki / styledText / tag / entity / allowedText)+', name='inline')
+inline **= Repetition(Choice([nowiki, styledText, html_comment, tag, entity, allowedText], expression='nowiki / styledText / html_comment / tag / entity / allowedText'), numMin=1, numMax=False, expression='(nowiki / styledText / html_comment / tag / entity / allowedText)+', name='inline')
 
 # Line types
 
@@ -404,23 +419,22 @@ paragraphs = Repetition(Choice([blankParagraph, EOL, paragraph], expression='bla
 listChar = Choice([BULLET, HASH, COLON, SEMICOLON], expression='BULLET / HASH / COLON / SEMICOLON', name='listChar')
 listLeafContent = Sequence([NextNot(listChar, expression='!listChar'), inline, EOL], expression='!listChar inline EOL', name='listLeafContent')(liftValue)
 
-bulletListLeaf = Sequence([BULLET, listLeafContent], expression='BULLET listLeafContent', name='bulletListLeaf')(liftValue)
-bulletSubList **= Sequence([BULLET, listItem], expression='BULLET listItem', name='bulletSubList')
+bulletListLeaf = Sequence([BULLET, optional_comment, listLeafContent], expression='BULLET optional_comment listLeafContent', name='bulletListLeaf')(liftValue)
+bulletSubList **= Sequence([BULLET, optional_comment, listItem], expression='BULLET optional_comment listItem', name='bulletSubList')
 
-numberListLeaf = Sequence([HASH, listLeafContent], expression='HASH listLeafContent', name='numberListLeaf')(liftValue)
-numberSubList **= Sequence([HASH, listItem], expression='HASH listItem', name='numberSubList')
+numberListLeaf = Sequence([HASH, optional_comment, listLeafContent], expression='HASH optional_comment listLeafContent', name='numberListLeaf')(liftValue)
+numberSubList **= Sequence([HASH, optional_comment, listItem], expression='HASH optional_comment listItem', name='numberSubList')
 
-colonListLeaf = Sequence([COLON, listLeafContent], expression='COLON listLeafContent', name='colonListLeaf')(liftValue)
-colonSubList **= Sequence([COLON, listItem], expression='COLON listItem', name='colonSubList')
+colonListLeaf = Sequence([COLON, optional_comment, listLeafContent], expression='COLON optional_comment listLeafContent', name='colonListLeaf')(liftValue)
+colonSubList **= Sequence([COLON, optional_comment, listItem], expression='COLON optional_comment listItem', name='colonSubList')
 
-semiColonListLeaf = Sequence([SEMICOLON, listLeafContent], expression='SEMICOLON listLeafContent', name='semiColonListLeaf')(liftValue)
-semiColonSubList **= Sequence([SEMICOLON, listItem], expression='SEMICOLON listItem', name='semiColonSubList')
+semiColonListLeaf = Sequence([SEMICOLON, optional_comment, listLeafContent], expression='SEMICOLON optional_comment listLeafContent', name='semiColonListLeaf')(liftValue)
+semiColonSubList **= Sequence([SEMICOLON, optional_comment, listItem], expression='SEMICOLON optional_comment listItem', name='semiColonSubList')
 
 listLeaf **= Choice([semiColonListLeaf, colonListLeaf, numberListLeaf, bulletListLeaf], expression='semiColonListLeaf / colonListLeaf / numberListLeaf / bulletListLeaf', name='listLeaf')
 subList **= Choice([semiColonSubList, colonSubList, numberSubList, bulletSubList], expression='semiColonSubList / colonSubList / numberSubList / bulletSubList', name='subList')
 listItem **= Choice([subList, listLeaf], expression='subList / listLeaf', name='listItem')
 list = Repetition(listItem, numMin=1, numMax=False, expression='listItem+', name='list')
-
 
 EOL_or_not = Repetition(EOL, numMin=0, numMax=1, expression='EOL{0..1}', name='EOL_or_not')(drop)
 preformattedLine = Sequence([SPACE, inline, EOL], expression='SPACE inline EOL', name='preformattedLine')(liftValue)
@@ -455,7 +469,9 @@ wikiTableContent = Choice([wikiTableLine, wikiTable, EOL], expression='wikiTable
 wikiTableBegin = Sequence([TABLE_BEGIN, Repetition(wikiTableParameters, numMin=False, numMax=False, expression='wikiTableParameters*')], expression='TABLE_BEGIN wikiTableParameters*', name='wikiTableBegin')(liftValue)
 wikiTable **= Sequence([wikiTableBegin, Repetition(EOL, numMin=False, numMax=False, expression='EOL*'), Repetition(wikiTableContent, numMin=False, numMax=False, expression='wikiTableContent*'), TABLE_END, EOL], expression='wikiTableBegin EOL* wikiTableContent* TABLE_END EOL', name='wikiTable')(liftValue)
 
-body = Repetition(Choice([list, horizontalRule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalidLine, EOL], expression='list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL'), numMin=1, numMax=False, expression='(list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+', name='body')
+# Top pattern
+
+body = Sequence([optional_comment, Repetition(Choice([list, horizontalRule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalidLine, EOL], expression='list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL'), numMin=1, numMax=False, expression='(list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+')], expression='optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalidLine / EOL)+', name='body')(liftValue)
 
 
 
