@@ -1,7 +1,5 @@
 wikitext
 <toolset>
-def setNullValue(node):
-    node.value = ''
 def parseAllQuotes(node):
     from apostrophes import parseQuotes
     node.value = parseQuotes(node.value)
@@ -53,6 +51,8 @@ def parseAllQuotes(node):
     TITLE1_END              : EQUAL{1} SPACETAB* EOL                                                : drop
     TEMPLATE_BEGIN          : L_BRACE{2}                                                            : drop
     TEMPLATE_END            : R_BRACE{2}                                                            : drop
+    PARAMETER_BEGIN         : L_BRACE{3}                                                            : drop
+    PARAMETER_END           : R_BRACE{3}                                                            : drop
     LINK_BEGIN              : L_BRACKET{2}                                                          : drop
     LINK_END                : R_BRACKET{2}                                                          : drop
 
@@ -88,10 +88,10 @@ def parseAllQuotes(node):
     value_quote             : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
     value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
     value_noquote           : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
-    attribute_value         : value_quote / value_apostrophe / value_noquote
+    attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))?             : liftNode
     attribute_name          : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
     tag_name                : (!(SPACE/SLASH) rawChar)+                                             : join
-    optional_attribute      : SPACETABEOL+ attribute_name EQUAL attribute_value
+    optional_attribute      : SPACETABEOL+ attribute_name attribute_value
     optional_attributes     : optional_attribute*
     tag_open                : LT tag_name optional_attributes SPACETABEOL* GT
     tag_close               : LT SLASH tag_name GT
@@ -113,14 +113,14 @@ def parseAllQuotes(node):
 
     page_name               : rawChar+                                                              : join
 # TODO: allow IPv6 addresses (http://[::1]/etc)
-    address                 : (!(SPACE/QUOTE/R_BRACKET) [\x21..\xff])+                              : liftValue
+    address                 : (!(QUOTE/R_BRACKET) [\x21..\xff])+                                    : liftValue
     url                     : protocol address                                                      : join
 
 # Links
 
-    allowed_in_link         : (!(R_BRACKET/PIPE) escChar)+                                          : restore liftValue join
+    allowed_in_link         : (!(R_BRACKET/PIPE) escChar)+                                          : restore join
     link_text               : (cleanInline / allowed_in_link)*                                      : liftValue
-    link_argument           : PIPE link_text
+    link_argument           : PIPE link_text                                                        : liftValue
     link_arguments          : link_argument*
     internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : liftValue
     optional_link_text      : SPACETAB+ link_text                                                   : liftValue
@@ -137,6 +137,14 @@ def parseAllQuotes(node):
     parameters              : parameter*
     template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END
 
+# Template parameters
+
+    # Those parameters should be substituted by their value when the current page is a template or by their optional default value in any case
+    template_parameter_id   : (!(R_BRACE/PIPE) anyChar)+                                            : join
+    default_value           : (!R_BRACE anyChar)+                                                   : join
+    optional_default_value  : (PIPE default_value)?                                                 : liftNode
+    template_parameter      : PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END
+
 # Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
@@ -148,7 +156,7 @@ def parseAllQuotes(node):
 
 # Text types
 
-    styled_text             : link / url / template / html_comment / tag / entity
+    styled_text             : link / url / template_parameter / template / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
@@ -157,9 +165,9 @@ def parseAllQuotes(node):
 
 # Paragraphs
 
-    special_line_begin      : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
+    special_line_begin      : SPACE/EQUAL/BULLET/HASH/COLON/DASH{4}/TABLE_BEGIN/SEMICOLON
     paragraph_line          : !special_line_begin inline EOL                                        : liftValue
-    blank_paragraph         : EOL{2}                                                                : setNullValue
+    blank_paragraph         : EOL{2}                                                                : drop keep
     paragraph               : paragraph_line+                                                       : liftValue
     paragraphs              : (blank_paragraph/EOL/paragraph)+
 
@@ -206,37 +214,39 @@ def parseAllQuotes(node):
 
 # Special lines
 
-    horizontalRule          : DASH{4} DASH* inline EOL                                              : liftValue
+    horizontal_rule         : DASH{4} DASH* inline* EOL                                             : liftValue keep
 
-	# This should never happen
+    # This should never happen
     invalid_line            : anyText EOL                                                           : liftValue
 
 # Tables
 
-    HTML_value_quote         : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                           : join
-    HTML_value_apostrophe    : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE            : join
-    HTML_value_noquote       : (!(GT/SPACETAB/SLASH) rawChar)+                                      : join
-    HTML_value               : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
-    HTML_name                : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                   : join
-	HTML_attribute           : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
-    HTML_attributes          : HTML_attribute*
-    wikiTableParametersPipe : SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE                        : liftValue
+    HTML_value_quote        : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
+    HTML_value_apostrophe   : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
+    HTML_value_noquote      : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
+    HTML_value              : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
+    HTML_name               : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
+    HTML_attribute          : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
+    HTML_attributes         : HTML_attribute*
+    wikiTableParametersPipe : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
     wikiTableParameters     : (HTML_attribute / cleanInline)+                                       : liftValue
-    wikiTableFirstCell      : wikiTableParametersPipe{0..1} cleanInline*                            : liftValue
-    wikiTableOtherCell      : PIPE{2} wikiTableFirstCell                                            : liftValue
-    wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
-    wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
-    wikiTableEmptyCell      : PIPE EOL                                                              : setNullValue
-    wikiTableParamLineBreak : TABLE_NEWLINE wikiTableParameters* EOL                                : liftValue
-    wikiTableLineBreak      : TABLE_NEWLINE EOL                                                     : setNullValue
-    wikiTableTitle          : TABLE_TITLE wikiTableParametersPipe{0..1} inline* EOL                 : liftValue
+    wikiTableParameter      : wikiTableParametersPipe{0..1}                                         : liftValue
+    wikiTableCellContent    : cleanInline*
+    wikiTableFirstCell      : wikiTableParameter wikiTableCellContent                               : liftNode
+    wikiTableOtherCell      : (PIPE{2} wikiTableFirstCell)*                                         : liftValue liftNode
+    wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell EOL                        : liftValue
+    wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell EOL                        : liftValue
+    wikiTableEmptyCell      : PIPE EOL                                                              : keep
+    wikiTableParamLineBreak : TABLE_NEWLINE wikiTableParameters* EOL                                : keep liftValue
+    wikiTableLineBreak      : TABLE_NEWLINE EOL                                                     : keep
+    wikiTableTitle          : TABLE_TITLE wikiTableParameter wikiTableCellContent EOL               : liftValue
     wikiTableSpecialLine    : wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
     wikiTableNormalLine     : wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
-    wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)
-    wikiTableContent        : wikiTableLine / wikiTable / EOL
+    wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)               : liftNode
+    wikiTableContent        : (wikiTableLine / wikiTable / EOL)*                                    : liftNode
     wikiTableBegin          : TABLE_BEGIN wikiTableParameters*                                      : liftValue
-    wikiTable               : wikiTableBegin EOL* wikiTableContent* TABLE_END EOL                   : @ liftValue
+    wikiTable               : wikiTableBegin SPACETABEOL* wikiTableContent TABLE_END EOL            : @ liftValue
 
 # Top pattern
 
-    body                    : optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue
+    body                    : optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue

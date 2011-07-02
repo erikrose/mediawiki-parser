@@ -47,6 +47,8 @@
     TITLE1_END              : EQUAL{1} SPACETAB* EOL                                                : drop
     TEMPLATE_BEGIN          : L_BRACE{2}                                                            : drop
     TEMPLATE_END            : R_BRACE{2}                                                            : drop
+    PARAMETER_BEGIN         : L_BRACE{3}                                                            : drop
+    PARAMETER_END           : R_BRACE{3}                                                            : drop
     LINK_BEGIN              : L_BRACKET{2}                                                          : drop
     LINK_END                : R_BRACKET{2}                                                          : drop
 
@@ -82,10 +84,10 @@
     value_quote             : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
     value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
     value_noquote           : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
-    attribute_value         : value_quote / value_apostrophe / value_noquote
+    attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))?             : liftNode
     attribute_name          : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
     tag_name                : (!(SPACE/SLASH) rawChar)+                                             : join
-    optional_attribute      : SPACETABEOL+ attribute_name EQUAL attribute_value
+    optional_attribute      : SPACETABEOL+ attribute_name attribute_value
     optional_attributes     : optional_attribute*
     tag_open                : LT tag_name optional_attributes SPACETABEOL* GT
     tag_close               : LT SLASH tag_name GT
@@ -107,14 +109,14 @@
 
     page_name               : rawChar+                                                              : join
 # TODO: allow IPv6 addresses (http://[::1]/etc)
-    address                 : (!(SPACE/QUOTE/R_BRACKET) [\x21..\xff])+                              : liftValue
+    address                 : (!(QUOTE/R_BRACKET) [\x21..\xff])+                                    : liftValue
     url                     : protocol address                                                      : join
 
 # Links
 
-    allowed_in_link         : (!(R_BRACKET/PIPE) escChar)+                                          : restore liftValue join
+    allowed_in_link         : (!(R_BRACKET/PIPE) escChar)+                                          : restore join
     link_text               : (cleanInline / allowed_in_link)*                                      : liftValue
-    link_argument           : PIPE link_text
+    link_argument           : PIPE link_text                                                        : liftValue
     link_arguments          : link_argument*
     internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : liftValue
     optional_link_text      : SPACETAB+ link_text                                                   : liftValue
@@ -131,6 +133,14 @@
     parameters              : parameter*
     template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END
 
+# Template parameters
+
+    # Those parameters should be substituted by their value when the current page is a template or by their optional default value in any case
+    template_parameter_id   : (!(R_BRACE/PIPE) anyChar)+                                            : join
+    default_value           : (!R_BRACE anyChar)+                                                   : join
+    optional_default_value  : (PIPE default_value)?                                                 : liftNode
+    template_parameter      : PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END
+
 # Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
@@ -142,7 +152,7 @@
 
 # Text types
 
-    styled_text             : link / url / template / html_comment / tag / entity
+    styled_text             : link / url / template_parameter / template / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
@@ -151,9 +161,9 @@
 
 # Paragraphs
 
-    special_line_begin      : SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON
+    special_line_begin      : SPACE/EQUAL/BULLET/HASH/COLON/DASH{4}/TABLE_BEGIN/SEMICOLON
     paragraph_line          : !special_line_begin inline EOL                                        : liftValue
-    blank_paragraph         : EOL{2}                                                                : setNullValue
+    blank_paragraph         : EOL{2}                                                                : drop keep
     paragraph               : paragraph_line+                                                       : liftValue
     paragraphs              : (blank_paragraph/EOL/paragraph)+
 
@@ -200,40 +210,42 @@
 
 # Special lines
 
-    horizontalRule          : DASH{4} DASH* inline EOL                                              : liftValue
+    horizontal_rule         : DASH{4} DASH* inline* EOL                                             : liftValue keep
 
-	# This should never happen
+    # This should never happen
     invalid_line            : anyText EOL                                                           : liftValue
 
 # Tables
 
-    HTML_value_quote         : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                           : join
-    HTML_value_apostrophe    : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE            : join
-    HTML_value_noquote       : (!(GT/SPACETAB/SLASH) rawChar)+                                      : join
-    HTML_value               : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
-    HTML_name                : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                   : join
-	HTML_attribute           : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
-    HTML_attributes          : HTML_attribute*
-    wikiTableParametersPipe : SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE                        : liftValue
+    HTML_value_quote        : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
+    HTML_value_apostrophe   : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
+    HTML_value_noquote      : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
+    HTML_value              : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
+    HTML_name               : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
+    HTML_attribute          : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
+    HTML_attributes         : HTML_attribute*
+    wikiTableParametersPipe : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
     wikiTableParameters     : (HTML_attribute / cleanInline)+                                       : liftValue
-    wikiTableFirstCell      : wikiTableParametersPipe{0..1} cleanInline*                            : liftValue
-    wikiTableOtherCell      : PIPE{2} wikiTableFirstCell                                            : liftValue
-    wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
-    wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell* EOL                       : liftValue
-    wikiTableEmptyCell      : PIPE EOL                                                              : setNullValue
-    wikiTableParamLineBreak : TABLE_NEWLINE wikiTableParameters* EOL                                : liftValue
-    wikiTableLineBreak      : TABLE_NEWLINE EOL                                                     : setNullValue
-    wikiTableTitle          : TABLE_TITLE wikiTableParametersPipe{0..1} inline* EOL                 : liftValue
+    wikiTableParameter      : wikiTableParametersPipe{0..1}                                         : liftValue
+    wikiTableCellContent    : cleanInline*
+    wikiTableFirstCell      : wikiTableParameter wikiTableCellContent                               : liftNode
+    wikiTableOtherCell      : (PIPE{2} wikiTableFirstCell)*                                         : liftValue liftNode
+    wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell EOL                        : liftValue
+    wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell EOL                        : liftValue
+    wikiTableEmptyCell      : PIPE EOL                                                              : keep
+    wikiTableParamLineBreak : TABLE_NEWLINE wikiTableParameters* EOL                                : keep liftValue
+    wikiTableLineBreak      : TABLE_NEWLINE EOL                                                     : keep
+    wikiTableTitle          : TABLE_TITLE wikiTableParameter wikiTableCellContent EOL               : liftValue
     wikiTableSpecialLine    : wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
     wikiTableNormalLine     : wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
-    wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)
-    wikiTableContent        : wikiTableLine / wikiTable / EOL
+    wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)               : liftNode
+    wikiTableContent        : (wikiTableLine / wikiTable / EOL)*                                    : liftNode
     wikiTableBegin          : TABLE_BEGIN wikiTableParameters*                                      : liftValue
-    wikiTable               : wikiTableBegin EOL* wikiTableContent* TABLE_END EOL                   : @ liftValue
+    wikiTable               : wikiTableBegin SPACETABEOL* wikiTableContent TABLE_END EOL            : @ liftValue
 
 # Top pattern
 
-    body                    : optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue
+    body                    : optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue
 
 """
 
@@ -250,8 +262,6 @@ state = wikitextParser.state
 
 
 ###   <toolset>
-def setNullValue(node):
-    node.value = ''
 def parseAllQuotes(node):
     from apostrophes import parseQuotes
     node.value = parseQuotes(node.value)
@@ -313,6 +323,8 @@ TITLE2_END = Sequence([Repetition(EQUAL, numMin=2, numMax=2, expression='EQUAL{2
 TITLE1_END = Sequence([Repetition(EQUAL, numMin=1, numMax=1, expression='EQUAL{1}'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), EOL], expression='EQUAL{1} SPACETAB* EOL', name='TITLE1_END')(drop)
 TEMPLATE_BEGIN = Repetition(L_BRACE, numMin=2, numMax=2, expression='L_BRACE{2}', name='TEMPLATE_BEGIN')(drop)
 TEMPLATE_END = Repetition(R_BRACE, numMin=2, numMax=2, expression='R_BRACE{2}', name='TEMPLATE_END')(drop)
+PARAMETER_BEGIN = Repetition(L_BRACE, numMin=3, numMax=3, expression='L_BRACE{3}', name='PARAMETER_BEGIN')(drop)
+PARAMETER_END = Repetition(R_BRACE, numMin=3, numMax=3, expression='R_BRACE{3}', name='PARAMETER_END')(drop)
 LINK_BEGIN = Repetition(L_BRACKET, numMin=2, numMax=2, expression='L_BRACKET{2}', name='LINK_BEGIN')(drop)
 LINK_END = Repetition(R_BRACKET, numMin=2, numMax=2, expression='R_BRACKET{2}', name='LINK_END')(drop)
 
@@ -348,10 +360,10 @@ anyText = Repetition(anyChar, numMin=1, numMax=False, expression='anyChar+', nam
 value_quote = Sequence([QUOTE, Repetition(Choice([Sequence([NextNot(Choice([GT, QUOTE], expression='GT/QUOTE'), expression='!(GT/QUOTE)'), anyChar], expression='!(GT/QUOTE) anyChar'), TAB], expression='(!(GT/QUOTE) anyChar) / TAB'), numMin=1, numMax=False, expression='((!(GT/QUOTE) anyChar) / TAB)+'), QUOTE], expression='QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE', name='value_quote')(join)
 value_apostrophe = Sequence([APOSTROPHE, Repetition(Choice([Sequence([NextNot(Choice([GT, APOSTROPHE], expression='GT/APOSTROPHE'), expression='!(GT/APOSTROPHE)'), anyChar], expression='!(GT/APOSTROPHE) anyChar'), TAB], expression='(!(GT/APOSTROPHE) anyChar) / TAB'), numMin=1, numMax=False, expression='((!(GT/APOSTROPHE) anyChar) / TAB)+'), APOSTROPHE], expression='APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE', name='value_apostrophe')(join)
 value_noquote = Repetition(Sequence([NextNot(Choice([GT, SPACETAB, SLASH], expression='GT/SPACETAB/SLASH'), expression='!(GT/SPACETAB/SLASH)'), rawChar], expression='!(GT/SPACETAB/SLASH) rawChar'), numMin=1, numMax=False, expression='(!(GT/SPACETAB/SLASH) rawChar)+', name='value_noquote')(join)
-attribute_value = Choice([value_quote, value_apostrophe, value_noquote], expression='value_quote / value_apostrophe / value_noquote', name='attribute_value')
+attribute_value = Option(Sequence([EQUAL, Choice([value_quote, value_apostrophe, value_noquote], expression='value_quote / value_apostrophe / value_noquote')], expression='EQUAL (value_quote / value_apostrophe / value_noquote)'), expression='(EQUAL (value_quote / value_apostrophe / value_noquote))?', name='attribute_value')(liftNode)
 attribute_name = Repetition(Sequence([NextNot(Choice([EQUAL, SLASH, SPACETAB], expression='EQUAL/SLASH/SPACETAB'), expression='!(EQUAL/SLASH/SPACETAB)'), rawChar], expression='!(EQUAL/SLASH/SPACETAB) rawChar'), numMin=1, numMax=False, expression='(!(EQUAL/SLASH/SPACETAB) rawChar)+', name='attribute_name')(join)
 tag_name = Repetition(Sequence([NextNot(Choice([SPACE, SLASH], expression='SPACE/SLASH'), expression='!(SPACE/SLASH)'), rawChar], expression='!(SPACE/SLASH) rawChar'), numMin=1, numMax=False, expression='(!(SPACE/SLASH) rawChar)+', name='tag_name')(join)
-optional_attribute = Sequence([Repetition(SPACETABEOL, numMin=1, numMax=False, expression='SPACETABEOL+'), attribute_name, EQUAL, attribute_value], expression='SPACETABEOL+ attribute_name EQUAL attribute_value', name='optional_attribute')
+optional_attribute = Sequence([Repetition(SPACETABEOL, numMin=1, numMax=False, expression='SPACETABEOL+'), attribute_name, attribute_value], expression='SPACETABEOL+ attribute_name attribute_value', name='optional_attribute')
 optional_attributes = Repetition(optional_attribute, numMin=False, numMax=False, expression='optional_attribute*', name='optional_attributes')
 tag_open = Sequence([LT, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), GT], expression='LT tag_name optional_attributes SPACETABEOL* GT', name='tag_open')
 tag_close = Sequence([LT, SLASH, tag_name, GT], expression='LT SLASH tag_name GT', name='tag_close')
@@ -373,14 +385,14 @@ optional_comment = Repetition(html_comment, numMin=False, numMax=False, expressi
 
 page_name = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='page_name')(join)
 # TODO: allow IPv6 addresses (http://[::1]/etc)
-address = Repetition(Sequence([NextNot(Choice([SPACE, QUOTE, R_BRACKET], expression='SPACE/QUOTE/R_BRACKET'), expression='!(SPACE/QUOTE/R_BRACKET)'), Klass(u'!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x21..\\xff]')], expression='!(SPACE/QUOTE/R_BRACKET) [\\x21..\\xff]'), numMin=1, numMax=False, expression='(!(SPACE/QUOTE/R_BRACKET) [\\x21..\\xff])+', name='address')(liftValue)
+address = Repetition(Sequence([NextNot(Choice([QUOTE, R_BRACKET], expression='QUOTE/R_BRACKET'), expression='!(QUOTE/R_BRACKET)'), Klass(u'!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x21..\\xff]')], expression='!(QUOTE/R_BRACKET) [\\x21..\\xff]'), numMin=1, numMax=False, expression='(!(QUOTE/R_BRACKET) [\\x21..\\xff])+', name='address')(liftValue)
 url = Sequence([protocol, address], expression='protocol address', name='url')(join)
 
 # Links
 
-allowed_in_link = Repetition(Sequence([NextNot(Choice([R_BRACKET, PIPE], expression='R_BRACKET/PIPE'), expression='!(R_BRACKET/PIPE)'), escChar], expression='!(R_BRACKET/PIPE) escChar'), numMin=1, numMax=False, expression='(!(R_BRACKET/PIPE) escChar)+', name='allowed_in_link')(restore, liftValue, join)
+allowed_in_link = Repetition(Sequence([NextNot(Choice([R_BRACKET, PIPE], expression='R_BRACKET/PIPE'), expression='!(R_BRACKET/PIPE)'), escChar], expression='!(R_BRACKET/PIPE) escChar'), numMin=1, numMax=False, expression='(!(R_BRACKET/PIPE) escChar)+', name='allowed_in_link')(restore, join)
 link_text = Repetition(Choice([cleanInline, allowed_in_link], expression='cleanInline / allowed_in_link'), numMin=False, numMax=False, expression='(cleanInline / allowed_in_link)*', name='link_text')(liftValue)
-link_argument = Sequence([PIPE, link_text], expression='PIPE link_text', name='link_argument')
+link_argument = Sequence([PIPE, link_text], expression='PIPE link_text', name='link_argument')(liftValue)
 link_arguments = Repetition(link_argument, numMin=False, numMax=False, expression='link_argument*', name='link_arguments')
 internal_link = Sequence([LINK_BEGIN, page_name, link_arguments, LINK_END], expression='LINK_BEGIN page_name link_arguments LINK_END', name='internal_link')(liftValue)
 optional_link_text = Sequence([Repetition(SPACETAB, numMin=1, numMax=False, expression='SPACETAB+'), link_text], expression='SPACETAB+ link_text', name='optional_link_text')(liftValue)
@@ -397,6 +409,14 @@ parameter = Sequence([Repetition(SPACETABEOL, numMin=False, numMax=False, expres
 parameters = Repetition(parameter, numMin=False, numMax=False, expression='parameter*', name='parameters')
 template = Sequence([TEMPLATE_BEGIN, page_name, parameters, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), TEMPLATE_END], expression='TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END', name='template')
 
+# Template parameters
+
+    # Those parameters should be substituted by their value when the current page is a template or by their optional default value in any case
+template_parameter_id = Repetition(Sequence([NextNot(Choice([R_BRACE, PIPE], expression='R_BRACE/PIPE'), expression='!(R_BRACE/PIPE)'), anyChar], expression='!(R_BRACE/PIPE) anyChar'), numMin=1, numMax=False, expression='(!(R_BRACE/PIPE) anyChar)+', name='template_parameter_id')(join)
+default_value = Repetition(Sequence([NextNot(R_BRACE, expression='!R_BRACE'), anyChar], expression='!R_BRACE anyChar'), numMin=1, numMax=False, expression='(!R_BRACE anyChar)+', name='default_value')(join)
+optional_default_value = Option(Sequence([PIPE, default_value], expression='PIPE default_value'), expression='(PIPE default_value)?', name='optional_default_value')(liftNode)
+template_parameter = Sequence([PARAMETER_BEGIN, template_parameter_id, optional_default_value, PARAMETER_END], expression='PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END', name='template_parameter')
+
 # Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
@@ -408,7 +428,7 @@ nowiki = Sequence([NOWIKI_BEGIN, nowiki_text, NOWIKI_END], expression='NOWIKI_BE
 
 # Text types
 
-styled_text = Choice([link, url, template, html_comment, tag, entity], expression='link / url / template / html_comment / tag / entity', name='styled_text')
+styled_text = Choice([link, url, template_parameter, template, html_comment, tag, entity], expression='link / url / template_parameter / template / html_comment / tag / entity', name='styled_text')
 not_styled_text = Choice([preformatted, nowiki], expression='preformatted / nowiki', name='not_styled_text')
 allowedChar = Repetition(escChar, numMin=1, numMax=1, expression='escChar{1}', name='allowedChar')(restore, liftValue)
 allowedText = Choice([rawText, allowedChar], expression='rawText / allowedChar', name='allowedText')
@@ -417,9 +437,9 @@ inline **= Repetition(Choice([not_styled_text, styled_text, allowedText], expres
 
 # Paragraphs
 
-special_line_begin = Choice([SPACE, EQUAL, BULLET, HASH, COLON, DASH, TABLE_BEGIN, SEMICOLON], expression='SPACE/EQUAL/BULLET/HASH/COLON/DASH/TABLE_BEGIN/SEMICOLON', name='special_line_begin')
+special_line_begin = Choice([SPACE, EQUAL, BULLET, HASH, COLON, Repetition(DASH, numMin=4, numMax=4, expression='DASH{4}'), TABLE_BEGIN, SEMICOLON], expression='SPACE/EQUAL/BULLET/HASH/COLON/DASH{4}/TABLE_BEGIN/SEMICOLON', name='special_line_begin')
 paragraph_line = Sequence([NextNot(special_line_begin, expression='!special_line_begin'), inline, EOL], expression='!special_line_begin inline EOL', name='paragraph_line')(liftValue)
-blank_paragraph = Repetition(EOL, numMin=2, numMax=2, expression='EOL{2}', name='blank_paragraph')(setNullValue)
+blank_paragraph = Repetition(EOL, numMin=2, numMax=2, expression='EOL{2}', name='blank_paragraph')(drop, keep)
 paragraph = Repetition(paragraph_line, numMin=1, numMax=False, expression='paragraph_line+', name='paragraph')(liftValue)
 paragraphs = Repetition(Choice([blank_paragraph, EOL, paragraph], expression='blank_paragraph/EOL/paragraph'), numMin=1, numMax=False, expression='(blank_paragraph/EOL/paragraph)+', name='paragraphs')
 
@@ -466,9 +486,9 @@ preformattedGroup = Choice([preformattedParagraph, preformattedLines], expressio
 
 # Special lines
 
-horizontalRule = Sequence([Repetition(DASH, numMin=4, numMax=4, expression='DASH{4}'), Repetition(DASH, numMin=False, numMax=False, expression='DASH*'), inline, EOL], expression='DASH{4} DASH* inline EOL', name='horizontalRule')(liftValue)
+horizontal_rule = Sequence([Repetition(DASH, numMin=4, numMax=4, expression='DASH{4}'), Repetition(DASH, numMin=False, numMax=False, expression='DASH*'), Repetition(inline, numMin=False, numMax=False, expression='inline*'), EOL], expression='DASH{4} DASH* inline* EOL', name='horizontal_rule')(liftValue, keep)
 
-	# This should never happen
+    # This should never happen
 invalid_line = Sequence([anyText, EOL], expression='anyText EOL', name='invalid_line')(liftValue)
 
 # Tables
@@ -480,26 +500,28 @@ HTML_value = Choice([HTML_value_quote, HTML_value_apostrophe, HTML_value_noquote
 HTML_name = Repetition(Sequence([NextNot(Choice([EQUAL, SLASH, SPACETAB], expression='EQUAL/SLASH/SPACETAB'), expression='!(EQUAL/SLASH/SPACETAB)'), rawChar], expression='!(EQUAL/SLASH/SPACETAB) rawChar'), numMin=1, numMax=False, expression='(!(EQUAL/SLASH/SPACETAB) rawChar)+', name='HTML_name')(join)
 HTML_attribute = Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), HTML_name, EQUAL, HTML_value, Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*')], expression='SPACETAB* HTML_name EQUAL HTML_value SPACETAB*', name='HTML_attribute')
 HTML_attributes = Repetition(HTML_attribute, numMin=False, numMax=False, expression='HTML_attribute*', name='HTML_attributes')
-wikiTableParametersPipe = Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), Repetition(HTML_attribute, numMin=1, numMax=False, expression='HTML_attribute+'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE', name='wikiTableParametersPipe')(liftValue)
+wikiTableParametersPipe = Option(Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), Repetition(HTML_attribute, numMin=1, numMax=False, expression='HTML_attribute+'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE'), expression='(SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?', name='wikiTableParametersPipe')(liftNode)
 wikiTableParameters = Repetition(Choice([HTML_attribute, cleanInline], expression='HTML_attribute / cleanInline'), numMin=1, numMax=False, expression='(HTML_attribute / cleanInline)+', name='wikiTableParameters')(liftValue)
-wikiTableFirstCell = Sequence([Repetition(wikiTableParametersPipe, numMin=0, numMax=1, expression='wikiTableParametersPipe{0..1}'), Repetition(cleanInline, numMin=False, numMax=False, expression='cleanInline*')], expression='wikiTableParametersPipe{0..1} cleanInline*', name='wikiTableFirstCell')(liftValue)
-wikiTableOtherCell = Sequence([Repetition(PIPE, numMin=2, numMax=2, expression='PIPE{2}'), wikiTableFirstCell], expression='PIPE{2} wikiTableFirstCell', name='wikiTableOtherCell')(liftValue)
-wikiTableLineCells = Sequence([PIPE, wikiTableFirstCell, Repetition(wikiTableOtherCell, numMin=False, numMax=False, expression='wikiTableOtherCell*'), EOL], expression='PIPE wikiTableFirstCell wikiTableOtherCell* EOL', name='wikiTableLineCells')(liftValue)
-wikiTableLineHeader = Sequence([BANG, wikiTableFirstCell, Repetition(wikiTableOtherCell, numMin=False, numMax=False, expression='wikiTableOtherCell*'), EOL], expression='BANG wikiTableFirstCell wikiTableOtherCell* EOL', name='wikiTableLineHeader')(liftValue)
-wikiTableEmptyCell = Sequence([PIPE, EOL], expression='PIPE EOL', name='wikiTableEmptyCell')(setNullValue)
-wikiTableParamLineBreak = Sequence([TABLE_NEWLINE, Repetition(wikiTableParameters, numMin=False, numMax=False, expression='wikiTableParameters*'), EOL], expression='TABLE_NEWLINE wikiTableParameters* EOL', name='wikiTableParamLineBreak')(liftValue)
-wikiTableLineBreak = Sequence([TABLE_NEWLINE, EOL], expression='TABLE_NEWLINE EOL', name='wikiTableLineBreak')(setNullValue)
-wikiTableTitle = Sequence([TABLE_TITLE, Repetition(wikiTableParametersPipe, numMin=0, numMax=1, expression='wikiTableParametersPipe{0..1}'), Repetition(inline, numMin=False, numMax=False, expression='inline*'), EOL], expression='TABLE_TITLE wikiTableParametersPipe{0..1} inline* EOL', name='wikiTableTitle')(liftValue)
+wikiTableParameter = Repetition(wikiTableParametersPipe, numMin=0, numMax=1, expression='wikiTableParametersPipe{0..1}', name='wikiTableParameter')(liftValue)
+wikiTableCellContent = Repetition(cleanInline, numMin=False, numMax=False, expression='cleanInline*', name='wikiTableCellContent')
+wikiTableFirstCell = Sequence([wikiTableParameter, wikiTableCellContent], expression='wikiTableParameter wikiTableCellContent', name='wikiTableFirstCell')(liftNode)
+wikiTableOtherCell = Repetition(Sequence([Repetition(PIPE, numMin=2, numMax=2, expression='PIPE{2}'), wikiTableFirstCell], expression='PIPE{2} wikiTableFirstCell'), numMin=False, numMax=False, expression='(PIPE{2} wikiTableFirstCell)*', name='wikiTableOtherCell')(liftValue, liftNode)
+wikiTableLineCells = Sequence([PIPE, wikiTableFirstCell, wikiTableOtherCell, EOL], expression='PIPE wikiTableFirstCell wikiTableOtherCell EOL', name='wikiTableLineCells')(liftValue)
+wikiTableLineHeader = Sequence([BANG, wikiTableFirstCell, wikiTableOtherCell, EOL], expression='BANG wikiTableFirstCell wikiTableOtherCell EOL', name='wikiTableLineHeader')(liftValue)
+wikiTableEmptyCell = Sequence([PIPE, EOL], expression='PIPE EOL', name='wikiTableEmptyCell')(keep)
+wikiTableParamLineBreak = Sequence([TABLE_NEWLINE, Repetition(wikiTableParameters, numMin=False, numMax=False, expression='wikiTableParameters*'), EOL], expression='TABLE_NEWLINE wikiTableParameters* EOL', name='wikiTableParamLineBreak')(keep, liftValue)
+wikiTableLineBreak = Sequence([TABLE_NEWLINE, EOL], expression='TABLE_NEWLINE EOL', name='wikiTableLineBreak')(keep)
+wikiTableTitle = Sequence([TABLE_TITLE, wikiTableParameter, wikiTableCellContent, EOL], expression='TABLE_TITLE wikiTableParameter wikiTableCellContent EOL', name='wikiTableTitle')(liftValue)
 wikiTableSpecialLine = Choice([wikiTableTitle, wikiTableLineBreak, wikiTableParamLineBreak], expression='wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak', name='wikiTableSpecialLine')
 wikiTableNormalLine = Choice([wikiTableLineCells, wikiTableLineHeader, wikiTableEmptyCell], expression='wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell', name='wikiTableNormalLine')
-wikiTableLine = Sequence([NextNot(TABLE_END, expression='!TABLE_END'), Choice([wikiTableSpecialLine, wikiTableNormalLine], expression='wikiTableSpecialLine / wikiTableNormalLine')], expression='!TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)', name='wikiTableLine')
-wikiTableContent = Choice([wikiTableLine, wikiTable, EOL], expression='wikiTableLine / wikiTable / EOL', name='wikiTableContent')
+wikiTableLine = Sequence([NextNot(TABLE_END, expression='!TABLE_END'), Choice([wikiTableSpecialLine, wikiTableNormalLine], expression='wikiTableSpecialLine / wikiTableNormalLine')], expression='!TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)', name='wikiTableLine')(liftNode)
+wikiTableContent = Repetition(Choice([wikiTableLine, wikiTable, EOL], expression='wikiTableLine / wikiTable / EOL'), numMin=False, numMax=False, expression='(wikiTableLine / wikiTable / EOL)*', name='wikiTableContent')(liftNode)
 wikiTableBegin = Sequence([TABLE_BEGIN, Repetition(wikiTableParameters, numMin=False, numMax=False, expression='wikiTableParameters*')], expression='TABLE_BEGIN wikiTableParameters*', name='wikiTableBegin')(liftValue)
-wikiTable **= Sequence([wikiTableBegin, Repetition(EOL, numMin=False, numMax=False, expression='EOL*'), Repetition(wikiTableContent, numMin=False, numMax=False, expression='wikiTableContent*'), TABLE_END, EOL], expression='wikiTableBegin EOL* wikiTableContent* TABLE_END EOL', name='wikiTable')(liftValue)
+wikiTable **= Sequence([wikiTableBegin, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), wikiTableContent, TABLE_END, EOL], expression='wikiTableBegin SPACETABEOL* wikiTableContent TABLE_END EOL', name='wikiTable')(liftValue)
 
 # Top pattern
 
-body = Sequence([optional_comment, Repetition(Choice([list, horizontalRule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalid_line, EOL], expression='list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL'), numMin=1, numMax=False, expression='(list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+')], expression='optional_comment (list / horizontalRule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+', name='body')(liftValue)
+body = Sequence([optional_comment, Repetition(Choice([list, horizontal_rule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalid_line, EOL], expression='list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL'), numMin=1, numMax=False, expression='(list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+')], expression='optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+', name='body')(liftValue)
 
 
 

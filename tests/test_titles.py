@@ -56,9 +56,9 @@ class Titles_tests(ParserTestCase):
         result = "[title3:[rawText:' <strong>bold text</strong> ']]"
         self.parsed_equal_string(source, result, None)
 
-    def test_link_in_title(self):
+    def test_formatted_link_in_title(self):
         source = "==== [[Title 4|formatted link]] ====\n"
-        result = "[title4:[rawText:' '  internal_link:[page_name:'Title 4'  link_arguments:[link_argument:[link_text:[rawText:'formatted link']]]]  rawText:' ']]"
+        result = "[title4:[rawText:' '  internal_link:[page_name:'Title 4'  link_arguments:[link_argument:[rawText:'formatted link']]]  rawText:' ']]"
         self.parsed_equal_string(source, result, None)
 
     def test_simple_template_in_title(self):

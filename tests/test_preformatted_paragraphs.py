@@ -85,14 +85,9 @@ Preformatted paragraph.
 """
         result = """body:
    @wikiTable@:
-      <?>:
-
-      <?>:
-         wikiTableLine:
-            wikiTableLineBreak:
-         wikiTableLine:
-            wikiTableLineHeader:
-               @cleanInline@:
-                  rawText: 
-                  preformatted:Text"""
+      wikiTableLineBreak:
+      wikiTableLineHeader:
+         @cleanInline@:
+            rawText: 
+            preformatted:Text"""
         self.parsed_equal_tree(source, result, None)

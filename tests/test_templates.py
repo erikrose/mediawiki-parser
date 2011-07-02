@@ -11,6 +11,28 @@ class Templates_tests(ParserTestCase):
       page_name:Template"""
         self.parsed_equal_tree(source, result, 'inline')
 
+    def test_numeric_template_parameter(self):
+        source = """{{{1}}}"""
+        result = """@inline@:
+   template_parameter:
+      template_parameter_id:1"""
+        self.parsed_equal_tree(source, result, 'inline')
+
+    def test_text_template_parameter(self):
+        source = """{{{A text}}}"""
+        result = """@inline@:
+   template_parameter:
+      template_parameter_id:A text"""
+        self.parsed_equal_tree(source, result, 'inline')
+
+    def test_template_parameter_with_default_value(self):
+        source = """{{{parameter name|default value}}}"""
+        result = """@inline@:
+   template_parameter:
+      template_parameter_id:parameter name
+      default_value:default value"""
+        self.parsed_equal_tree(source, result, 'inline')
+
     def test_template_with_parameters(self):
         source = """{{Template with|1=parameter| 2 = parameters }}"""
         result = """@inline@:

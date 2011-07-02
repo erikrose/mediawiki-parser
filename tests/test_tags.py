@@ -9,6 +9,16 @@ class Tags_tests(ParserTestCase):
         result = "[tag_name:'a']"
         self.parsed_equal_string(source, result, 'tag')
 
+    def test_open_tag_with_standalone_attribute(self):
+        # Not correct in XML but correct in HTML
+        source = '<table noborder>'
+        result = """tag_open:
+   tag_name:table
+   optional_attributes:
+      optional_attribute:
+         attribute_name:noborder"""
+        self.parsed_equal_tree(source, result, 'tag')
+
     def test_open_tag_with_attribute(self):
         source = '<a style="color:red">'
         result = """tag_open:
