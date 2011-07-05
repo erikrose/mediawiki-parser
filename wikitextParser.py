@@ -73,7 +73,7 @@
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
     escSeq                  : special_tag / escChar / titleEnd
     rawChar                 : !escSeq [\x20..\xff]
-    rawText                 : rawChar+                                                              : join parseAllQuotes
+    rawText                 : rawChar+                                                              : join parse_all_quotes
     alpha_num               : [a..zA..Z0..9]
     alpha_num_text          : alpha_num+                                                            : join
     anyChar                 : [\x20..\xff]
@@ -147,7 +147,8 @@
     pre_text                : (!PRE_END anyChar)*                                                   : join
     preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
     # We allow any char without parsing them as long as the tag is not closed
-    nowiki_text             : (!NOWIKI_END anyChar)*                                                : join
+    eol_to_space            : EOL*                                                                  : replace_by_space
+    nowiki_text             : (!NOWIKI_END (anyChar/eol_to_space))*                                 : join
     nowiki                  : NOWIKI_BEGIN nowiki_text NOWIKI_END                                   : liftValue
 
 # Text types
@@ -262,9 +263,12 @@ state = wikitextParser.state
 
 
 ###   <toolset>
-def parseAllQuotes(node):
+def parse_all_quotes(node):
     from apostrophes import parseQuotes
     node.value = parseQuotes(node.value)
+
+def replace_by_space(node):
+    node.value = ' '
 
 ###   <definition>
 # recursive pattern(s)
@@ -349,7 +353,7 @@ escChar = Choice([L_BRACKET, R_BRACKET, protocol, PIPE, L_BRACE, R_BRACE, LT, GT
 titleEnd = Choice([TITLE6_END, TITLE5_END, TITLE4_END, TITLE3_END, TITLE2_END, TITLE1_END], expression='TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END', name='titleEnd')
 escSeq = Choice([special_tag, escChar, titleEnd], expression='special_tag / escChar / titleEnd', name='escSeq')
 rawChar = Sequence([NextNot(escSeq, expression='!escSeq'), Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]')], expression='!escSeq [\\x20..\\xff]', name='rawChar')
-rawText = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='rawText')(join, parseAllQuotes)
+rawText = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='rawText')(join, parse_all_quotes)
 alpha_num = Klass(u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', expression='[a..zA..Z0..9]', name='alpha_num')
 alpha_num_text = Repetition(alpha_num, numMin=1, numMax=False, expression='alpha_num+', name='alpha_num_text')(join)
 anyChar = Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]', name='anyChar')
@@ -423,7 +427,8 @@ template_parameter = Sequence([PARAMETER_BEGIN, template_parameter_id, optional_
 pre_text = Repetition(Sequence([NextNot(PRE_END, expression='!PRE_END'), anyChar], expression='!PRE_END anyChar'), numMin=False, numMax=False, expression='(!PRE_END anyChar)*', name='pre_text')(join)
 preformatted = Sequence([PRE_BEGIN, pre_text, PRE_END], expression='PRE_BEGIN pre_text PRE_END', name='preformatted')(liftValue)
     # We allow any char without parsing them as long as the tag is not closed
-nowiki_text = Repetition(Sequence([NextNot(NOWIKI_END, expression='!NOWIKI_END'), anyChar], expression='!NOWIKI_END anyChar'), numMin=False, numMax=False, expression='(!NOWIKI_END anyChar)*', name='nowiki_text')(join)
+eol_to_space = Repetition(EOL, numMin=False, numMax=False, expression='EOL*', name='eol_to_space')(replace_by_space)
+nowiki_text = Repetition(Sequence([NextNot(NOWIKI_END, expression='!NOWIKI_END'), Choice([anyChar, eol_to_space], expression='anyChar/eol_to_space')], expression='!NOWIKI_END (anyChar/eol_to_space)'), numMin=False, numMax=False, expression='(!NOWIKI_END (anyChar/eol_to_space))*', name='nowiki_text')(join)
 nowiki = Sequence([NOWIKI_BEGIN, nowiki_text, NOWIKI_END], expression='NOWIKI_BEGIN nowiki_text NOWIKI_END', name='nowiki')(liftValue)
 
 # Text types
