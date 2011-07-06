@@ -73,7 +73,7 @@
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
     escSeq                  : special_tag / escChar / titleEnd
     rawChar                 : !escSeq [\x20..\xff]
-    rawText                 : rawChar+                                                              : join parse_all_quotes
+    rawText                 : rawChar+                                                              : join render_raw_text
     alpha_num               : [a..zA..Z0..9]
     alpha_num_text          : alpha_num+                                                            : join
     anyChar                 : [\x20..\xff]
@@ -147,8 +147,7 @@
     pre_text                : (!PRE_END anyChar)*                                                   : join
     preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
     # We allow any char without parsing them as long as the tag is not closed
-    eol_to_space            : EOL*                                                                  : replace_by_space
-    nowiki_text             : (!NOWIKI_END (anyChar/eol_to_space))*                                 : join
+    nowiki_text             : (!NOWIKI_END anyChar)*                                                : join
     nowiki                  : NOWIKI_BEGIN nowiki_text NOWIKI_END                                   : liftValue
 
 # Text types
@@ -165,7 +164,7 @@
     special_line_begin      : SPACE/EQUAL/BULLET/HASH/COLON/DASH{4}/TABLE_BEGIN/SEMICOLON
     paragraph_line          : !special_line_begin inline EOL                                        : liftValue
     blank_paragraph         : EOL{2}                                                                : drop keep
-    paragraph               : paragraph_line+                                                       : liftValue
+    paragraph               : paragraph_line+                                                       : liftValue render_paragraph
     paragraphs              : (blank_paragraph/EOL/paragraph)+
 
 # Titles
@@ -174,7 +173,7 @@
     title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
     title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue
     title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue
-    title2                  : TITLE2_BEGIN inline TITLE2_END                                        : liftValue
+    title2                  : TITLE2_BEGIN inline TITLE2_END                                        : liftValue render_title2
     title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue
     title                   : title6 / title5 / title4 / title3 / title2 / title1
 
@@ -246,7 +245,7 @@
 
 # Top pattern
 
-    body                    : optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue
+    body                    : optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue render_body
 
 """
 
@@ -263,12 +262,15 @@ state = wikitextParser.state
 
 
 ###   <toolset>
-def parse_all_quotes(node):
-    from apostrophes import parseQuotes
-    node.value = parseQuotes(node.value)
+import config
 
-def replace_by_space(node):
-    node.value = ' '
+if config.output == 'html':
+    from html import *
+elif config.output == 'text':
+    from text import *
+else:
+    from raw import *
+
 
 ###   <definition>
 # recursive pattern(s)
@@ -353,7 +355,7 @@ escChar = Choice([L_BRACKET, R_BRACKET, protocol, PIPE, L_BRACE, R_BRACE, LT, GT
 titleEnd = Choice([TITLE6_END, TITLE5_END, TITLE4_END, TITLE3_END, TITLE2_END, TITLE1_END], expression='TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END', name='titleEnd')
 escSeq = Choice([special_tag, escChar, titleEnd], expression='special_tag / escChar / titleEnd', name='escSeq')
 rawChar = Sequence([NextNot(escSeq, expression='!escSeq'), Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]')], expression='!escSeq [\\x20..\\xff]', name='rawChar')
-rawText = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='rawText')(join, parse_all_quotes)
+rawText = Repetition(rawChar, numMin=1, numMax=False, expression='rawChar+', name='rawText')(join, render_raw_text)
 alpha_num = Klass(u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', expression='[a..zA..Z0..9]', name='alpha_num')
 alpha_num_text = Repetition(alpha_num, numMin=1, numMax=False, expression='alpha_num+', name='alpha_num_text')(join)
 anyChar = Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]', name='anyChar')
@@ -427,8 +429,7 @@ template_parameter = Sequence([PARAMETER_BEGIN, template_parameter_id, optional_
 pre_text = Repetition(Sequence([NextNot(PRE_END, expression='!PRE_END'), anyChar], expression='!PRE_END anyChar'), numMin=False, numMax=False, expression='(!PRE_END anyChar)*', name='pre_text')(join)
 preformatted = Sequence([PRE_BEGIN, pre_text, PRE_END], expression='PRE_BEGIN pre_text PRE_END', name='preformatted')(liftValue)
     # We allow any char without parsing them as long as the tag is not closed
-eol_to_space = Repetition(EOL, numMin=False, numMax=False, expression='EOL*', name='eol_to_space')(replace_by_space)
-nowiki_text = Repetition(Sequence([NextNot(NOWIKI_END, expression='!NOWIKI_END'), Choice([anyChar, eol_to_space], expression='anyChar/eol_to_space')], expression='!NOWIKI_END (anyChar/eol_to_space)'), numMin=False, numMax=False, expression='(!NOWIKI_END (anyChar/eol_to_space))*', name='nowiki_text')(join)
+nowiki_text = Repetition(Sequence([NextNot(NOWIKI_END, expression='!NOWIKI_END'), anyChar], expression='!NOWIKI_END anyChar'), numMin=False, numMax=False, expression='(!NOWIKI_END anyChar)*', name='nowiki_text')(join)
 nowiki = Sequence([NOWIKI_BEGIN, nowiki_text, NOWIKI_END], expression='NOWIKI_BEGIN nowiki_text NOWIKI_END', name='nowiki')(liftValue)
 
 # Text types
@@ -445,7 +446,7 @@ inline **= Repetition(Choice([not_styled_text, styled_text, allowedText], expres
 special_line_begin = Choice([SPACE, EQUAL, BULLET, HASH, COLON, Repetition(DASH, numMin=4, numMax=4, expression='DASH{4}'), TABLE_BEGIN, SEMICOLON], expression='SPACE/EQUAL/BULLET/HASH/COLON/DASH{4}/TABLE_BEGIN/SEMICOLON', name='special_line_begin')
 paragraph_line = Sequence([NextNot(special_line_begin, expression='!special_line_begin'), inline, EOL], expression='!special_line_begin inline EOL', name='paragraph_line')(liftValue)
 blank_paragraph = Repetition(EOL, numMin=2, numMax=2, expression='EOL{2}', name='blank_paragraph')(drop, keep)
-paragraph = Repetition(paragraph_line, numMin=1, numMax=False, expression='paragraph_line+', name='paragraph')(liftValue)
+paragraph = Repetition(paragraph_line, numMin=1, numMax=False, expression='paragraph_line+', name='paragraph')(liftValue, render_paragraph)
 paragraphs = Repetition(Choice([blank_paragraph, EOL, paragraph], expression='blank_paragraph/EOL/paragraph'), numMin=1, numMax=False, expression='(blank_paragraph/EOL/paragraph)+', name='paragraphs')
 
 # Titles
@@ -454,7 +455,7 @@ title6 = Sequence([TITLE6_BEGIN, inline, TITLE6_END], expression='TITLE6_BEGIN i
 title5 = Sequence([TITLE5_BEGIN, inline, TITLE5_END], expression='TITLE5_BEGIN inline TITLE5_END', name='title5')(liftValue)
 title4 = Sequence([TITLE4_BEGIN, inline, TITLE4_END], expression='TITLE4_BEGIN inline TITLE4_END', name='title4')(liftValue)
 title3 = Sequence([TITLE3_BEGIN, inline, TITLE3_END], expression='TITLE3_BEGIN inline TITLE3_END', name='title3')(liftValue)
-title2 = Sequence([TITLE2_BEGIN, inline, TITLE2_END], expression='TITLE2_BEGIN inline TITLE2_END', name='title2')(liftValue)
+title2 = Sequence([TITLE2_BEGIN, inline, TITLE2_END], expression='TITLE2_BEGIN inline TITLE2_END', name='title2')(liftValue, render_title2)
 title1 = Sequence([TITLE1_BEGIN, inline, TITLE1_END], expression='TITLE1_BEGIN inline TITLE1_END', name='title1')(liftValue)
 title = Choice([title6, title5, title4, title3, title2, title1], expression='title6 / title5 / title4 / title3 / title2 / title1', name='title')
 
@@ -526,7 +527,7 @@ wikiTable **= Sequence([wikiTableBegin, Repetition(SPACETABEOL, numMin=False, nu
 
 # Top pattern
 
-body = Sequence([optional_comment, Repetition(Choice([list, horizontal_rule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalid_line, EOL], expression='list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL'), numMin=1, numMax=False, expression='(list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+')], expression='optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+', name='body')(liftValue)
+body = Sequence([optional_comment, Repetition(Choice([list, horizontal_rule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalid_line, EOL], expression='list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL'), numMin=1, numMax=False, expression='(list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+')], expression='optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+', name='body')(liftValue, render_body)
 
 
 
