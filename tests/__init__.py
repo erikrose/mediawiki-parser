@@ -2,6 +2,11 @@
 from unittest import TestCase
 
 
+def setup_module():
+    from pijnu import makeParser
+    mediawikiGrammar = file("mediawiki.pijnu").read()
+    mediawikiParser = makeParser(mediawikiGrammar)
+
 class ParserTestCase(TestCase):
     def _grammar(self, method_name):
         """Return a full or partial grammar.
@@ -9,7 +14,8 @@ class ParserTestCase(TestCase):
         method_name -- If truthy, the attribute of the full grammar to return
 
         """
-        from raw import parser
+        from raw import make_parser
+        parser = make_parser()
         return getattr(parser, method_name) if method_name else parser
 
     def parsed_equal_string(self, source, result, method_name):

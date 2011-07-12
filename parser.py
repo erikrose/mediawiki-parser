@@ -1,11 +1,12 @@
 # -*- coding: utf8 -*-
 
 # get the parser
-#from pijnu import makeParser
-#mediawikiGrammar = file("mediawiki.pijnu").read()
-#mediawikiParser = makeParser(mediawikiGrammar)
+from pijnu import makeParser
+mediawikiGrammar = file("mediawiki.pijnu").read()
+makeParser(mediawikiGrammar)
 
-from html import parser
+from html import make_parser
+parser = make_parser()
 
 # import the source in a utf-8 string
 import codecs
