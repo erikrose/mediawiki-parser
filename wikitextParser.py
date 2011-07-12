@@ -253,9 +253,18 @@
 from pijnu.library import *
 
 
-def make_parser(toolset=None):
-    if toolset is None:
-        toolset = {}
+def make_parser(actions=None):
+    """Return a parser.
+
+    The parser's toolset functions are (optionally) augmented (or overridden)
+    by a map of additional ones passed in.
+
+    """
+    if actions is None:
+        actions = {}
+
+    # Start off with the imported pijnu library functions:
+    toolset = globals().copy()
 
     parser = Parser()
     state = parser.state
@@ -263,13 +272,8 @@ def make_parser(toolset=None):
 ### title: wikitext ###
     
     
-    
-    def merged_toolset():
-        """Merge anything passed in with the hard-coded toolset and then pijnu's default actions.
-    
-        ...in that order of precedence.
-    
-        """
+    def toolset_from_grammar():
+        """Return a map of toolset functions hard-coded into the grammar."""
     ###   <toolset>
         def parse_all_quotes(node):
             from apostrophes import parseQuotes
@@ -278,20 +282,10 @@ def make_parser(toolset=None):
         def replace_by_space(node):
             node.value = ' '
     
-        # Get default actions from pijnu.library:
-        actions = globals().copy()
+        return locals().copy()
     
-        # Overlay actions from the grammar:
-        hard_coded_actions = locals().copy()
-        del hard_coded_actions['toolset']  # This creeps in from the outer scope because we reference it.
-        del hard_coded_actions['actions']
-        actions.update(hard_coded_actions)
-    
-        # And overlay any passed-in actions:
-        actions.update(toolset)
-        return actions
-    
-    toolset = merged_toolset()
+    toolset.update(toolset_from_grammar())
+    toolset.update(actions)
     
     ###   <definition>
     # recursive pattern(s)
@@ -552,7 +546,7 @@ def make_parser(toolset=None):
     body = Sequence([optional_comment, Repetition(Choice([list, horizontal_rule, preformattedGroup, title, wikiTable, EOL, paragraphs, invalid_line, EOL], expression='list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL'), numMin=1, numMax=False, expression='(list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+')], expression='optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+', name='body')(toolset['liftValue'])
 
     symbols = locals().copy()
-    symbols.update(toolset)
+    symbols.update(actions)
     parser._recordPatterns(symbols)
     parser._setTopPattern("body")
     parser.grammarTitle = "wikitext"
