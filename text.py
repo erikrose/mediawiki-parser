@@ -18,6 +18,7 @@ toolset = {'render_raw_text': render_raw_text,
            'render_title2': render_title2,
            'render_body': render_body}
 
+from mediawiki_parser import wikitextParser
+
 def make_parser():
-    from mediawiki_parser.wikitextParser import make_parser
-    return make_parser(toolset)
+    return wikitextParser.make_parser(toolset)

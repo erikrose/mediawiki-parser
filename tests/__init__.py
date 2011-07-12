@@ -14,8 +14,8 @@ class ParserTestCase(TestCase):
         method_name -- If truthy, the attribute of the full grammar to return
 
         """
-        from raw import make_parser
-        parser = make_parser()
+        from mediawiki_parser import raw
+        parser = raw.make_parser()
         return getattr(parser, method_name) if method_name else parser
 
     def parsed_equal_string(self, source, result, method_name):
