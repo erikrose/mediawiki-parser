@@ -1,13 +1,7 @@
 wikitext
 <toolset>
-import config
-
-if config.output == 'html':
-    from html import *
-elif config.output == 'text':
-    from text import *
-else:
-    from raw import *
+def replace_by_space(node):
+    node.value = ' '
 
 <definition>
 # Codes
@@ -157,7 +151,8 @@ else:
     pre_text                : (!PRE_END anyChar)*                                                   : join
     preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
     # We allow any char without parsing them as long as the tag is not closed
-    nowiki_text             : (!NOWIKI_END anyChar)*                                                : join
+    eol_to_space            : EOL*                                                                  : replace_by_space
+    nowiki_text             : (!NOWIKI_END (anyChar/eol_to_space))*                                 : join
     nowiki                  : NOWIKI_BEGIN nowiki_text NOWIKI_END                                   : liftValue
 
 # Text types

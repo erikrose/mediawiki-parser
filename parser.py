@@ -1,11 +1,11 @@
 # -*- coding: utf8 -*-
-import config
-print "Output will be", config.output
 
 # get the parser
-from pijnu import makeParser
-mediawikiGrammar = file("mediawiki.pijnu").read()
-mediawikiParser = makeParser(mediawikiGrammar)
+#from pijnu import makeParser
+#mediawikiGrammar = file("mediawiki.pijnu").read()
+#mediawikiParser = makeParser(mediawikiGrammar)
+
+from html import parser
 
 # import the source in a utf-8 string
 import codecs
@@ -18,6 +18,6 @@ source = fileObj.read()
 if source[-1] != '\n':
   source += '\n'
 
-tree = mediawikiParser.parse(source)
+tree = parser.parse(source)
 
 print tree.leaves()
