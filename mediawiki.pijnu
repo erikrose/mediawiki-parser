@@ -1,11 +1,8 @@
 wikitext
 <toolset>
-def parse_all_quotes(node):
-    from apostrophes import parseQuotes
-    node.value = parseQuotes(node.value)
-
 def replace_by_space(node):
     node.value = ' '
+
 <definition>
 # Codes
 
@@ -80,7 +77,7 @@ def replace_by_space(node):
     titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
     escSeq                  : special_tag / escChar / titleEnd
     rawChar                 : !escSeq [\x20..\xff]
-    rawText                 : rawChar+                                                              : join parse_all_quotes
+    rawText                 : rawChar+                                                              : join render_raw_text
     alpha_num               : [a..zA..Z0..9]
     alpha_num_text          : alpha_num+                                                            : join
     anyChar                 : [\x20..\xff]
@@ -172,7 +169,7 @@ def replace_by_space(node):
     special_line_begin      : SPACE/EQUAL/BULLET/HASH/COLON/DASH{4}/TABLE_BEGIN/SEMICOLON
     paragraph_line          : !special_line_begin inline EOL                                        : liftValue
     blank_paragraph         : EOL{2}                                                                : drop keep
-    paragraph               : paragraph_line+                                                       : liftValue
+    paragraph               : paragraph_line+                                                       : liftValue render_paragraph
     paragraphs              : (blank_paragraph/EOL/paragraph)+
 
 # Titles
@@ -181,7 +178,7 @@ def replace_by_space(node):
     title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
     title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue
     title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue
-    title2                  : TITLE2_BEGIN inline TITLE2_END                                        : liftValue
+    title2                  : TITLE2_BEGIN inline TITLE2_END                                        : liftValue render_title2
     title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue
     title                   : title6 / title5 / title4 / title3 / title2 / title1
 
@@ -253,4 +250,4 @@ def replace_by_space(node):
 
 # Top pattern
 
-    body                    : optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue
+    body                    : optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue render_body

@@ -1,0 +1,10 @@
+== Title ==
+This is a paragraph.
+
+This is a [[link#Title|link test]], '''bold and ''italic'' texts'''.
+
+An http://www.mozilla.org URL.
+
+[[Image:Test.png|thumb|150px|Legend]]
+
+a [[Category:Tests|Text]]
