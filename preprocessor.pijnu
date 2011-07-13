@@ -1,0 +1,128 @@
+preprocessor
+<toolset>
+def replace_by_space(node):
+    node.value = ' '
+
+<definition>
+# Codes
+
+    LF                      : '
+'
+    CR                      : '
+'
+    EOL                     : LF / CR
+    L_BRACKET               : "["                                                                   : drop
+    R_BRACKET               : "\]"                                                                  : drop
+    L_BRACE                 : "{"                                                                   : drop
+    R_BRACE                 : "}"                                                                   : drop
+    SPACE                   : " "                                                                   : drop
+    TAB                     : "	"                                                                   : drop
+    SPACETAB                : SPACE / TAB                                                           : drop
+    SPACETABEOL             : SPACE / TAB / EOL                                                     : drop
+    AMP                     : "&"                                                                   : drop
+    PIPE                    : "|"                                                                   : drop
+    BANG                    : "!"                                                                   : drop
+    EQUAL                   : "="                                                                   : drop
+    BULLET                  : "*"                                                                   : drop
+    HASH                    : "#"                                                                   : drop
+    COLON                   : ":"                                                                   : drop
+    LT                      : "<"                                                                   : drop
+    GT                      : ">"                                                                   : drop
+    SLASH                   : "/"                                                                   : drop
+    SEMICOLON               : ";"                                                                   : drop
+    DASH                    : "-"                                                                   : drop
+    TABLE_BEGIN             : "{|"                                                                  : drop
+    TABLE_END               : "|}"                                                                  : drop
+    TABLE_NEWLINE           : "|-"                                                                  : drop
+    TABLE_TITLE             : "|+"                                                                  : drop
+    QUOTE                   : "\""                                                                  : drop
+    APOSTROPHE              : "\'"                                                                  : drop
+    TEMPLATE_BEGIN          : L_BRACE{2}                                                            : drop
+    TEMPLATE_END            : R_BRACE{2}                                                            : drop
+    PARAMETER_BEGIN         : L_BRACE{3}                                                            : drop
+    PARAMETER_END           : R_BRACE{3}                                                            : drop
+
+# Protocols
+
+    HTTPS                   : "https://"                                                            : liftValue
+    HTTP                    : "http://"                                                             : liftValue
+    FTP                     : "ftp://"                                                              : liftValue
+    protocol                : HTTPS / HTTP / FTP                                                    : liftValue
+
+# Predefined tags
+
+    NOWIKI_BEGIN            : "<nowiki>"                                                            : drop
+    NOWIKI_END              : "</nowiki>"                                                           : drop
+    PRE_BEGIN               : "<pre>"                                                               : drop
+    PRE_END                 : "</pre>"                                                              : drop
+    special_tag             : NOWIKI_BEGIN/NOWIKI_END/PRE_BEGIN/PRE_END
+
+# Characters
+
+    escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON
+    escSeq                  : special_tag / escChar
+    rawChar                 : !escSeq [\x20..\xff]
+    rawText                 : rawChar+                                                              : join
+    alpha_num               : [a..zA..Z0..9]
+    alpha_num_text          : alpha_num+                                                            : join
+    anyChar                 : [\x20..\xff]
+    anyText                 : anyChar+                                                              : join
+
+# HTML comments
+
+    # HTML comments are totally ignored and do not appear in the final text
+    comment_content         : ((!(DASH{2} GT) [\x20..\xff])+ / SPACETABEOL)*
+    html_comment            : LT BANG DASH{2} comment_content DASH{2} GT                            : drop
+
+# Text
+
+    page_name               : rawChar+                                                              : join
+
+# Template parameters
+
+    # Those parameters should be substituted by their value when the current page is a template or by their optional default value in any case
+    template_parameter_id   : (!(R_BRACE/PIPE) anyChar)+                                            : join
+    default_value           : (!R_BRACE anyChar)+                                                   : join
+    optional_default_value  : (PIPE default_value)?                                                 : liftNode
+    template_parameter      : PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END : substitute_template_parameter
+
+# Templates
+
+    LINK_BEGIN              : L_BRACKET{2}                                                          : restore
+    LINK_PIPE               : PIPE                                                                  : restore
+    LINK_END                : R_BRACKET{2}                                                          : restore
+    internal_link           : LINK_BEGIN inline (LINK_PIPE inline)* LINK_END                        : join
+    external_link           : L_BRACKET inline (SPACE inline)* R_BRACKET                            : join
+    link                    : internal_link / external_link
+    value                   : SPACETABEOL* EQUAL SPACETABEOL* inline SPACETABEOL*
+    optional_value          : value?                                                                : liftValue
+    parameter_name          : (!EQUAL rawChar)+                                                     : join
+    named_parameter         : parameter_name optional_value                                         : liftValue
+    parameter               : SPACETABEOL* PIPE SPACETABEOL* (named_parameter / inline?)            : liftValue
+    parameters              : parameter*
+    template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END         : substitute_template
+
+# new_inline
+
+    raw_char                : !(L_BRACE/L_BRACKET/PIPE/R_BRACKET/R_BRACE) anyChar
+    raw_text                : raw_char+                                                             : join
+    structure               : link / template
+    inline                  : (structure / raw_text)+                                               : @
+
+# Pre and nowiki tags
+
+    # Preformatted acts like nowiki (disables wikitext parsing)
+    pre_text                : (!PRE_END anyChar)*                                                   : join
+    preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
+    # We allow any char without parsing them as long as the tag is not closed
+    eol_to_space            : EOL*                                                                  : replace_by_space
+    nowiki_text             : (!NOWIKI_END (anyChar/eol_to_space))*                                 : join
+    nowiki                  : NOWIKI_BEGIN nowiki_text NOWIKI_END                                   : liftValue
+
+# Text types
+
+    styled_text             : template_parameter / template
+    not_styled_text         : html_comment / preformatted / nowiki
+    allowedChar             : escChar{1}                                                            : restore liftValue
+    allowedText             : rawText / allowedChar
+    wikitext                : (not_styled_text / styled_text / allowedText / EOL)+                  : join liftNode

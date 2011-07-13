@@ -7,4 +7,20 @@ An http://www.mozilla.org URL.
 
 [[Image:Test.png|thumb|150px|Legend]]
 
+{{template1}}
+
+a comment <!-- comment --> (ignored)...
+
+a <pre>preformatted {{section}}</pre>
+
+a <nowiki>nowiki {{section}} {{{parameter}}}</nowiki>
+
+another {{template 2|1=Value1|name=[[Value for name]]}} successfully substituted template
+
+here, we use templates inside template parameters: {{template 2|1=Value1|name={{template 2|1=Value1|name=Value for name}}}}
+
+here, we specify no value so the default value is used when it exists: {{template 2|1=test}} or {{template 2|name=test}}
+
+{{template 3|param|param2=[[link]]   | param3 = [[the|parameters]]|test={{template}}|test2={{other template|param=[[link]]}}}}
+
 a [[Category:Tests|Text]]

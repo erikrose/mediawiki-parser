@@ -2,15 +2,20 @@
 
 # get the parser
 from pijnu import makeParser
+preprocessorGrammar = file("preprocessor.pijnu").read()
+makeParser(preprocessorGrammar)
+
 mediawikiGrammar = file("mediawiki.pijnu").read()
 makeParser(mediawikiGrammar)
+
+from preprocessor import make_parser
+preprocessor = make_parser()
 
 from html import make_parser
 parser = make_parser()
 
 # import the source in a utf-8 string
 import codecs
-from apostrophes import parseAllQuotes
 fileObj = codecs.open("wikitext.txt", "r", "utf-8")
 source = fileObj.read()
 
@@ -19,6 +24,10 @@ source = fileObj.read()
 if source[-1] != '\n':
   source += '\n'
 
-tree = parser.parse(source)
+preprocessed_text = preprocessor.parse(source)
 
-print tree.leaves()
+print preprocessed_text.treeView()
+
+# Uncomment this to obtain HTML (not finished)
+#tree = parser.parse(preprocessed_text.leaves())
+#print tree.leaves()
