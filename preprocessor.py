@@ -1,7 +1,7 @@
 templates = {'template1': 'Content of template1.',
              'template 2': '"Template 2" has 2 parameters: {{{1}}} and: {{{name|default}}}!'}
 
-def substitute_template_parameter(node, values):
+def substitute_template_parameter(node, values={}):
     assert len(node.value) > 0, "Bad AST shape!"
     parameter_id = node.value[0].value
     if parameter_id in values:

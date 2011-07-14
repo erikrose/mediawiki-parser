@@ -11,9 +11,11 @@ An http://www.mozilla.org URL.
 
 a comment <!-- comment --> (ignored)...
 
-a <pre>preformatted {{section}}</pre>
+a <pre>preformatted {{section}} {{{parameter|default}}} </pre>
 
-a <nowiki>nowiki {{section}} {{{parameter}}}</nowiki>
+a <nowiki>nowiki {{section}} {{{parameter|default}}} </nowiki>
+
+parameters: {{{parameter|default}}} {{{parameter}}}
 
 another {{template 2|1=Value1|name=[[Value for name]]}} successfully substituted template
 
@@ -21,6 +23,8 @@ here, we use templates inside template parameters: {{template 2|1=Value1|name={{
 
 here, we specify no value so the default value is used when it exists: {{template 2|1=test}} or {{template 2|name=test}}
 
-{{template 3|param|param2=[[link]]   | param3 = [[the|parameters]]|test={{template}}|test2={{other template|param=[[link]]}}}}
+links in templates: {{template 2|1=[http://www.mozilla.org Value1]|name=[[Value|for name]]}} 
+
+unknown templates are replaced by a link: {{template 3|param|param2=[[link]]   | param3 = [[the|parameters]]|test={{template}}|test2={{other template|param=[[link]]}}}}
 
 a [[Category:Tests|Text]]
