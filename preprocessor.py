@@ -1,5 +1,5 @@
-templates = {'template1': 'Content of template1.',
-             'template 2': '"Template 2" has 2 parameters: {{{1}}} and: {{{name|default}}}!'}
+templates = {}
+parsed_templates = {}  # Caches templates, to accelerate and avoid infinite loops
 
 def substitute_template_parameter(node, values={}):
     assert len(node.value) > 0, "Bad AST shape!"
@@ -15,38 +15,55 @@ def substitute_template_parameter(node, values={}):
             node.value = '{{{%s}}}' %  parameter_id
 
 def substitute_template(node):
-    if len(node.value) > 0:
-        page_name = node.value[0].value
-        count = 0
-        parameters = {}
-        if len(node.value) > 1:
-            for parameter in node.value[1].value:
-                if isinstance(parameter.value, unicode):
-                    # It is a standalone parameter
-                    count += 1 
-                    parameters['%s' % count] = parameter.value
-                else:
-                    # It is a parameter with a name and a value
-                    assert len(parameter.value) == 2, "Wrong AST shape!"
-                    parameter_name = parameter.value[0].value
-                    parameter_value = parameter.value[1].value
-                    parameters['%s' % parameter_name] = parameter_value
-        if page_name in templates:
-            template = parse_template(templates[page_name], parameters)
-            node.value = '%s' % template
+    node_to_str = '%s' % node
+    if node_to_str in parsed_templates:
+        if parsed_templates[node_to_str] is not None:
+            result = parsed_templates[node_to_str]
         else:
-            # FIXME: should be a link to page_name if page_name begins with a namespace
-            # that is valid for this wiki or to Template:page_name otherwise
-            node.value = '[[Template:%s]]' % page_name
+            result = 'Infinite template call detected!'
     else:
-        node.value = '{{}}'
+        parsed_templates[node_to_str] = None
+        if len(node.value) > 0:
+            page_name = node.value[0].value
+            count = 0
+            parameters = {}
+            if len(node.value) > 1:
+                for parameter in node.value[1].value:
+                    if isinstance(parameter.value, unicode) or \
+                       isinstance(parameter.value, str) or \
+                       len(parameter.value) == 1:
+                        # It is a standalone parameter
+                        count += 1 
+                        parameters['%s' % count] = parameter.value
+                    elif len(parameter.value) == 2 and \
+                         parameter.value[0].tag == 'parameter_name' and \
+                         parameter.value[1].tag == 'parameter_value':
+                        parameter_name = parameter.value[0].value
+                        parameter_value = parameter.value[1].value
+                        parameters['%s' % parameter_name] = parameter_value
+                    else:
+                        print parameter
+                        raise Exception, "Wrong AST shape!"
+            if page_name in templates:
+                template = parse_template(templates[page_name], parameters)
+                result = '%s' % template
+            else:
+                # FIXME: should be a link to page_name if page_name begins with a namespace
+                # that is valid for this wiki or to Template:page_name otherwise
+                result = '[[Template:%s]]' % page_name
+        else:
+            result = '{{}}'
+    node.value = result
+    parsed_templates[node_to_str] = result
 
 toolset = {'substitute_template': substitute_template,
            'substitute_template_parameter': substitute_template_parameter}
 
 from mediawiki_parser import preprocessorParser
 
-def make_parser():
+def make_parser(template_dict):
+    global templates
+    templates = template_dict
     return preprocessorParser.make_parser(toolset)
 
 def parse_template(template, parameters):

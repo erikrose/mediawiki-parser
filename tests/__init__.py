@@ -4,8 +4,26 @@ from unittest import TestCase
 
 def setup_module():
     from pijnu import makeParser
+    preprocessorGrammar = file("preprocessor.pijnu").read()
+    makeParser(preprocessorGrammar)
+
     mediawikiGrammar = file("mediawiki.pijnu").read()
-    mediawikiParser = makeParser(mediawikiGrammar)
+    makeParser(mediawikiGrammar)
+
+
+class PreprocessorTestCase(TestCase):
+    def _grammar(self, templates):
+        """Return a full or partial grammar.
+
+        method_name -- If truthy, the attribute of the full grammar to return
+
+        """
+        from mediawiki_parser import preprocessor
+        return preprocessor.make_parser(templates)
+
+    def parsed_equal_string(self, source, result, templates={}):
+        self.assertEquals(unicode(self._grammar(templates).parseTest(source).value), result)
+
 
 class ParserTestCase(TestCase):
     def _grammar(self, method_name):

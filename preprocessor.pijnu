@@ -63,17 +63,22 @@ def replace_by_space(node):
     optional_default_value  : (PIPE default_value)?                                                 : liftNode
     template_parameter      : PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END : substitute_template_parameter
 
-# Templates
+# Links
 
     LINK_PIPE               : PIPE                                                                  : restore
     internal_link           : L_BRACKET{2} inline (LINK_PIPE inline)* R_BRACKET{2}                  : join
     external_link           : L_BRACKET inline (SPACE inline)* R_BRACKET                            : join
     link                    : internal_link / external_link
-    value                   : SPACETABEOL* EQUAL SPACETABEOL* inline SPACETABEOL*
-    optional_value          : value?                                                                : liftValue
-    parameter_name          : (!EQUAL raw_char)+                                                    : join
+
+# Templates
+
+    value_content           : (inline / (!(TEMPLATE_END/PIPE) any_char)+)+
+    parameter_value         : SPACETABEOL* EQUAL SPACETABEOL* value_content SPACETABEOL*
+    optional_value          : parameter_value?                                                      : liftValue
+    parameter_name          : (!(SPACETABEOL* EQUAL) raw_char)+                                     : join
     named_parameter         : parameter_name optional_value                                         : liftValue
-    parameter               : SPACETABEOL* PIPE SPACETABEOL* (named_parameter / inline?)            : liftValue
+    standalone_parameter    : inline?                                                               : join
+    parameter               : SPACETABEOL* PIPE SPACETABEOL* (named_parameter/standalone_parameter) : liftValue
     parameters              : parameter*
     template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END         : substitute_template
 
@@ -98,4 +103,4 @@ def replace_by_space(node):
     not_styled_text         : html_comment / preformatted / nowiki
     allowed_char            : esc_char{1}                                                           : restore liftValue
     allowed_text            : raw_text / allowed_char
-    wikitext                : (not_styled_text / styled_text / allowed_text / EOL)+                 : join liftNode
+    wikitext                : (not_styled_text / styled_text / allowed_text / EOL)+                 : join

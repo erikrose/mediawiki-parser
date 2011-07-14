@@ -8,8 +8,12 @@ makeParser(preprocessorGrammar)
 mediawikiGrammar = file("mediawiki.pijnu").read()
 makeParser(mediawikiGrammar)
 
+templates = {'template1': 'Content of template1.',
+             'template 2': '"Template 2" has 2 parameters: {{{1}}} and: {{{name|default}}}!',
+             'Template with': 'test {{{1}}} {{{2}}}'}
+
 from preprocessor import make_parser
-preprocessor = make_parser()
+preprocessor = make_parser(templates)
 
 from html import make_parser
 parser = make_parser()
