@@ -72,6 +72,8 @@ def parse_template(template, parameters):
 
     toolset['substitute_template_parameter'] = subst_param
     parser = preprocessorParser.make_parser(toolset)
-
     result = parser.parse(template)
+    
+    # We reinitialize this so that we won't pollute other templates with our values
+    toolset['substitute_template_parameter'] = substitute_template_parameter
     return result.value
