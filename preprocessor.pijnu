@@ -32,10 +32,10 @@ def replace_by_space(node):
 
 # Predefined tags
 
-    NOWIKI_BEGIN            : "<nowiki>"                                                            : drop
-    NOWIKI_END              : "</nowiki>"                                                           : drop
-    PRE_BEGIN               : "<pre>"                                                               : drop
-    PRE_END                 : "</pre>"                                                              : drop
+    NOWIKI_BEGIN            : "<nowiki>"
+    NOWIKI_END              : "</nowiki>"
+    PRE_BEGIN               : "<pre>"
+    PRE_END                 : "</pre>"
     special_tag             : NOWIKI_BEGIN/NOWIKI_END/PRE_BEGIN/PRE_END
 
 # Characters

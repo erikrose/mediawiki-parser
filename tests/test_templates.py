@@ -71,6 +71,25 @@ class TemplatesTests(PreprocessorTestCase):
         templates = {'Template with': 'test: {{{1}}} {{{2}}} {{{3}}}'}
         self.parsed_equal_string(source, result, templates)
 
+    def test_formatted_template_arguments(self):
+        "The formatted arguments are allowed, but will be processed in the parser, not in the preprocessor."
+        source = "A {{Template with|an argument ''in italic'' |and another one '''in bold'''}}."
+        result = "A test: an argument ''in italic''  and another one '''in bold'''."
+        templates = {'Template with': 'test: {{{1}}} {{{2}}}'}
+        self.parsed_equal_string(source, result, templates)
+
+    def test_template_in_nowiki_section(self):
+        "<nowiki> sections must be left untouched"
+        source = "a <nowiki>{{Template with|an argument ''in italic'' |and another one '''in bold'''}} section </nowiki>."
+        result = "a <nowiki>{{Template with|an argument ''in italic'' |and another one '''in bold'''}} section </nowiki>."
+        self.parsed_equal_string(source, result)
+
+    def test_template_in_preformatted_section(self):
+        "<pre> sections must be left untouched"
+        source = "a <pre>{{Template with|an argument ''in italic'' |and another one '''in bold'''}} section </pre>."
+        result = "a <pre>{{Template with|an argument ''in italic'' |and another one '''in bold'''}} section </pre>."
+        self.parsed_equal_string(source, result)
+
     def test_nested_template(self):
         source = "A {{Template with|{{other|inside}}}}."
         result = "A test is inside."
