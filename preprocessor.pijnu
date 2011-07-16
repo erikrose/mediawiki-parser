@@ -46,8 +46,8 @@ def replace_by_space(node):
     raw_text                : raw_char+                                                             : join
 
 # HTML comments
+# HTML comments are totally ignored and do not appear in the final text
 
-    # HTML comments are totally ignored and do not appear in the final text
     comment_content         : ((!(DASH{2} GT) [\x20..\xff])+ / SPACETABEOL)*
     html_comment            : LT BANG DASH{2} comment_content DASH{2} GT                            : drop
 
@@ -56,12 +56,12 @@ def replace_by_space(node):
     page_name               : raw_char+                                                             : join
 
 # Template parameters
+# Those parameters should be substituted by their value when the current page is a template
+# or by their optional default value in any case
 
-    # Those parameters should be substituted by their value when the current page is a template or by their optional default value in any case
-    template_parameter_id   : (!(R_BRACE/PIPE) any_char)+                                           : join
-    default_value           : (!R_BRACE any_char)+                                                  : join
-    optional_default_value  : (PIPE default_value)?                                                 : liftNode
-    template_parameter      : PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END : substitute_template_parameter
+    parameter_id            : raw_char+                                                             : join
+    optional_default_value  : (PIPE SPACETABEOL* inline)? SPACETABEOL*                              : liftNode
+    template_parameter      : PARAMETER_BEGIN parameter_id optional_default_value PARAMETER_END     : substitute_template_parameter
 
 # Links
 
@@ -72,11 +72,12 @@ def replace_by_space(node):
 
 # Templates
 
-    value_content           : (inline / (!(TEMPLATE_END/PIPE) any_char)+)+
-    parameter_value         : SPACETABEOL* EQUAL SPACETABEOL* value_content SPACETABEOL*
-    optional_value          : parameter_value?                                                      : liftValue
-    parameter_name          : (!(SPACETABEOL* EQUAL) raw_char)+                                     : join
-    named_parameter         : parameter_name optional_value                                         : liftValue
+    value_content           : (inline / (!(TEMPLATE_END/PIPE) any_char)+)*                          : keep
+    parameter_value         : value_content SPACETABEOL*
+    optional_value          : parameter_value?
+    parameter_equal         : SPACETABEOL* EQUAL SPACETABEOL*
+    parameter_name          : (!(esc_char/parameter_equal) raw_char)+                               : join
+    named_parameter         : parameter_name parameter_equal optional_value
     standalone_parameter    : inline?                                                               : join
     parameter               : SPACETABEOL* PIPE SPACETABEOL* (named_parameter/standalone_parameter) : liftValue
     parameters              : parameter*
@@ -84,22 +85,22 @@ def replace_by_space(node):
 
 # inline allows to have templates/links inside templates/links
 
-    structure               : link / template
+    structure               : link / template / template_parameter
     inline                  : (structure / raw_text)+                                               : @
 
 # Pre and nowiki tags
+# Preformatted acts like nowiki (disables wikitext parsing)
+# We allow any char without parsing them as long as the tag is not closed
 
-    # Preformatted acts like nowiki (disables wikitext parsing)
     pre_text                : (!PRE_END any_char)*                                                  : join
     preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
-    # We allow any char without parsing them as long as the tag is not closed
     eol_to_space            : EOL*                                                                  : replace_by_space
     nowiki_text             : (!NOWIKI_END (any_char/eol_to_space))*                                : join
     nowiki                  : NOWIKI_BEGIN nowiki_text NOWIKI_END                                   : liftValue
 
 # Text types
 
-    styled_text             : template_parameter / template
+    styled_text             : template / template_parameter 
     not_styled_text         : html_comment / preformatted / nowiki
     allowed_char            : esc_char{1}                                                           : restore liftValue
     allowed_text            : raw_text / allowed_char

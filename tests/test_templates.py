@@ -26,9 +26,15 @@ class TemplatesTests(PreprocessorTestCase):
         self.parsed_equal_string(source, result)
 
     def test_template_parameter_with_default_value(self):
-        source = """{{{parameter name|default value}}}"""
+        source = "{{{parameter name|default value}}}"
         result = "default value"
         self.parsed_equal_string(source, result)
+
+    def test_nested_default_values(self):
+        source = "Cheese or dessert? Person1: {{menu|cheese=camembert}}; person2: {{menu|dessert=apple}}; person3: {{menu}}."
+        result = "Cheese or dessert? Person1: Menu: camembert; person2: Menu: apple; person3: Menu: not cheese nor dessert."
+        templates = {'menu': 'Menu: {{{cheese|{{{dessert|not cheese nor dessert}}}}}}'}
+        self.parsed_equal_string(source, result, templates)
 
     def test_template_with_parameters(self):
         source = "{{Template with|1=parameter| 2 = parameters}}"
@@ -40,6 +46,26 @@ class TemplatesTests(PreprocessorTestCase):
         source = "a {{Template with|parameter1|parameter2}}"
         result = "a test: parameter1 parameter2"
         templates = {'Template with': 'test: {{{1}}} {{{2}}}'}
+        self.parsed_equal_string(source, result, templates)
+
+    def test_equal_in_template_parameter(self):
+        source = "a {{Template with|1=a=b|2=text text = test test}}"
+        result = "a test: a=b text text = test test"
+        templates = {'Template with': 'test: {{{1}}} {{{2}}}'}
+        self.parsed_equal_string(source, result, templates)
+
+    def test_empty_template_parameter(self):
+        "We pass an empty value, which is different than no value at all."
+        source = "a {{Template with|1=}}"
+        result = "a test: "
+        templates = {'Template with': 'test: {{{1}}}'}
+        self.parsed_equal_string(source, result, templates)
+
+    def test_pipe_in_template_parameter(self):
+        source = "a {{Template with|apple{{!}}orange{{!}}lemon}}"
+        result = "a test: apple|orange|lemon"
+        templates = {'Template with': 'test: {{{1}}}',
+                     '!': '|'}
         self.parsed_equal_string(source, result, templates)
 
     def test_template_parameters_precedence(self):
