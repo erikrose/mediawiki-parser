@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Bold_and_italic_tests(ParserTestCase):
+class BoldAndItalicTests(ParserTestCase):
     def test_italic(self):
         source = "Here, we have ''italic'' text."
         result = "[rawText:'Here, we have <em>italic</em> text.']"

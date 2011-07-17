@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Special_chars_tests(ParserTestCase):
+class SpecialCharsTests(ParserTestCase):
     def test_unicode_chars(self):
         source = u"Some Unicode characters: 你好."
         result = u"[rawText:'Some Unicode characters: 你好.']"

@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Rules_tests(ParserTestCase):
+class RulesTests(ParserTestCase):
     def test_simple_rule(self):
         source = '----\n'
         result = "[horizontal_rule:'']"
@@ -24,5 +24,6 @@ class Rules_tests(ParserTestCase):
     def test_inline_after_rule(self):
         # In this case, it is a paragraph!
         source = '------ {{template|arg=[[link]]}}\n'
-        result = "[horizontal_rule:[@inline@:[rawText:' '  template:[page_name:'template'  parameters:[parameter:[parameter_name:'arg'  optional_value:[internal_link:'link']]]]]]]"
-        self.parsed_equal_string(source, result, None)
+        result = u"[horizontal_rule:[@inline@:[rawText:' test: '  internal_link:'link']]]"
+        templates = {'template': 'test: {{{arg}}}'}
+        self.parsed_equal_string(source, result, None, templates)

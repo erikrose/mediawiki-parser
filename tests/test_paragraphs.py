@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Paragraphs_tests(ParserTestCase):
+class ParagraphsTests(ParserTestCase):
     def test_single_line_paragraph(self):
         source = "This is a paragraph.\n"
         result = """body:
@@ -54,13 +54,20 @@ Followed a blank line and another paragraph.
         self.parsed_equal_tree(source, result, None)
 
     def test_styled_text_in_paragraph(self):
-        source = """Styled text such as ''italic'', '''bold''', {{templates}} also work.
+        source = """Styled text such as ''italic'', '''bold''', {{templates}} and {{{template parameters}}} also work.
 """
         result = """body:
    paragraphs:
       paragraph:
          rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
-         template:
-            page_name:templates
+         internal_link:Template:templates
+         rawText: and 
+         allowedChar:{
+         allowedChar:{
+         allowedChar:{
+         rawText:template parameters
+         allowedChar:}
+         allowedChar:}
+         allowedChar:}
          rawText: also work."""
         self.parsed_equal_tree(source, result, None)

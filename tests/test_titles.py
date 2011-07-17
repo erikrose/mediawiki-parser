@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Titles_tests(ParserTestCase):
+class TitlesTests(ParserTestCase):
     def test_title1(self):
         source = '=Title 1=\n'
         result = "[title1:[rawText:'Title 1']]"
@@ -63,7 +63,7 @@ class Titles_tests(ParserTestCase):
 
     def test_simple_template_in_title(self):
         source = '===== {{Title 5}} =====\n'
-        result = "[title5:[rawText:' '  template:[page_name:'Title 5']  rawText:' ']]"
+        result = "[title5:[rawText:' '  internal_link:'Template:Title 5'  rawText:' ']]"
         self.parsed_equal_string(source, result, None)
 
     def test_braces_in_title(self):

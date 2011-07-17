@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Comments_tests(ParserTestCase):
+class CommentsTests(ParserTestCase):
     def test_comment_before_title(self):
         source = '<!-- comment -->=Title 1=\n'
         result = "[title1:[rawText:'Title 1']]"
@@ -32,16 +32,15 @@ class Comments_tests(ParserTestCase):
         result = """body:
    paragraphs:
       paragraph:
-         rawText:This is a
-         rawText: paragraph."""
+         rawText:This is a paragraph."""
         self.parsed_equal_tree(source, result, None)
 
     def test_empty_comment(self):
         source = 'an <!----> empty comment'
-        result = "[rawText:'an '  rawText:' empty comment']"
+        result = "[rawText:'an  empty comment']"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_special_chars_in_comment(self):
         source = u'a <!--\n\t你好--> comment'
-        result = "[rawText:'a '  rawText:' comment']"
+        result = "[rawText:'a  comment']"
         self.parsed_equal_string(source, result, 'inline')

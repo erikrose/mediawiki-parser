@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Links_tests(ParserTestCase):
+class LinksTests(ParserTestCase):
     def test_simple_internal_link(self):
         source = '[[article]]'
         result = "[internal_link:'article']"
@@ -20,9 +20,10 @@ class Links_tests(ParserTestCase):
         self.parsed_equal_string(source, result, 'inline')
 
     def test_template_in_internal_link(self):
-        source = '[[article|{{template|value=1}}]]'
-        result = "[internal_link:[page_name:'article'  link_arguments:[link_argument:[template:[page_name:'template'  parameters:[parameter:[parameter_name:'value'  optional_value:[rawText:'1']]]]]]]]"
-        self.parsed_equal_string(source, result, 'inline')
+        source = "[[article|{{template|value=pass}}]]"
+        result = "[internal_link:[page_name:'article'  link_arguments:[link_argument:[rawText:'test: pass']]]]"
+        templates = {'template': 'test: {{{value}}}'}
+        self.parsed_equal_string(source, result, 'inline', templates)
 
     def test_category(self):
         source = '[[Category:Category name|sort key]]'

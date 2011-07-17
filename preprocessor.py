@@ -42,7 +42,6 @@ def substitute_template(node):
                         parameter_value = parameter.value[1].value
                         parameters['%s' % parameter_name] = parameter_value
                     else:
-                        print parameter
                         raise Exception, "Wrong AST shape!"
             if page_name in templates:
                 template = parse_template(templates[page_name], parameters)
@@ -64,6 +63,8 @@ from mediawiki_parser import preprocessorParser
 def make_parser(template_dict):
     global templates
     templates = template_dict
+    global parsed_templates
+    parsed_templates = {}
     return preprocessorParser.make_parser(toolset)
 
 def parse_template(template, parameters):

@@ -45,10 +45,6 @@
     TITLE3_END              : EQUAL{3} SPACETAB* EOL                                                : drop
     TITLE2_END              : EQUAL{2} SPACETAB* EOL                                                : drop
     TITLE1_END              : EQUAL{1} SPACETAB* EOL                                                : drop
-    TEMPLATE_BEGIN          : L_BRACE{2}                                                            : drop
-    TEMPLATE_END            : R_BRACE{2}                                                            : drop
-    PARAMETER_BEGIN         : L_BRACE{3}                                                            : drop
-    PARAMETER_END           : R_BRACE{3}                                                            : drop
     LINK_BEGIN              : L_BRACKET{2}                                                          : drop
     LINK_END                : R_BRACKET{2}                                                          : drop
 
@@ -123,24 +119,6 @@
     external_link           : L_BRACKET url optional_link_text? R_BRACKET 
     link                    : internal_link / external_link
 
-# Templates
-
-    value                   : EQUAL cleanInline                                                     : liftValue
-    optional_value          : value*                                                                : liftValue
-    parameter_name          : (!EQUAL rawChar)+                                                     : join
-    parameter_with_value    : parameter_name optional_value                                         : liftValue
-    parameter               : SPACETABEOL* PIPE SPACETABEOL* (parameter_with_value / cleanInline)   : liftValue
-    parameters              : parameter*
-    template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END
-
-# Template parameters
-
-    # Those parameters should be substituted by their value when the current page is a template or by their optional default value in any case
-    template_parameter_id   : (!(R_BRACE/PIPE) anyChar)+                                            : join
-    default_value           : (!R_BRACE anyChar)+                                                   : join
-    optional_default_value  : (PIPE default_value)?                                                 : liftNode
-    template_parameter      : PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END
-
 # Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
@@ -153,7 +131,7 @@
 
 # Text types
 
-    styled_text             : link / url / template_parameter / template / html_comment / tag / entity
+    styled_text             : link / url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
@@ -339,10 +317,6 @@ def make_parser(actions=None):
     TITLE3_END = Sequence([Repetition(EQUAL, numMin=3, numMax=3, expression='EQUAL{3}'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), EOL], expression='EQUAL{3} SPACETAB* EOL', name='TITLE3_END')(toolset['drop'])
     TITLE2_END = Sequence([Repetition(EQUAL, numMin=2, numMax=2, expression='EQUAL{2}'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), EOL], expression='EQUAL{2} SPACETAB* EOL', name='TITLE2_END')(toolset['drop'])
     TITLE1_END = Sequence([Repetition(EQUAL, numMin=1, numMax=1, expression='EQUAL{1}'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), EOL], expression='EQUAL{1} SPACETAB* EOL', name='TITLE1_END')(toolset['drop'])
-    TEMPLATE_BEGIN = Repetition(L_BRACE, numMin=2, numMax=2, expression='L_BRACE{2}', name='TEMPLATE_BEGIN')(toolset['drop'])
-    TEMPLATE_END = Repetition(R_BRACE, numMin=2, numMax=2, expression='R_BRACE{2}', name='TEMPLATE_END')(toolset['drop'])
-    PARAMETER_BEGIN = Repetition(L_BRACE, numMin=3, numMax=3, expression='L_BRACE{3}', name='PARAMETER_BEGIN')(toolset['drop'])
-    PARAMETER_END = Repetition(R_BRACE, numMin=3, numMax=3, expression='R_BRACE{3}', name='PARAMETER_END')(toolset['drop'])
     LINK_BEGIN = Repetition(L_BRACKET, numMin=2, numMax=2, expression='L_BRACKET{2}', name='LINK_BEGIN')(toolset['drop'])
     LINK_END = Repetition(R_BRACKET, numMin=2, numMax=2, expression='R_BRACKET{2}', name='LINK_END')(toolset['drop'])
     
@@ -417,24 +391,6 @@ def make_parser(actions=None):
     external_link = Sequence([L_BRACKET, url, Option(optional_link_text, expression='optional_link_text?'), R_BRACKET], expression='L_BRACKET url optional_link_text? R_BRACKET', name='external_link')
     link = Choice([internal_link, external_link], expression='internal_link / external_link', name='link')
     
-    # Templates
-    
-    value = Sequence([EQUAL, cleanInline], expression='EQUAL cleanInline', name='value')(toolset['liftValue'])
-    optional_value = Repetition(value, numMin=False, numMax=False, expression='value*', name='optional_value')(toolset['liftValue'])
-    parameter_name = Repetition(Sequence([NextNot(EQUAL, expression='!EQUAL'), rawChar], expression='!EQUAL rawChar'), numMin=1, numMax=False, expression='(!EQUAL rawChar)+', name='parameter_name')(toolset['join'])
-    parameter_with_value = Sequence([parameter_name, optional_value], expression='parameter_name optional_value', name='parameter_with_value')(toolset['liftValue'])
-    parameter = Sequence([Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), PIPE, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), Choice([parameter_with_value, cleanInline], expression='parameter_with_value / cleanInline')], expression='SPACETABEOL* PIPE SPACETABEOL* (parameter_with_value / cleanInline)', name='parameter')(toolset['liftValue'])
-    parameters = Repetition(parameter, numMin=False, numMax=False, expression='parameter*', name='parameters')
-    template = Sequence([TEMPLATE_BEGIN, page_name, parameters, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), TEMPLATE_END], expression='TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END', name='template')
-    
-    # Template parameters
-    
-        # Those parameters should be substituted by their value when the current page is a template or by their optional default value in any case
-    template_parameter_id = Repetition(Sequence([NextNot(Choice([R_BRACE, PIPE], expression='R_BRACE/PIPE'), expression='!(R_BRACE/PIPE)'), anyChar], expression='!(R_BRACE/PIPE) anyChar'), numMin=1, numMax=False, expression='(!(R_BRACE/PIPE) anyChar)+', name='template_parameter_id')(toolset['join'])
-    default_value = Repetition(Sequence([NextNot(R_BRACE, expression='!R_BRACE'), anyChar], expression='!R_BRACE anyChar'), numMin=1, numMax=False, expression='(!R_BRACE anyChar)+', name='default_value')(toolset['join'])
-    optional_default_value = Option(Sequence([PIPE, default_value], expression='PIPE default_value'), expression='(PIPE default_value)?', name='optional_default_value')(toolset['liftNode'])
-    template_parameter = Sequence([PARAMETER_BEGIN, template_parameter_id, optional_default_value, PARAMETER_END], expression='PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END', name='template_parameter')
-    
     # Pre and nowiki tags
     
         # Preformatted acts like nowiki (disables wikitext parsing)
@@ -447,7 +403,7 @@ def make_parser(actions=None):
     
     # Text types
     
-    styled_text = Choice([link, url, template_parameter, template, html_comment, tag, entity], expression='link / url / template_parameter / template / html_comment / tag / entity', name='styled_text')
+    styled_text = Choice([link, url, html_comment, tag, entity], expression='link / url / html_comment / tag / entity', name='styled_text')
     not_styled_text = Choice([preformatted, nowiki], expression='preformatted / nowiki', name='not_styled_text')
     allowedChar = Repetition(escChar, numMin=1, numMax=1, expression='escChar{1}', name='allowedChar')(toolset['restore'], toolset['liftValue'])
     allowedText = Choice([rawText, allowedChar], expression='rawText / allowedChar', name='allowedText')

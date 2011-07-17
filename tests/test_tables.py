@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Tables_tests(ParserTestCase):
+class TablesTests(ParserTestCase):
     def test_table_first_cell(self):
         source = 'style="color:red" | cell 1'
         result = """wikiTableFirstCell:
@@ -165,14 +165,7 @@ class Tables_tests(ParserTestCase):
         result = """@wikiTable@:
    wikiTableTitle:
       @cleanInline@:
-         rawText: Table 
-         template:
-            page_name:title
-            parameters:
-               parameter:
-                  parameter_name:parameter
-                  optional_value:
-                     rawText:yes
+         rawText: Table test: yes
    wikiTableLineCells:
       wikiTableCellContent:
          @cleanInline@:
@@ -188,7 +181,8 @@ class Tables_tests(ParserTestCase):
       wikiTableCellContent:
          @cleanInline@:
             rawText: cell 4"""
-        self.parsed_equal_tree(source, result, "wikiTable")
+        templates = {'title': 'test: {{{parameter}}}'}
+        self.parsed_equal_tree(source, result, "wikiTable", templates)
 
     def test_table_with_HTML_and_template(self):
         source = """{| class="wikitable" {{prettyTable}}
@@ -213,9 +207,9 @@ class Tables_tests(ParserTestCase):
          HTML_attribute:
             HTML_name:class
             HTML_value_quote:wikitable
-         @cleanInline@:
-            template:
-               page_name:prettyTable
+         HTML_attribute:
+            HTML_name:style
+            HTML_value_quote:color:blue
    wikiTableContent:
       wikiTableTitle:
          wikiTableParameter:
@@ -224,11 +218,7 @@ class Tables_tests(ParserTestCase):
                HTML_value_quote:color:red
          wikiTableCellContent:
             @cleanInline@:
-               rawText: Table 
-               template:
-                  page_name:title
-                  parameters:
-                     parameter:parameter
+               rawText: Table test: parameter
       wikiTableLineBreak:
       wikiTableLineHeader:
          wikiTableParameter:
@@ -275,20 +265,15 @@ class Tables_tests(ParserTestCase):
             rawText:data L2.A
       wikiTableLineCells:
          @cleanInline@:
-            rawText:data 
-            template:
-               page_name:template
-               parameters:
-                  parameter:with
-                  parameter:
-                     parameter_name:parameters
-                     optional_value:
-                        rawText:L2.B"""
-        self.parsed_equal_tree(source, result, "wikiTable")
+            rawText:data with and L2.B..."""
+        templates = {'prettyTable': 'style="color:blue"',
+                     'title': 'test: {{{1}}}',
+                     'template': '{{{1}}} and {{{parameters}}}...'}
+        self.parsed_equal_tree(source, result, "wikiTable", templates)
 
     def test_nested_tables(self):
-        source = """{| class="wikitable" {{prettyTable|1=true}}
-|+ style="color:red" | Table {{title}}
+        source = """{| class="wikitable" {{prettyTable}}
+|+ style="color:red" | Table {{title|1=true}}
 |-
 ! scope=col | First (mother)
 ! scope=col | table
@@ -315,14 +300,9 @@ class Tables_tests(ParserTestCase):
          HTML_attribute:
             HTML_name:class
             HTML_value_quote:wikitable
-         @cleanInline@:
-            template:
-               page_name:prettyTable
-               parameters:
-                  parameter:
-                     parameter_name:1
-                     optional_value:
-                        rawText:true
+         HTML_attribute:
+            HTML_name:style
+            HTML_value_quote:color:blue
    wikiTableContent:
       wikiTableTitle:
          wikiTableParameter:
@@ -331,9 +311,7 @@ class Tables_tests(ParserTestCase):
                HTML_value_quote:color:red
          wikiTableCellContent:
             @cleanInline@:
-               rawText: Table 
-               template:
-                  page_name:title
+               rawText: Table test: true
       wikiTableLineBreak:
       wikiTableLineHeader:
          wikiTableParameter:
@@ -357,9 +335,9 @@ class Tables_tests(ParserTestCase):
                HTML_attribute:
                   HTML_name:class
                   HTML_value_quote:wikitable
-               @cleanInline@:
-                  template:
-                     page_name:prettyTable
+               HTML_attribute:
+                  HTML_name:style
+                  HTML_value_quote:color:blue
          wikiTableContent:
             wikiTableLineBreak:
             wikiTableLineHeader:
@@ -401,4 +379,6 @@ class Tables_tests(ParserTestCase):
       wikiTableLineCells:
          @cleanInline@:
             rawText: again"""
-        self.parsed_equal_tree(source, result, "wikiTable")
+        templates = {'prettyTable': 'style="color:blue"',
+                     'title': 'test: {{{1}}}'}
+        self.parsed_equal_tree(source, result, "wikiTable", templates)

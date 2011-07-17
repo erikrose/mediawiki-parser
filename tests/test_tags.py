@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Tags_tests(ParserTestCase):
+class TagsTests(ParserTestCase):
     def test_basic_tag(self):
         source = '<a>'
         result = "[tag_name:'a']"

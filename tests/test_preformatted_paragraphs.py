@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Paragraphs_tests(ParserTestCase):
+class PreformattedParagraphsTests(ParserTestCase):
     def test_single_line_paragraph(self):
         source = " This is a preformatted paragraph.\n"
         result = """body:
@@ -44,8 +44,7 @@ Followed by a "normal" one.
    preformattedLines:
       preformattedLine:
          rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
-         template:
-            page_name:templates
+         internal_link:Template:templates
          rawText: also work."""
         self.parsed_equal_tree(source, result, None)
 
@@ -65,7 +64,6 @@ Preformatted paragraph.
         source = "<pre>some [[text]] that should {{not}} be changed</pre>\n"
         result = "[paragraphs:[paragraph:[preformatted:'some [[text]] that should {{not}} be changed']]]"
         self.parsed_equal_string(source, result, None)
-
 
     def test_html_pre_in_paragraph(self):
         source = "Normal paragraph <pre>Preformatted one</pre> Normal one.\n"

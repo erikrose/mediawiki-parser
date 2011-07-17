@@ -49,10 +49,6 @@ def replace_by_space(node):
     TITLE3_END              : EQUAL{3} SPACETAB* EOL                                                : drop
     TITLE2_END              : EQUAL{2} SPACETAB* EOL                                                : drop
     TITLE1_END              : EQUAL{1} SPACETAB* EOL                                                : drop
-    TEMPLATE_BEGIN          : L_BRACE{2}                                                            : drop
-    TEMPLATE_END            : R_BRACE{2}                                                            : drop
-    PARAMETER_BEGIN         : L_BRACE{3}                                                            : drop
-    PARAMETER_END           : R_BRACE{3}                                                            : drop
     LINK_BEGIN              : L_BRACKET{2}                                                          : drop
     LINK_END                : R_BRACKET{2}                                                          : drop
 
@@ -127,24 +123,6 @@ def replace_by_space(node):
     external_link           : L_BRACKET url optional_link_text? R_BRACKET 
     link                    : internal_link / external_link
 
-# Templates
-
-    value                   : EQUAL cleanInline                                                     : liftValue
-    optional_value          : value*                                                                : liftValue
-    parameter_name          : (!EQUAL rawChar)+                                                     : join
-    parameter_with_value    : parameter_name optional_value                                         : liftValue
-    parameter               : SPACETABEOL* PIPE SPACETABEOL* (parameter_with_value / cleanInline)   : liftValue
-    parameters              : parameter*
-    template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END
-
-# Template parameters
-
-    # Those parameters should be substituted by their value when the current page is a template or by their optional default value in any case
-    template_parameter_id   : (!(R_BRACE/PIPE) anyChar)+                                            : join
-    default_value           : (!R_BRACE anyChar)+                                                   : join
-    optional_default_value  : (PIPE default_value)?                                                 : liftNode
-    template_parameter      : PARAMETER_BEGIN template_parameter_id optional_default_value PARAMETER_END
-
 # Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
@@ -157,7 +135,7 @@ def replace_by_space(node):
 
 # Text types
 
-    styled_text             : link / url / template_parameter / template / html_comment / tag / entity
+    styled_text             : link / url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowedChar             : escChar{1}                                                            : restore liftValue
     allowedText             : rawText / allowedChar
