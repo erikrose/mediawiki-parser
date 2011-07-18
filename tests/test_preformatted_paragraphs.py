@@ -3,13 +3,13 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class PreformattedParagraphsTests(ParserTestCase):
+class preformatted_paragraphsTests(ParserTestCase):
     def test_single_line_paragraph(self):
         source = " This is a preformatted paragraph.\n"
         result = """body:
-   preformattedLines:
-      preformattedLine:
-         rawText:This is a preformatted paragraph."""
+   preformatted_lines:
+      preformatted_line:
+         raw_text:This is a preformatted paragraph."""
         self.parsed_equal_tree(source, result, None)
 
     def test_preformatted_and_normal_paragraphs(self):
@@ -17,12 +17,12 @@ class PreformattedParagraphsTests(ParserTestCase):
 Followed by a "normal" one.
 """
         result = """body:
-   preformattedLines:
-      preformattedLine:
-         rawText:This is a preformatted paragraph.
+   preformatted_lines:
+      preformatted_line:
+         raw_text:This is a preformatted paragraph.
    paragraphs:
       paragraph:
-         rawText:Followed by a "normal" one."""
+         raw_text:Followed by a "normal" one."""
         self.parsed_equal_tree(source, result, None)
 
     def test_multiline_paragraph(self):
@@ -30,22 +30,22 @@ Followed by a "normal" one.
  preformatted paragraph.
 """
         result = """body:
-   preformattedLines:
-      preformattedLine:
-         rawText:This is a multiline
-      preformattedLine:
-         rawText:preformatted paragraph."""
+   preformatted_lines:
+      preformatted_line:
+         raw_text:This is a multiline
+      preformatted_line:
+         raw_text:preformatted paragraph."""
         self.parsed_equal_tree(source, result, None)
 
     def test_style_in_paragraph(self):
         source = """ Styled text such as ''italic'', '''bold''', {{templates}} also work.
 """
         result = """body:
-   preformattedLines:
-      preformattedLine:
-         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
+   preformatted_lines:
+      preformatted_line:
+         raw_text:Styled text such as <em>italic</em>, <strong>bold</strong>, 
          internal_link:Template:templates
-         rawText: also work."""
+         raw_text: also work."""
         self.parsed_equal_tree(source, result, None)
 
     def test_html_pre_paragraph(self):
@@ -54,9 +54,9 @@ Preformatted paragraph.
 </pre>
 """
         result = """body:
-   preformattedParagraph:
-      preformattedText:
-         rawText:Preformatted paragraph."""
+   preformatted_paragraph:
+      preformatted_text:
+         raw_text:Preformatted paragraph."""
         self.parsed_equal_tree(source, result, None)
 
     def test_formatted_html_pre_paragraph(self):
@@ -70,9 +70,9 @@ Preformatted paragraph.
         result = """body:
    paragraphs:
       paragraph:
-         rawText:Normal paragraph 
+         raw_text:Normal paragraph 
          preformatted:Preformatted one
-         rawText: Normal one."""
+         raw_text: Normal one."""
         self.parsed_equal_tree(source, result, None)
 
     def test_pre_paragraph_in_table(self):
@@ -82,10 +82,10 @@ Preformatted paragraph.
 |}
 """
         result = """body:
-   @wikiTable@:
-      wikiTableLineBreak:
-      wikiTableLineHeader:
-         @cleanInline@:
-            rawText: 
+   @table@:
+      table_line_break:
+      table_line_header:
+         @clean_inline@:
+            raw_text: 
             preformatted:Text"""
         self.parsed_equal_tree(source, result, None)

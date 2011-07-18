@@ -65,28 +65,28 @@ def replace_by_space(node):
     NOWIKI_END              : "</nowiki>"                                                           : drop
     PRE_BEGIN               : "<pre>"                                                               : drop
     PRE_END                 : "</pre>"                                                              : drop
-    special_tag             : NOWIKI_BEGIN/NOWIKI_END/PRE_BEGIN/PRE_END
+    SPECIAL_TAG             : NOWIKI_BEGIN/NOWIKI_END/PRE_BEGIN/PRE_END
 
 # Characters
 
-    escChar                 : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON
-    titleEnd                : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
-    escSeq                  : special_tag / escChar / titleEnd
-    rawChar                 : !escSeq [\x20..\xff]
-    rawText                 : rawChar+                                                              : join render_raw_text
+    ESC_CHAR                : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON
+    TITLE_END               : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
+    ESC_SEQ                 : SPECIAL_TAG / ESC_CHAR / TITLE_END
+    raw_char                : !ESC_SEQ [\x20..\xff]
+    raw_text                : raw_char+                                                             : join render_raw_text
     alpha_num               : [a..zA..Z0..9]
     alpha_num_text          : alpha_num+                                                            : join
-    anyChar                 : [\x20..\xff]
-    anyText                 : anyChar+                                                              : join
+    any_char                : [\x20..\xff]
+    any_text                : any_char+                                                             : join
 
 # HTML tags
 
-    value_quote             : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
-    value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
-    value_noquote           : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
+    value_quote             : QUOTE ((!(GT/QUOTE) any_char) / TAB)+ QUOTE                           : join
+    value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) any_char) / TAB)+ APOSTROPHE            : join
+    value_noquote           : (!(GT/SPACETAB/SLASH) raw_char)+                                      : join
     attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))?             : liftNode
-    attribute_name          : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
-    tag_name                : (!(SPACE/SLASH) rawChar)+                                             : join
+    attribute_name          : (!(EQUAL/SLASH/SPACETAB) raw_char)+                                   : join
+    tag_name                : (!(SPACE/SLASH) raw_char)+                                            : join
     optional_attribute      : SPACETABEOL+ attribute_name attribute_value
     optional_attributes     : optional_attribute*
     tag_open                : LT tag_name optional_attributes SPACETABEOL* GT
@@ -107,15 +107,15 @@ def replace_by_space(node):
 
 # Text
 
-    page_name               : rawChar+                                                              : join
+    page_name               : raw_char+                                                             : join
 # TODO: allow IPv6 addresses (http://[::1]/etc)
     address                 : (!(QUOTE/R_BRACKET) [\x21..\xff])+                                    : liftValue
     url                     : protocol address                                                      : join
 
 # Links
 
-    allowed_in_link         : (!(R_BRACKET/PIPE) escChar)+                                          : restore join
-    link_text               : (cleanInline / allowed_in_link)*                                      : liftValue
+    allowed_in_link         : (!(R_BRACKET/PIPE) ESC_CHAR)+                                         : restore join
+    link_text               : (clean_inline / allowed_in_link)*                                     : liftValue
     link_argument           : PIPE link_text                                                        : liftValue
     link_arguments          : link_argument*
     internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : liftValue
@@ -126,21 +126,21 @@ def replace_by_space(node):
 # Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
-    pre_text                : (!PRE_END anyChar)*                                                   : join
+    pre_text                : (!PRE_END any_char)*                                                  : join
     preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
     # We allow any char without parsing them as long as the tag is not closed
     eol_to_space            : EOL*                                                                  : replace_by_space
-    nowiki_text             : (!NOWIKI_END (anyChar/eol_to_space))*                                 : join
+    nowiki_text             : (!NOWIKI_END (any_char/eol_to_space))*                                : join
     nowiki                  : NOWIKI_BEGIN nowiki_text NOWIKI_END                                   : liftValue
 
 # Text types
 
     styled_text             : link / url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
-    allowedChar             : escChar{1}                                                            : restore liftValue
-    allowedText             : rawText / allowedChar
-    cleanInline             : (not_styled_text / styled_text / rawText)+                            : @
-    inline                  : (not_styled_text / styled_text / allowedText)+                        : @
+    allowed_char            : ESC_CHAR{1}                                                           : restore liftValue
+    allowed_text            : raw_text / allowed_char
+    clean_inline            : (not_styled_text / styled_text / raw_text)+                           : @
+    inline                  : (not_styled_text / styled_text / allowed_text)+                       : @
 
 # Paragraphs
 
@@ -162,70 +162,71 @@ def replace_by_space(node):
 
 # Lists
 
-    listChar                : BULLET / HASH / COLON / SEMICOLON
-    listLeafContent         : !listChar inline EOL                                                  : liftValue
+    LIST_CHAR               : BULLET / HASH / COLON / SEMICOLON
+    list_leaf_content       : !LIST_CHAR inline EOL                                                 : liftValue
 
-    bulletListLeaf          : BULLET optional_comment listLeafContent                               : liftValue
-    bulletSubList           : BULLET optional_comment listItem                                      : @
+    bullet_list_leaf        : BULLET optional_comment list_leaf_content                             : liftValue
+    bullet_sub_list         : BULLET optional_comment list_item                                     : @
 
-    numberListLeaf          : HASH optional_comment listLeafContent                                 : liftValue
-    numberSubList           : HASH optional_comment listItem                                        : @
+    number_list_leaf        : HASH optional_comment list_leaf_content                               : liftValue
+    number_sub_list         : HASH optional_comment list_item                                       : @
 
-    colonListLeaf           : COLON optional_comment listLeafContent                                : liftValue
-    colonSubList            : COLON optional_comment listItem                                       : @
+    colon_list_leaf         : COLON optional_comment list_leaf_content                              : liftValue
+    colon_sub_list          : COLON optional_comment list_item                                      : @
 
-    semiColonListLeaf       : SEMICOLON optional_comment listLeafContent                            : liftValue
-    semiColonSubList        : SEMICOLON optional_comment listItem                                   : @
+    semi_colon_list_leaf    : SEMICOLON optional_comment list_leaf_content                          : liftValue
+    semi_colon_sub_list     : SEMICOLON optional_comment list_item                                  : @
 
-    listLeaf                : semiColonListLeaf / colonListLeaf / numberListLeaf / bulletListLeaf   : @
-    subList                 : semiColonSubList / colonSubList / numberSubList / bulletSubList       : @
-    listItem                : subList / listLeaf                                                    : @
-    list                    : listItem+
+    list_leaf               : semi_colon_list_leaf/colon_list_leaf/number_list_leaf/bullet_list_leaf: @
+    sub_list                : semi_colon_sub_list/colon_sub_list/number_sub_list/bullet_sub_list    : @
+    list_item               : sub_list / list_leaf                                                  : @
+    list                    : list_item+
 
 # Preformatted
 
     EOL_or_not              : EOL{0..1}                                                             : drop
-    preformattedLine        : SPACE inline EOL                                                      : liftValue
-    preformattedLines       : preformattedLine+
-    preformattedText        : inline EOL_or_not                                                     : liftValue
-    preformattedParagraph   : PRE_BEGIN EOL preformattedText PRE_END EOL
-    preformattedGroup       : preformattedParagraph / preformattedLines
+    preformatted_line       : SPACE inline EOL                                                      : liftValue
+    preformatted_lines      : preformatted_line+
+    preformatted_text       : inline EOL_or_not                                                     : liftValue
+    preformatted_paragraph  : PRE_BEGIN EOL preformatted_text PRE_END EOL
+    preformatted_group      : preformatted_paragraph / preformatted_lines
 
 # Special lines
 
     horizontal_rule         : DASH{4} DASH* inline* EOL                                             : liftValue keep
 
     # This should never happen
-    invalid_line            : anyText EOL                                                           : liftValue
+    invalid_line            : any_text EOL                                                          : liftValue
 
 # Tables
 
-    HTML_value_quote        : QUOTE ((!(GT/QUOTE) anyChar) / TAB)+ QUOTE                            : join
-    HTML_value_apostrophe   : APOSTROPHE ((!(GT/APOSTROPHE) anyChar) / TAB)+ APOSTROPHE             : join
-    HTML_value_noquote      : (!(GT/SPACETAB/SLASH) rawChar)+                                       : join
+    HTML_value_quote        : QUOTE ((!(GT/QUOTE) any_char) / TAB)+ QUOTE                           : join
+    HTML_value_apostrophe   : APOSTROPHE ((!(GT/APOSTROPHE) any_char) / TAB)+ APOSTROPHE            : join
+    HTML_value_noquote      : (!(GT/SPACETAB/SLASH) raw_char)+                                      : join
     HTML_value              : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
-    HTML_name               : (!(EQUAL/SLASH/SPACETAB) rawChar)+                                    : join
+    HTML_name               : (!(EQUAL/SLASH/SPACETAB) raw_char)+                                   : join
     HTML_attribute          : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
     HTML_attributes         : HTML_attribute*
-    wikiTableParametersPipe : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
-    wikiTableParameters     : (HTML_attribute / cleanInline)+                                       : liftValue
-    wikiTableParameter      : wikiTableParametersPipe{0..1}                                         : liftValue
-    wikiTableCellContent    : cleanInline*
-    wikiTableFirstCell      : wikiTableParameter wikiTableCellContent                               : liftNode
-    wikiTableOtherCell      : (PIPE{2} wikiTableFirstCell)*                                         : liftValue liftNode
-    wikiTableLineCells      : PIPE wikiTableFirstCell wikiTableOtherCell EOL                        : liftValue
-    wikiTableLineHeader     : BANG wikiTableFirstCell wikiTableOtherCell EOL                        : liftValue
-    wikiTableEmptyCell      : PIPE EOL                                                              : keep
-    wikiTableParamLineBreak : TABLE_NEWLINE wikiTableParameters* EOL                                : keep liftValue
-    wikiTableLineBreak      : TABLE_NEWLINE EOL                                                     : keep
-    wikiTableTitle          : TABLE_TITLE wikiTableParameter wikiTableCellContent EOL               : liftValue
-    wikiTableSpecialLine    : wikiTableTitle / wikiTableLineBreak / wikiTableParamLineBreak
-    wikiTableNormalLine     : wikiTableLineCells / wikiTableLineHeader / wikiTableEmptyCell
-    wikiTableLine           : !TABLE_END (wikiTableSpecialLine / wikiTableNormalLine)               : liftNode
-    wikiTableContent        : (wikiTableLine / wikiTable / EOL)*                                    : liftNode
-    wikiTableBegin          : TABLE_BEGIN wikiTableParameters*                                      : liftValue
-    wikiTable               : wikiTableBegin SPACETABEOL* wikiTableContent TABLE_END EOL            : @ liftValue
+    table_parameters_pipe   : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
+    table_parameters        : (HTML_attribute / clean_inline)+                                      : liftValue
+    table_parameter         : table_parameters_pipe{0..1}                                           : liftValue
+    table_cell_content      : clean_inline*
+    table_first_cell        : table_parameter table_cell_content                                    : liftNode
+    table_other_cell        : (PIPE{2} table_first_cell)*                                           : liftValue liftNode
+    table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue
+    table_line_header       : BANG table_first_cell table_other_cell EOL                            : liftValue
+    table_empty_cell        : PIPE EOL                                                              : keep
+    table_param_line_break  : TABLE_NEWLINE table_parameters* EOL                                   : keep liftValue
+    table_line_break        : TABLE_NEWLINE EOL                                                     : keep
+    table_title             : TABLE_TITLE table_parameter table_cell_content EOL                    : liftValue
+    table_special_line      : table_title / table_line_break / table_param_line_break
+    table_normal_line       : table_line_cells / table_line_header / table_empty_cell
+    table_line              : !TABLE_END (table_special_line / table_normal_line)                   : liftNode
+    table_content           : (table_line / table / EOL)*                                           : liftNode
+    table_begin             : TABLE_BEGIN table_parameters*                                         : liftValue
+    table                   : table_begin SPACETABEOL* table_content TABLE_END EOL                  : @ liftValue
 
 # Top pattern
 
-    body                    : optional_comment (list / horizontal_rule / preformattedGroup / title / wikiTable / EOL / paragraphs / invalid_line / EOL)+ : liftValue render_body
+    wikitext                : list / horizontal_rule / preformatted_group / title / table / EOL / paragraphs
+    body                    : optional_comment (wikitext/invalid_line)+                             : liftValue render_body

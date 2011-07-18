@@ -9,7 +9,7 @@ class ParagraphsTests(ParserTestCase):
         result = """body:
    paragraphs:
       paragraph:
-         rawText:This is a paragraph."""
+         raw_text:This is a paragraph."""
         self.parsed_equal_tree(source, result, None)
 
     def test_multi_line_paragraph(self):
@@ -20,9 +20,9 @@ With a newline in the middle.
    paragraphs:
       paragraph:
          paragraph_line:
-            rawText:This is a paragraph.
+            raw_text:This is a paragraph.
          paragraph_line:
-            rawText:With a newline in the middle."""
+            raw_text:With a newline in the middle."""
         self.parsed_equal_tree(source, result, None)
 
     def test_2_paragraphs(self):
@@ -33,9 +33,9 @@ Followed by another one.
         result = """body:
    paragraphs:
       paragraph:
-         rawText:This is a paragraph.
+         raw_text:This is a paragraph.
       paragraph:
-         rawText:Followed by another one."""
+         raw_text:Followed by another one."""
         self.parsed_equal_tree(source, result, None)
 
     def test_blank_line_in_paragraphs(self):
@@ -47,10 +47,10 @@ Followed a blank line and another paragraph.
         result = """body:
    paragraphs:
       paragraph:
-         rawText:This is a paragraph.
+         raw_text:This is a paragraph.
       blank_paragraph:
       paragraph:
-         rawText:Followed a blank line and another paragraph."""
+         raw_text:Followed a blank line and another paragraph."""
         self.parsed_equal_tree(source, result, None)
 
     def test_styled_text_in_paragraph(self):
@@ -59,15 +59,15 @@ Followed a blank line and another paragraph.
         result = """body:
    paragraphs:
       paragraph:
-         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
+         raw_text:Styled text such as <em>italic</em>, <strong>bold</strong>, 
          internal_link:Template:templates
-         rawText: and 
-         allowedChar:{
-         allowedChar:{
-         allowedChar:{
-         rawText:template parameters
-         allowedChar:}
-         allowedChar:}
-         allowedChar:}
-         rawText: also work."""
+         raw_text: and 
+         allowed_char:{
+         allowed_char:{
+         allowed_char:{
+         raw_text:template parameters
+         allowed_char:}
+         allowed_char:}
+         allowed_char:}
+         raw_text: also work."""
         self.parsed_equal_tree(source, result, None)

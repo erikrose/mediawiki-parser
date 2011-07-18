@@ -6,72 +6,72 @@ from mediawiki_parser.tests import ParserTestCase
 class ListsTests(ParserTestCase):
     def test_1_bullet_list(self):
         source = '* text\n'
-        result = "[list:[bulletListLeaf:[rawText:' text']]]"
+        result = "[list:[bullet_list_leaf:[raw_text:' text']]]"
         self.parsed_equal_string(source, result, None)
 
     def test_2_bullet_list(self):
         source = '** other text\n'
-        result = "[list:[@bulletSubList@:[bulletListLeaf:[rawText:' other text']]]]"
+        result = "[list:[@bullet_sub_list@:[bullet_list_leaf:[raw_text:' other text']]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_3_bullet_list(self):
         source = '*** other text\n'
-        result = "[list:[@bulletSubList@:[@bulletSubList@:[bulletListLeaf:[rawText:' other text']]]]]"
+        result = "[list:[@bullet_sub_list@:[@bullet_sub_list@:[bullet_list_leaf:[raw_text:' other text']]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_hash_list(self):
         source = '# text\n'
-        result = "[list:[numberListLeaf:[rawText:' text']]]"
+        result = "[list:[number_list_leaf:[raw_text:' text']]]"
         self.parsed_equal_string(source, result, None)
 
     def test_2_hash_list(self):
         source = "## ''more text''\n"
-        result = "[list:[@numberSubList@:[numberListLeaf:[rawText:' <em>more text</em>']]]]"
+        result = "[list:[@number_sub_list@:[number_list_leaf:[raw_text:' <em>more text</em>']]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_3_hash_list(self):
         source = "### ''other text''\n"
-        result = "[list:[@numberSubList@:[@numberSubList@:[numberListLeaf:[rawText:' <em>other text</em>']]]]]"
+        result = "[list:[@number_sub_list@:[@number_sub_list@:[number_list_leaf:[raw_text:' <em>other text</em>']]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_colon_list(self):
         source = ": '''more text'''\n"
-        result = "[list:[colonListLeaf:[rawText:' <strong>more text</strong>']]]"
+        result = "[list:[colon_list_leaf:[raw_text:' <strong>more text</strong>']]]"
         self.parsed_equal_string(source, result, None)
 
     def test_4_colon_list(self):
         source = ":::: '''more text'''\n"
-        result = "[list:[@colonSubList@:[@colonSubList@:[@colonSubList@:[colonListLeaf:[rawText:' <strong>more text</strong>']]]]]]"
+        result = "[list:[@colon_sub_list@:[@colon_sub_list@:[@colon_sub_list@:[colon_list_leaf:[raw_text:' <strong>more text</strong>']]]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_semicolon_list(self):
         source = '; still more [[text]]\n'
-        result = "[list:[semiColonListLeaf:[rawText:' still more '  internal_link:'text']]]"
+        result = "[list:[semi_colon_list_leaf:[raw_text:' still more '  internal_link:'text']]]"
         self.parsed_equal_string(source, result, None)
 
     def test_2_semicolon_list(self):
         source = ';; still more [[text]]\n'
-        result = "[list:[@semiColonSubList@:[semiColonListLeaf:[rawText:' still more '  internal_link:'text']]]]"
+        result = "[list:[@semi_colon_sub_list@:[semi_colon_list_leaf:[raw_text:' still more '  internal_link:'text']]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_colon_1_bullet_list(self):
         source = ':* more complicated case\n'
-        result = "[list:[@colonSubList@:[bulletListLeaf:[rawText:' more complicated case']]]]"
+        result = "[list:[@colon_sub_list@:[bullet_list_leaf:[raw_text:' more complicated case']]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_semicolon_1_bullet_list(self):
         source = ';* same as previous line\n'
-        result = "[list:[@semiColonSubList@:[bulletListLeaf:[rawText:' same as previous line']]]]"
+        result = "[list:[@semi_colon_sub_list@:[bullet_list_leaf:[raw_text:' same as previous line']]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_2_semicolon_2_bullet_list(self):
         source = '::** another complicated case\n'
-        result = "[list:[@colonSubList@:[@colonSubList@:[@bulletSubList@:[bulletListLeaf:[rawText:' another complicated case']]]]]]"
+        result = "[list:[@colon_sub_list@:[@colon_sub_list@:[@bullet_sub_list@:[bullet_list_leaf:[raw_text:' another complicated case']]]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_composed_list(self):
         source = "*:*;#*: this is '''correct''' syntax!\n"
-        result = "[list:[@bulletSubList@:[@colonSubList@:[@bulletSubList@:[@semiColonSubList@:[@numberSubList@:[@bulletSubList@:[colonListLeaf:[rawText:' this is <strong>correct</strong> syntax!']]]]]]]]]"
+        result = "[list:[@bullet_sub_list@:[@colon_sub_list@:[@bullet_sub_list@:[@semi_colon_sub_list@:[@number_sub_list@:[@bullet_sub_list@:[colon_list_leaf:[raw_text:' this is <strong>correct</strong> syntax!']]]]]]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_multiline_bullet_list(self):
@@ -82,16 +82,16 @@ class ListsTests(ParserTestCase):
 """
         result = """body:
    list:
-      bulletListLeaf:
-         rawText: This example...
-      @bulletSubList@:
-         bulletListLeaf:
-            rawText: shows the shape...
-      @bulletSubList@:
-         @bulletSubList@:
-            bulletListLeaf:
-               rawText: of the resulting ...
-      @bulletSubList@:
-         bulletListLeaf:
-            rawText: AST"""
+      bullet_list_leaf:
+         raw_text: This example...
+      @bullet_sub_list@:
+         bullet_list_leaf:
+            raw_text: shows the shape...
+      @bullet_sub_list@:
+         @bullet_sub_list@:
+            bullet_list_leaf:
+               raw_text: of the resulting ...
+      @bullet_sub_list@:
+         bullet_list_leaf:
+            raw_text: AST"""
         self.parsed_equal_tree(source, result, None)
