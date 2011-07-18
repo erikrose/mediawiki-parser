@@ -25,6 +25,13 @@ class TemplatesTests(PreprocessorTestCase):
         result = "{{{A text}}}"
         self.parsed_equal_string(source, result)
 
+    def test_template_name_as_parameter_name(self):
+        "Template should of course not be substituted in this case."
+        source = "a {{{Template}}}"
+        result = "a {{{Template}}}"
+        templates = {'Template': 'template content'}
+        self.parsed_equal_string(source, result, templates)
+
     def test_template_parameter_with_default_value(self):
         source = "{{{parameter name|default value}}}"
         result = "default value"

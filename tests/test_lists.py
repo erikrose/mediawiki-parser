@@ -95,3 +95,19 @@ class ListsTests(ParserTestCase):
          bullet_list_leaf:
             raw_text: AST"""
         self.parsed_equal_tree(source, result, None)
+
+    def test_list_with_template_produces_single_list(self):
+        source = """* This example...
+{{template}}
+*it...
+"""
+        result = """body:
+   list:
+      bullet_list_leaf:
+         raw_text: This example...
+      bullet_list_leaf:
+         raw_text: checks
+      bullet_list_leaf:
+         raw_text:it..."""
+        templates = {'template': '* checks'}
+        self.parsed_equal_tree(source, result, None, templates)
