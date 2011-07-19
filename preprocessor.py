@@ -1,5 +1,14 @@
+from constants import html_entities
+
 templates = {}
 parsed_templates = {}  # Caches templates, to accelerate and avoid infinite loops
+
+def substitute_entity(node):
+    value = '%s' % node.leaf()
+    if value in html_entities:
+        node.value = '%s' % unichr(html_entities[value])
+    else:
+        node.value = '&%s;' % value
 
 def substitute_template_parameter(node, values={}):
     assert len(node.value) > 0, "Bad AST shape!"
@@ -56,7 +65,8 @@ def substitute_template(node):
     parsed_templates[node_to_str] = result
 
 toolset = {'substitute_template': substitute_template,
-           'substitute_template_parameter': substitute_template_parameter}
+           'substitute_template_parameter': substitute_template_parameter,
+           'substitute_entity': substitute_entity}
 
 from mediawiki_parser import preprocessorParser
 

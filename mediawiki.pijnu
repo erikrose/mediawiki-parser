@@ -96,7 +96,7 @@ def replace_by_space(node):
 
 # HTML entities
 
-    entity                  : AMP alpha_num_text SEMICOLON                                          : liftValue
+    entity                  : AMP alpha_num_text SEMICOLON                                          : render_entity
 
 # HTML comments
 

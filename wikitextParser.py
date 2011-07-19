@@ -92,7 +92,7 @@
 
 # HTML entities
 
-    entity                  : AMP alpha_num_text SEMICOLON                                          : liftValue
+    entity                  : AMP alpha_num_text SEMICOLON                                          : render_entity
 
 # HTML comments
 
@@ -365,7 +365,7 @@ def make_parser(actions=None):
     
     # HTML entities
     
-    entity = Sequence([AMP, alpha_num_text, SEMICOLON], expression='AMP alpha_num_text SEMICOLON', name='entity')(toolset['liftValue'])
+    entity = Sequence([AMP, alpha_num_text, SEMICOLON], expression='AMP alpha_num_text SEMICOLON', name='entity')(toolset['render_entity'])
     
     # HTML comments
     

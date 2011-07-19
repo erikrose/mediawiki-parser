@@ -25,6 +25,8 @@ def replace_by_space(node):
     LT                      : "<"                                                                   : drop
     GT                      : ">"                                                                   : drop
     DASH                    : "-"                                                                   : drop
+    AMP                     : "&"                                                                   : drop
+    SEMICOLON               : ";"                                                                   : drop
     TEMPLATE_BEGIN          : L_BRACE{2}                                                            : drop
     TEMPLATE_END            : R_BRACE{2}                                                            : drop
     PARAMETER_BEGIN         : L_BRACE{3}                                                            : drop
@@ -41,7 +43,7 @@ def replace_by_space(node):
 # Characters
 
     any_char                : [\x20..\xff]
-    esc_char                : L_BRACKET/R_BRACKET/PIPE/L_BRACE/R_BRACE/LT/GT
+    esc_char                : L_BRACKET/R_BRACKET/PIPE/L_BRACE/R_BRACE/LT/GT/AMP/SEMICOLON
     raw_char                : !esc_char any_char
     raw_text                : raw_char+                                                             : join
 
@@ -87,6 +89,7 @@ def replace_by_space(node):
 
     structure               : link / template / template_parameter
     inline                  : (structure / raw_text)+                                               : @
+    entity                  : AMP [a..zA..Z]+ SEMICOLON                                             : substitute_entity
 
 # Pre and nowiki tags
 # Preformatted acts like nowiki (disables wikitext parsing)
@@ -100,7 +103,7 @@ def replace_by_space(node):
 
 # Text types
 
-    styled_text             : template / template_parameter 
+    styled_text             : template / template_parameter / entity
     not_styled_text         : html_comment / preformatted / nowiki
     allowed_char            : esc_char{1}                                                           : restore liftValue
     allowed_text            : raw_text / allowed_char
