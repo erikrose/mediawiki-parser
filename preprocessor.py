@@ -3,12 +3,22 @@ from constants import html_entities
 templates = {}
 parsed_templates = {}  # Caches templates, to accelerate and avoid infinite loops
 
-def substitute_entity(node):
+def substitute_named_entity(node):
     value = '%s' % node.leaf()
-    if value in html_entities:
-        node.value = '%s' % unichr(html_entities[value])
+    if value in html_entities and value not in ['lt', 'gt']:
+        node.value = u'%s' % unichr(html_entities[value])
     else:
         node.value = '&%s;' % value
+
+def substitute_numbered_entity(node):
+    try:
+        value = int(node.leaf())
+        # We eliminate some characters such as < and >
+        if value in [60, 62]:
+            raise exception
+        node.value = u'%s' % unichr(value)
+    except:
+        node.value = '&#%s;' % value
 
 def substitute_template_parameter(node, values={}):
     assert len(node.value) > 0, "Bad AST shape!"
@@ -66,7 +76,8 @@ def substitute_template(node):
 
 toolset = {'substitute_template': substitute_template,
            'substitute_template_parameter': substitute_template_parameter,
-           'substitute_entity': substitute_entity}
+           'substitute_named_entity': substitute_named_entity,
+           'substitute_numbered_entity': substitute_numbered_entity}
 
 from mediawiki_parser import preprocessorParser
 

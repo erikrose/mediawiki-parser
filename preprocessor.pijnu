@@ -24,6 +24,7 @@ def replace_by_space(node):
     EQUAL                   : "="                                                                   : drop
     LT                      : "<"                                                                   : drop
     GT                      : ">"                                                                   : drop
+    HASH                    : "#"                                                                   : drop
     DASH                    : "-"                                                                   : drop
     AMP                     : "&"                                                                   : drop
     SEMICOLON               : ";"                                                                   : drop
@@ -89,7 +90,9 @@ def replace_by_space(node):
 
     structure               : link / template / template_parameter
     inline                  : (structure / raw_text)+                                               : @
-    entity                  : AMP [a..zA..Z]+ SEMICOLON                                             : substitute_entity
+    numbered_entity         : AMP HASH [0..9]+ SEMICOLON                                            : substitute_numbered_entity
+    named_entity            : AMP [a..zA..Z]+ SEMICOLON                                             : substitute_named_entity
+    entity                  : named_entity / numbered_entity
 
 # Pre and nowiki tags
 # Preformatted acts like nowiki (disables wikitext parsing)

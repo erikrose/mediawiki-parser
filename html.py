@@ -23,11 +23,19 @@ def render_entity(node):
     else:
         node.value = '&amp;%s;' % value
 
+def render_lt(node):
+    node.value = '&lt;'
+
+def render_gt(node):
+    node.value = '&gt;'
+
 toolset = {'render_raw_text': render_raw_text,
            'render_paragraph': render_paragraph,
            'render_title2': render_title2,
            'render_body': render_body,
-           'render_entity': render_entity}
+           'render_entity': render_entity,
+           'render_lt': render_lt,
+           'render_gt': render_gt}
 
 from mediawiki_parser import wikitextParser
 

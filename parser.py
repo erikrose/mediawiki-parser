@@ -32,6 +32,5 @@ preprocessed_text = preprocessor.parse(source)
 
 print preprocessed_text.treeView()
 
-# Uncomment this to obtain HTML (not finished)
-#tree = parser.parse(preprocessed_text.leaves())
-#print tree.leaves()
+tree = parser.parse(preprocessed_text.leaves())
+print tree.leaves()

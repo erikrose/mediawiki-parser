@@ -26,8 +26,8 @@ def replace_by_space(node):
     BULLET                  : "*"                                                                   : drop
     HASH                    : "#"                                                                   : drop
     COLON                   : ":"                                                                   : drop
-    LT                      : "<"                                                                   : drop
-    GT                      : ">"                                                                   : drop
+    LT                      : "<"                                                                   : render_lt
+    GT                      : ">"                                                                   : render_gt
     SLASH                   : "/"                                                                   : drop
     SEMICOLON               : ";"                                                                   : drop
     DASH                    : "-"                                                                   : drop
@@ -89,9 +89,11 @@ def replace_by_space(node):
     tag_name                : (!(SPACE/SLASH) raw_char)+                                            : join
     optional_attribute      : SPACETABEOL+ attribute_name attribute_value
     optional_attributes     : optional_attribute*
-    tag_open                : LT tag_name optional_attributes SPACETABEOL* GT
-    tag_close               : LT SLASH tag_name GT
-    tag_autoclose           : LT tag_name optional_attributes SPACETABEOL* SLASH GT
+    tag_lt                  : LT                                                                    : drop
+    tag_gt                  : GT                                                                    : drop
+    tag_open                : tag_lt tag_name optional_attributes SPACETABEOL* tag_gt
+    tag_close               : tag_lt SLASH tag_name tag_gt
+    tag_autoclose           : tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt
     tag                     : tag_autoclose / tag_open / tag_close
 
 # HTML entities
@@ -102,7 +104,7 @@ def replace_by_space(node):
 
     # HTML comments are totally ignored and do not appear in the final text
     comment_content         : ((!(DASH{2} GT) [\x20..\xff])+ / SPACETABEOL)*
-    html_comment            : LT BANG DASH{2} comment_content DASH{2} GT                            : drop
+    html_comment            : tag_lt BANG DASH{2} comment_content DASH{2} tag_gt                    : drop
     optional_comment        : html_comment*
 
 # Text
@@ -138,7 +140,7 @@ def replace_by_space(node):
     styled_text             : link / url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowed_char            : ESC_CHAR{1}                                                           : restore liftValue
-    allowed_text            : raw_text / allowed_char
+    allowed_text            : raw_text / LT / GT / allowed_char
     clean_inline            : (not_styled_text / styled_text / raw_text)+                           : @
     inline                  : (not_styled_text / styled_text / allowed_text)+                       : @
 

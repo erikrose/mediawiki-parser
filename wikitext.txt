@@ -9,7 +9,7 @@ An http://www.mozilla.org URL.
 
 {{template1}}
 
-a comment <!-- comment --> (ignored)...
+a comment <!-- comment --> (ignored)... < > <<< >>>
 
 a <pre>preformatted {{section}} {{{parameter|default}}} </pre>
 

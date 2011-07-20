@@ -22,8 +22,8 @@
     BULLET                  : "*"                                                                   : drop
     HASH                    : "#"                                                                   : drop
     COLON                   : ":"                                                                   : drop
-    LT                      : "<"                                                                   : drop
-    GT                      : ">"                                                                   : drop
+    LT                      : "<"                                                                   : render_lt
+    GT                      : ">"                                                                   : render_gt
     SLASH                   : "/"                                                                   : drop
     SEMICOLON               : ";"                                                                   : drop
     DASH                    : "-"                                                                   : drop
@@ -85,9 +85,11 @@
     tag_name                : (!(SPACE/SLASH) raw_char)+                                            : join
     optional_attribute      : SPACETABEOL+ attribute_name attribute_value
     optional_attributes     : optional_attribute*
-    tag_open                : LT tag_name optional_attributes SPACETABEOL* GT
-    tag_close               : LT SLASH tag_name GT
-    tag_autoclose           : LT tag_name optional_attributes SPACETABEOL* SLASH GT
+    tag_lt                  : LT                                                                    : drop
+    tag_gt                  : GT                                                                    : drop
+    tag_open                : tag_lt tag_name optional_attributes SPACETABEOL* tag_gt
+    tag_close               : tag_lt SLASH tag_name tag_gt
+    tag_autoclose           : tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt
     tag                     : tag_autoclose / tag_open / tag_close
 
 # HTML entities
@@ -98,7 +100,7 @@
 
     # HTML comments are totally ignored and do not appear in the final text
     comment_content         : ((!(DASH{2} GT) [\x20..\xff])+ / SPACETABEOL)*
-    html_comment            : LT BANG DASH{2} comment_content DASH{2} GT                            : drop
+    html_comment            : tag_lt BANG DASH{2} comment_content DASH{2} tag_gt                    : drop
     optional_comment        : html_comment*
 
 # Text
@@ -134,7 +136,7 @@
     styled_text             : link / url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowed_char            : ESC_CHAR{1}                                                           : restore liftValue
-    allowed_text            : raw_text / allowed_char
+    allowed_text            : raw_text / LT / GT / allowed_char
     clean_inline            : (not_styled_text / styled_text / raw_text)+                           : @
     inline                  : (not_styled_text / styled_text / allowed_text)+                       : @
 
@@ -295,8 +297,8 @@ def make_parser(actions=None):
     BULLET = Word('*', expression='"*"', name='BULLET')(toolset['drop'])
     HASH = Word('#', expression='"#"', name='HASH')(toolset['drop'])
     COLON = Word(':', expression='":"', name='COLON')(toolset['drop'])
-    LT = Word('<', expression='"<"', name='LT')(toolset['drop'])
-    GT = Word('>', expression='">"', name='GT')(toolset['drop'])
+    LT = Word('<', expression='"<"', name='LT')(toolset['render_lt'])
+    GT = Word('>', expression='">"', name='GT')(toolset['render_gt'])
     SLASH = Word('/', expression='"/"', name='SLASH')(toolset['drop'])
     SEMICOLON = Word(';', expression='";"', name='SEMICOLON')(toolset['drop'])
     DASH = Word('-', expression='"-"', name='DASH')(toolset['drop'])
@@ -358,9 +360,11 @@ def make_parser(actions=None):
     tag_name = Repetition(Sequence([NextNot(Choice([SPACE, SLASH], expression='SPACE/SLASH'), expression='!(SPACE/SLASH)'), raw_char], expression='!(SPACE/SLASH) raw_char'), numMin=1, numMax=False, expression='(!(SPACE/SLASH) raw_char)+', name='tag_name')(toolset['join'])
     optional_attribute = Sequence([Repetition(SPACETABEOL, numMin=1, numMax=False, expression='SPACETABEOL+'), attribute_name, attribute_value], expression='SPACETABEOL+ attribute_name attribute_value', name='optional_attribute')
     optional_attributes = Repetition(optional_attribute, numMin=False, numMax=False, expression='optional_attribute*', name='optional_attributes')
-    tag_open = Sequence([LT, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), GT], expression='LT tag_name optional_attributes SPACETABEOL* GT', name='tag_open')
-    tag_close = Sequence([LT, SLASH, tag_name, GT], expression='LT SLASH tag_name GT', name='tag_close')
-    tag_autoclose = Sequence([LT, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), SLASH, GT], expression='LT tag_name optional_attributes SPACETABEOL* SLASH GT', name='tag_autoclose')
+    tag_lt = Clone(LT, expression='LT', name='tag_lt')(toolset['drop'])
+    tag_gt = Clone(GT, expression='GT', name='tag_gt')(toolset['drop'])
+    tag_open = Sequence([tag_lt, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), tag_gt], expression='tag_lt tag_name optional_attributes SPACETABEOL* tag_gt', name='tag_open')
+    tag_close = Sequence([tag_lt, SLASH, tag_name, tag_gt], expression='tag_lt SLASH tag_name tag_gt', name='tag_close')
+    tag_autoclose = Sequence([tag_lt, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), SLASH, tag_gt], expression='tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt', name='tag_autoclose')
     tag = Choice([tag_autoclose, tag_open, tag_close], expression='tag_autoclose / tag_open / tag_close', name='tag')
     
     # HTML entities
@@ -371,7 +375,7 @@ def make_parser(actions=None):
     
         # HTML comments are totally ignored and do not appear in the final text
     comment_content = Repetition(Choice([Repetition(Sequence([NextNot(Sequence([Repetition(DASH, numMin=2, numMax=2, expression='DASH{2}'), GT], expression='DASH{2} GT'), expression='!(DASH{2} GT)'), Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]')], expression='!(DASH{2} GT) [\\x20..\\xff]'), numMin=1, numMax=False, expression='(!(DASH{2} GT) [\\x20..\\xff])+'), SPACETABEOL], expression='(!(DASH{2} GT) [\\x20..\\xff])+ / SPACETABEOL'), numMin=False, numMax=False, expression='((!(DASH{2} GT) [\\x20..\\xff])+ / SPACETABEOL)*', name='comment_content')
-    html_comment = Sequence([LT, BANG, Repetition(DASH, numMin=2, numMax=2, expression='DASH{2}'), comment_content, Repetition(DASH, numMin=2, numMax=2, expression='DASH{2}'), GT], expression='LT BANG DASH{2} comment_content DASH{2} GT', name='html_comment')(toolset['drop'])
+    html_comment = Sequence([tag_lt, BANG, Repetition(DASH, numMin=2, numMax=2, expression='DASH{2}'), comment_content, Repetition(DASH, numMin=2, numMax=2, expression='DASH{2}'), tag_gt], expression='tag_lt BANG DASH{2} comment_content DASH{2} tag_gt', name='html_comment')(toolset['drop'])
     optional_comment = Repetition(html_comment, numMin=False, numMax=False, expression='html_comment*', name='optional_comment')
     
     # Text
@@ -407,7 +411,7 @@ def make_parser(actions=None):
     styled_text = Choice([link, url, html_comment, tag, entity], expression='link / url / html_comment / tag / entity', name='styled_text')
     not_styled_text = Choice([preformatted, nowiki], expression='preformatted / nowiki', name='not_styled_text')
     allowed_char = Repetition(ESC_CHAR, numMin=1, numMax=1, expression='ESC_CHAR{1}', name='allowed_char')(toolset['restore'], toolset['liftValue'])
-    allowed_text = Choice([raw_text, allowed_char], expression='raw_text / allowed_char', name='allowed_text')
+    allowed_text = Choice([raw_text, LT, GT, allowed_char], expression='raw_text / LT / GT / allowed_char', name='allowed_text')
     clean_inline **= Repetition(Choice([not_styled_text, styled_text, raw_text], expression='not_styled_text / styled_text / raw_text'), numMin=1, numMax=False, expression='(not_styled_text / styled_text / raw_text)+', name='clean_inline')
     inline **= Repetition(Choice([not_styled_text, styled_text, allowed_text], expression='not_styled_text / styled_text / allowed_text'), numMin=1, numMax=False, expression='(not_styled_text / styled_text / allowed_text)+', name='inline')
     
