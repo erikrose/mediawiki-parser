@@ -6,7 +6,7 @@ parsed_templates = {}  # Caches templates, to accelerate and avoid infinite loop
 def substitute_named_entity(node):
     value = '%s' % node.leaf()
     if value in html_entities and value not in ['lt', 'gt']:
-        node.value = u'%s' % unichr(html_entities[value])
+        node.value = unichr(html_entities[value])
     else:
         node.value = '&%s;' % value
 
@@ -15,8 +15,8 @@ def substitute_numbered_entity(node):
         value = int(node.leaf())
         # We eliminate some characters such as < and >
         if value in [60, 62]:
-            raise exception
-        node.value = u'%s' % unichr(value)
+            raise Exception()
+        node.value = unichr(value)
     except:
         node.value = '&#%s;' % value
 
@@ -61,7 +61,7 @@ def substitute_template(node):
                         parameter_value = parameter.value[1].value
                         parameters['%s' % parameter_name] = parameter_value
                     else:
-                        raise Exception, "Wrong AST shape!"
+                        raise Exception("Bad AST shape!")
             if page_name in templates:
                 template = parse_template(templates[page_name], parameters)
                 result = '%s' % template

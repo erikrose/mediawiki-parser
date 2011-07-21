@@ -2,55 +2,48 @@ from constants import html_entities
 
 allowed_tags = {}
 
-def render_title2(node):
-    pass
+def toolset():
+    def render_title2(node):
+        pass
+    
+    def render_title6(node):
+        pass
+    
+    def render_raw_text(node):
+        from apostrophes import parseQuotes
+        node.value = "%s" % parseQuotes(node.leaf())
+    
+    def render_paragraph(node):
+        pass
+    
+    def render_body(node):
+        pass
+    
+    def render_entity(node):
+        value = '%s' % node.leaf()
+        if value in html_entities:
+            node.value = '%s' % unichr(html_entities[value])
+        else:
+            node.value = '&%s;' % value
+    
+    def render_lt(node):
+        pass
+    
+    def render_gt(node):
+        pass
+    
+    def render_tag_open(node):
+        pass
+    
+    def render_tag_close(node):
+        pass
+    
+    def render_tag_autoclose(node):
+        pass
 
-def render_title6(node):
-    pass
+    return locals()
 
-def render_raw_text(node):
-    from apostrophes import parseQuotes
-    node.value = "%s" % parseQuotes(node.leaf())
-
-def render_paragraph(node):
-    pass
-
-def render_body(node):
-    pass
-
-def render_entity(node):
-    value = '%s' % node.leaf()
-    if value in html_entities:
-        node.value = '%s' % unichr(html_entities[value])
-    else:
-        node.value = '&%s;' % value
-
-def render_lt(node):
-    pass
-
-def render_gt(node):
-    pass
-
-def render_tag_open(node):
-    pass
-
-def render_tag_close(node):
-    pass
-
-def render_tag_autoclose(node):
-    pass
-
-toolset = {'render_raw_text': render_raw_text,
-           'render_paragraph': render_paragraph,
-           'render_title2': render_title2,
-           'render_title6': render_title6,
-           'render_body': render_body,
-           'render_entity': render_entity,
-           'render_lt': render_lt,
-           'render_gt': render_gt,
-           'render_tag_open': render_tag_open,
-           'render_tag_close': render_tag_close,
-           'render_tag_autoclose': render_tag_autoclose}
+toolset = toolset()
 
 from mediawiki_parser import wikitextParser
 
