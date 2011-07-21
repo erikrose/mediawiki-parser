@@ -47,3 +47,28 @@ class ParserTestCase(TestCase):
     def parsed_equal_tree(self, source, result, method_name, templates={}):
         preprocessed = self._preprocessor(templates).parseTest(source).value
         self.assertEquals(self._grammar(method_name).parseTest(preprocessed).treeView(), result)
+
+
+class PostprocessorTestCase(TestCase):
+    def _preprocessor(self, templates):
+        from mediawiki_parser import preprocessor
+        return preprocessor.make_parser(templates)
+
+    def _grammar(self, method_name, postprocessor_name):
+        """Return a full or partial grammar.
+
+        method_name -- If truthy, the attribute of the full grammar to return
+
+        """
+        if postprocessor_name == 'html':
+            from mediawiki_parser import html as postprocessor
+        elif postprocessor_name == 'text':
+            from mediawiki_parser import text as postprocessor
+        else:
+            from mediawiki_parser import raw as postprocessor
+        parser = postprocessor.make_parser()
+        return getattr(parser, method_name) if method_name else parser
+
+    def parsed_equal_string(self, source, result, method_name, templates={}, postprocessor='raw'):
+        preprocessed = self._preprocessor(templates).parseTest(source).value
+        self.assertEquals(unicode(self._grammar(method_name, postprocessor).parseTest(preprocessed).leaves()), result)

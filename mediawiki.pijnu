@@ -91,9 +91,9 @@ def replace_by_space(node):
     optional_attributes     : optional_attribute*
     tag_lt                  : LT                                                                    : drop
     tag_gt                  : GT                                                                    : drop
-    tag_open                : tag_lt tag_name optional_attributes SPACETABEOL* tag_gt
-    tag_close               : tag_lt SLASH tag_name tag_gt
-    tag_autoclose           : tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt
+    tag_open                : tag_lt tag_name optional_attributes SPACETABEOL* tag_gt               : render_tag_open
+    tag_close               : tag_lt SLASH tag_name tag_gt                                          : render_tag_close
+    tag_autoclose           : tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt         : render_tag_autoclose
     tag                     : tag_autoclose / tag_open / tag_close
 
 # HTML entities
@@ -154,7 +154,7 @@ def replace_by_space(node):
 
 # Titles
 
-    title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue
+    title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue render_title6
     title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
     title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue
     title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue

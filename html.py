@@ -1,5 +1,8 @@
 from constants import html_entities
 
+allowed_tags = ['p', 'span', 'b', 'br', 'hr']
+allowed_parameters = ['class', 'style', 'name', 'id']
+
 def render_title2(node):
     node.value = '<h2>%s</h2>\n' % node.leaf()
 
@@ -29,13 +32,57 @@ def render_lt(node):
 def render_gt(node):
     node.value = '&gt;'
 
+def process_attributes(node, allowed_tag):
+    result = ''
+    if len(node.value) == 1:
+        pass
+    elif len(node.value) == 2:
+        attributes = node.value[1].value
+        for i in range(len(attributes)):
+            attribute_name = attributes[i].value[0].value
+            attribute_value = attributes[i].value[1].value
+            if not allowed_tag or attribute_name in allowed_parameters:
+                result += ' %s="%s"' % (attribute_name, attribute_value)
+    else:
+        raise exception, "Bad AST shape!"
+    return result
+
+def render_tag_open(node):
+    tag_name = node.value[0].value
+    if tag_name in allowed_tags:
+        attributes = process_attributes(node, True)
+        node.value = '<%s%s>' % (tag_name, attributes) 
+    else:
+        attributes = process_attributes(node, False)
+        node.value = '&lt;%s%s&gt;' % (tag_name, attributes)
+
+def render_tag_close(node):
+    tag_name = node.value[0].value
+    if tag_name in allowed_tags:
+        node.value = "</%s>" % tag_name
+    else:
+        node.value = "&lt;/%s&gt;" % tag_name
+
+def render_tag_autoclose(node):
+    tag_name = node.value[0].value
+    if tag_name in allowed_tags:
+        attributes = process_attributes(node, True)
+        node.value = '<%s%s />' % (tag_name, attributes) 
+    else:
+        attributes = process_attributes(node, False)
+        node.value = '&lt;%s%s /&gt;' % (tag_name, attributes)
+
 toolset = {'render_raw_text': render_raw_text,
            'render_paragraph': render_paragraph,
            'render_title2': render_title2,
+           'render_title6': render_title6,
            'render_body': render_body,
            'render_entity': render_entity,
            'render_lt': render_lt,
-           'render_gt': render_gt}
+           'render_gt': render_gt,
+           'render_tag_open': render_tag_open,
+           'render_tag_close': render_tag_close,
+           'render_tag_autoclose': render_tag_autoclose}
 
 from mediawiki_parser import wikitextParser
 

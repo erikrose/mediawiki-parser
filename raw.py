@@ -1,5 +1,7 @@
 from constants import html_entities
 
+allowed_tags = {}
+
 def render_title2(node):
     pass
 
@@ -29,13 +31,26 @@ def render_lt(node):
 def render_gt(node):
     pass
 
+def render_tag_open(node):
+    pass
+
+def render_tag_close(node):
+    pass
+
+def render_tag_autoclose(node):
+    pass
+
 toolset = {'render_raw_text': render_raw_text,
            'render_paragraph': render_paragraph,
            'render_title2': render_title2,
+           'render_title6': render_title6,
            'render_body': render_body,
            'render_entity': render_entity,
            'render_lt': render_lt,
-           'render_gt': render_gt}
+           'render_gt': render_gt,
+           'render_tag_open': render_tag_open,
+           'render_tag_close': render_tag_close,
+           'render_tag_autoclose': render_tag_autoclose}
 
 from mediawiki_parser import wikitextParser
 

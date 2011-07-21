@@ -87,9 +87,9 @@
     optional_attributes     : optional_attribute*
     tag_lt                  : LT                                                                    : drop
     tag_gt                  : GT                                                                    : drop
-    tag_open                : tag_lt tag_name optional_attributes SPACETABEOL* tag_gt
-    tag_close               : tag_lt SLASH tag_name tag_gt
-    tag_autoclose           : tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt
+    tag_open                : tag_lt tag_name optional_attributes SPACETABEOL* tag_gt               : render_tag_open
+    tag_close               : tag_lt SLASH tag_name tag_gt                                          : render_tag_close
+    tag_autoclose           : tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt         : render_tag_autoclose
     tag                     : tag_autoclose / tag_open / tag_close
 
 # HTML entities
@@ -150,7 +150,7 @@
 
 # Titles
 
-    title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue
+    title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue render_title6
     title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
     title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue
     title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue
@@ -362,9 +362,9 @@ def make_parser(actions=None):
     optional_attributes = Repetition(optional_attribute, numMin=False, numMax=False, expression='optional_attribute*', name='optional_attributes')
     tag_lt = Clone(LT, expression='LT', name='tag_lt')(toolset['drop'])
     tag_gt = Clone(GT, expression='GT', name='tag_gt')(toolset['drop'])
-    tag_open = Sequence([tag_lt, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), tag_gt], expression='tag_lt tag_name optional_attributes SPACETABEOL* tag_gt', name='tag_open')
-    tag_close = Sequence([tag_lt, SLASH, tag_name, tag_gt], expression='tag_lt SLASH tag_name tag_gt', name='tag_close')
-    tag_autoclose = Sequence([tag_lt, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), SLASH, tag_gt], expression='tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt', name='tag_autoclose')
+    tag_open = Sequence([tag_lt, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), tag_gt], expression='tag_lt tag_name optional_attributes SPACETABEOL* tag_gt', name='tag_open')(toolset['render_tag_open'])
+    tag_close = Sequence([tag_lt, SLASH, tag_name, tag_gt], expression='tag_lt SLASH tag_name tag_gt', name='tag_close')(toolset['render_tag_close'])
+    tag_autoclose = Sequence([tag_lt, tag_name, optional_attributes, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), SLASH, tag_gt], expression='tag_lt tag_name optional_attributes SPACETABEOL* SLASH tag_gt', name='tag_autoclose')(toolset['render_tag_autoclose'])
     tag = Choice([tag_autoclose, tag_open, tag_close], expression='tag_autoclose / tag_open / tag_close', name='tag')
     
     # HTML entities
@@ -425,7 +425,7 @@ def make_parser(actions=None):
     
     # Titles
     
-    title6 = Sequence([TITLE6_BEGIN, inline, TITLE6_END], expression='TITLE6_BEGIN inline TITLE6_END', name='title6')(toolset['liftValue'])
+    title6 = Sequence([TITLE6_BEGIN, inline, TITLE6_END], expression='TITLE6_BEGIN inline TITLE6_END', name='title6')(toolset['liftValue'], toolset['render_title6'])
     title5 = Sequence([TITLE5_BEGIN, inline, TITLE5_END], expression='TITLE5_BEGIN inline TITLE5_END', name='title5')(toolset['liftValue'])
     title4 = Sequence([TITLE4_BEGIN, inline, TITLE4_END], expression='TITLE4_BEGIN inline TITLE4_END', name='title4')(toolset['liftValue'])
     title3 = Sequence([TITLE3_BEGIN, inline, TITLE3_END], expression='TITLE3_BEGIN inline TITLE3_END', name='title3')(toolset['liftValue'])
