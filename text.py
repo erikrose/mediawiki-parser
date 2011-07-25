@@ -51,7 +51,10 @@ def toolset():
         else:
             raise Exception("Bad AST shape!")
         return result
-    
+
+    def render_attribute(node):
+        node.value = process_attributes(node, True)
+
     def render_tag_open(node):
         tag_name = node.value[0].value
         if tag_name in allowed_tags:
@@ -74,6 +77,24 @@ def toolset():
         else:
             attributes = process_attributes(node, False)
             node.value = '<%s%s />' % (tag_name, attributes)
+
+    def render_table(node):
+        pass
+
+    def render_table_line_break(node):
+        node.value = '\n'
+
+    def render_table_header_cell(node):
+        pass
+
+    def render_table_normal_cell(node):
+        pass
+
+    def render_table_empty_cell(node):
+        pass
+
+    def render_table_caption(node):
+        pass
 
     return locals()
 

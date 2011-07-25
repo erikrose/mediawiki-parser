@@ -9,8 +9,8 @@ class TablesTests(ParserTestCase):
         result = """table_first_cell:
    table_parameter:
       HTML_attribute:
-         HTML_name:style
-         HTML_value_quote:color:red
+         attribute_name:style
+         value_quote:color:red
    table_cell_content:
       @clean_inline@:
          raw_text: cell 1"""
@@ -31,8 +31,8 @@ class TablesTests(ParserTestCase):
         result = """table_line_cells:
    table_parameter:
       HTML_attribute:
-         HTML_name:style
-         HTML_value_quote:color:red
+         attribute_name:style
+         value_quote:color:red
    table_cell_content:
       @clean_inline@:
          raw_text: cell 1"""
@@ -43,14 +43,14 @@ class TablesTests(ParserTestCase):
         result = """table_line_cells:
    table_parameter:
       HTML_attribute:
-         HTML_name:style
-         HTML_value_quote:color:red
+         attribute_name:style
+         value_quote:color:red
       HTML_attribute:
-         HTML_name:id
-         HTML_value_apostrophe:test
+         attribute_name:id
+         value_apostrophe:test
       HTML_attribute:
-         HTML_name:name
-         HTML_value_noquote:test
+         attribute_name:name
+         value_noquote:test
    table_cell_content:
       @clean_inline@:
          raw_text: cell 1"""
@@ -83,8 +83,8 @@ class TablesTests(ParserTestCase):
    table_first_cell:
       table_parameter:
          HTML_attribute:
-            HTML_name:style
-            HTML_value_quote:color:red
+            attribute_name:style
+            value_quote:color:red
       table_cell_content:
          @clean_inline@:
             raw_text: cell 1 
@@ -102,8 +102,8 @@ class TablesTests(ParserTestCase):
    table_first_cell:
       table_parameter:
          HTML_attribute:
-            HTML_name:style
-            HTML_value_quote:color:red
+            attribute_name:style
+            value_quote:color:red
       table_cell_content:
          @clean_inline@:
             raw_text: cell 2"""
@@ -114,8 +114,8 @@ class TablesTests(ParserTestCase):
         result = """table_line_header:
    table_parameter:
       HTML_attribute:
-         HTML_name:scope
-         HTML_value_noquote:row
+         attribute_name:scope
+         value_noquote:row
    table_cell_content:
       @clean_inline@:
          raw_text: Line 1"""
@@ -123,7 +123,7 @@ class TablesTests(ParserTestCase):
 
     def test_table_line_with_global_css(self):
         source = '|- style="color:red"\n'
-        result = "[table_parameters:[HTML_name:'style'  HTML_value_quote:'color:red']]"
+        result = "[table_parameters:[HTML_attribute:[attribute_name:'style'  value_quote:'color:red']]]"
         self.parsed_equal_string(source, result, 'table_line')
 
     def test_table_with_css(self):
@@ -142,10 +142,11 @@ class TablesTests(ParserTestCase):
    table_line_header:
       @clean_inline@:
          raw_text: cellB
-   table_param_line_break:
+   table_line_break:
       table_parameters:
-         HTML_name:style
-         HTML_value_quote:color:red
+         HTML_attribute:
+            attribute_name:style
+            value_quote:color:red
    table_line_cells:
       @clean_inline@:
          raw_text: cell C
@@ -205,34 +206,35 @@ class TablesTests(ParserTestCase):
    table_begin:
       table_parameters:
          HTML_attribute:
-            HTML_name:class
-            HTML_value_quote:table
+            attribute_name:class
+            value_quote:table
          HTML_attribute:
-            HTML_name:style
-            HTML_value_quote:color:blue
+            attribute_name:style
+            value_quote:color:blue
    table_content:
       table_title:
          table_parameter:
             HTML_attribute:
-               HTML_name:style
-               HTML_value_quote:color:red
+               attribute_name:style
+               value_quote:color:red
          table_cell_content:
             @clean_inline@:
                raw_text: Table test: parameter
       table_line_break:
+      table_empty_cell:
       table_line_header:
          table_parameter:
             HTML_attribute:
-               HTML_name:scope
-               HTML_value_noquote:col
+               attribute_name:scope
+               value_noquote:col
          table_cell_content:
             @clean_inline@:
                raw_text: Title A
       table_line_header:
          table_parameter:
             HTML_attribute:
-               HTML_name:scope
-               HTML_value_noquote:col
+               attribute_name:scope
+               value_noquote:col
          table_cell_content:
             @clean_inline@:
                raw_text: Title B
@@ -240,8 +242,8 @@ class TablesTests(ParserTestCase):
       table_line_header:
          table_parameter:
             HTML_attribute:
-               HTML_name:scope
-               HTML_value_noquote:row
+               attribute_name:scope
+               value_noquote:row
          table_cell_content:
             @clean_inline@:
                raw_text: Line 1
@@ -255,8 +257,8 @@ class TablesTests(ParserTestCase):
       table_line_header:
          table_parameter:
             HTML_attribute:
-               HTML_name:scope
-               HTML_value_noquote:row
+               attribute_name:scope
+               value_noquote:row
          table_cell_content:
             @clean_inline@:
                raw_text: Line 2
@@ -298,17 +300,17 @@ class TablesTests(ParserTestCase):
    table_begin:
       table_parameters:
          HTML_attribute:
-            HTML_name:class
-            HTML_value_quote:table
+            attribute_name:class
+            value_quote:table
          HTML_attribute:
-            HTML_name:style
-            HTML_value_quote:color:blue
+            attribute_name:style
+            value_quote:color:blue
    table_content:
       table_title:
          table_parameter:
             HTML_attribute:
-               HTML_name:style
-               HTML_value_quote:color:red
+               attribute_name:style
+               value_quote:color:red
          table_cell_content:
             @clean_inline@:
                raw_text: Table test: true
@@ -316,35 +318,36 @@ class TablesTests(ParserTestCase):
       table_line_header:
          table_parameter:
             HTML_attribute:
-               HTML_name:scope
-               HTML_value_noquote:col
+               attribute_name:scope
+               value_noquote:col
          table_cell_content:
             @clean_inline@:
                raw_text: First (mother)
       table_line_header:
          table_parameter:
             HTML_attribute:
-               HTML_name:scope
-               HTML_value_noquote:col
+               attribute_name:scope
+               value_noquote:col
          table_cell_content:
             @clean_inline@:
                raw_text: table
+      table_empty_cell:
       @table@:
          table_begin:
             table_parameters:
                HTML_attribute:
-                  HTML_name:class
-                  HTML_value_quote:table
+                  attribute_name:class
+                  value_quote:table
                HTML_attribute:
-                  HTML_name:style
-                  HTML_value_quote:color:blue
+                  attribute_name:style
+                  value_quote:color:blue
          table_content:
             table_line_break:
             table_line_header:
                table_parameter:
                   HTML_attribute:
-                     HTML_name:scope
-                     HTML_value_noquote:row
+                     attribute_name:scope
+                     value_noquote:row
                table_cell_content:
                   @clean_inline@:
                      raw_text: Second (daughter) table
@@ -358,8 +361,8 @@ class TablesTests(ParserTestCase):
             table_line_header:
                table_parameter:
                   HTML_attribute:
-                     HTML_name:scope
-                     HTML_value_noquote:row
+                     attribute_name:scope
+                     value_noquote:row
                table_cell_content:
                   @clean_inline@:
                      raw_text: in the first one

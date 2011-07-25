@@ -41,6 +41,27 @@ def toolset():
     def render_tag_autoclose(node):
         pass
 
+    def render_attribute(node):
+        pass
+
+    def render_table(node):
+        pass
+
+    def render_table_line_break(node):
+        pass
+
+    def render_table_header_cell(node):
+        pass
+
+    def render_table_normal_cell(node):
+        pass
+
+    def render_table_empty_cell(node):
+        pass
+
+    def render_table_caption(node):
+        pass
+
     return locals()
 
 toolset = toolset()

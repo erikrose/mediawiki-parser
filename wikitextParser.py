@@ -80,10 +80,10 @@
     value_quote             : QUOTE ((!(GT/QUOTE) any_char) / TAB)+ QUOTE                           : join
     value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) any_char) / TAB)+ APOSTROPHE            : join
     value_noquote           : (!(GT/SPACETAB/SLASH) raw_char)+                                      : join
-    attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))?             : liftNode
+    attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))              : liftNode
     attribute_name          : (!(EQUAL/SLASH/SPACETAB) raw_char)+                                   : join
     tag_name                : (!(SPACE/SLASH) raw_char)+                                            : join
-    optional_attribute      : SPACETABEOL+ attribute_name attribute_value
+    optional_attribute      : SPACETABEOL+ attribute_name attribute_value?
     optional_attributes     : optional_attribute*
     tag_lt                  : LT                                                                    : drop
     tag_gt                  : GT                                                                    : drop
@@ -198,31 +198,24 @@
 
 # Tables
 
-    HTML_value_quote        : QUOTE ((!(GT/QUOTE) any_char) / TAB)+ QUOTE                           : join
-    HTML_value_apostrophe   : APOSTROPHE ((!(GT/APOSTROPHE) any_char) / TAB)+ APOSTROPHE            : join
-    HTML_value_noquote      : (!(GT/SPACETAB/SLASH) raw_char)+                                      : join
-    HTML_value              : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
-    HTML_name               : (!(EQUAL/SLASH/SPACETAB) raw_char)+                                   : join
-    HTML_attribute          : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
-    HTML_attributes         : HTML_attribute*
+    HTML_attribute          : SPACETAB* attribute_name attribute_value SPACETAB*                    : render_attribute
     table_parameters_pipe   : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
-    table_parameters        : (HTML_attribute / clean_inline)+                                      : liftValue
+    table_parameters        : (HTML_attribute / clean_inline)+
     table_parameter         : table_parameters_pipe{0..1}                                           : liftValue
-    table_cell_content      : clean_inline*
+    table_cell_content      : clean_inline+
     table_first_cell        : table_parameter table_cell_content                                    : liftNode
     table_other_cell        : (PIPE{2} table_first_cell)*                                           : liftValue liftNode
-    table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue
-    table_line_header       : BANG table_first_cell table_other_cell EOL                            : liftValue
+    table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue render_table_normal_cell
+    table_line_header       : BANG table_first_cell table_other_cell EOL                            : liftValue render_table_header_cell
     table_empty_cell        : PIPE EOL                                                              : keep
-    table_param_line_break  : TABLE_NEWLINE table_parameters* EOL                                   : keep liftValue
-    table_line_break        : TABLE_NEWLINE EOL                                                     : keep
-    table_title             : TABLE_TITLE table_parameter table_cell_content EOL                    : liftValue
-    table_special_line      : table_title / table_line_break / table_param_line_break
+    table_line_break        : TABLE_NEWLINE table_parameters* EOL                                   : keep liftValue render_table_line_break
+    table_title             : TABLE_TITLE table_parameter table_cell_content EOL                    : liftValue render_table_caption
+    table_special_line      : table_title / table_line_break
     table_normal_line       : table_line_cells / table_line_header / table_empty_cell
     table_line              : !TABLE_END (table_special_line / table_normal_line)                   : liftNode
     table_content           : (table_line / table / EOL)*                                           : liftNode
     table_begin             : TABLE_BEGIN table_parameters*                                         : liftValue
-    table                   : table_begin SPACETABEOL* table_content TABLE_END EOL                  : @ liftValue
+    table                   : table_begin SPACETABEOL* table_content TABLE_END EOL                  : @ liftValue render_table
 
 # Top pattern
 
@@ -355,10 +348,10 @@ def make_parser(actions=None):
     value_quote = Sequence([QUOTE, Repetition(Choice([Sequence([NextNot(Choice([GT, QUOTE], expression='GT/QUOTE'), expression='!(GT/QUOTE)'), any_char], expression='!(GT/QUOTE) any_char'), TAB], expression='(!(GT/QUOTE) any_char) / TAB'), numMin=1, numMax=False, expression='((!(GT/QUOTE) any_char) / TAB)+'), QUOTE], expression='QUOTE ((!(GT/QUOTE) any_char) / TAB)+ QUOTE', name='value_quote')(toolset['join'])
     value_apostrophe = Sequence([APOSTROPHE, Repetition(Choice([Sequence([NextNot(Choice([GT, APOSTROPHE], expression='GT/APOSTROPHE'), expression='!(GT/APOSTROPHE)'), any_char], expression='!(GT/APOSTROPHE) any_char'), TAB], expression='(!(GT/APOSTROPHE) any_char) / TAB'), numMin=1, numMax=False, expression='((!(GT/APOSTROPHE) any_char) / TAB)+'), APOSTROPHE], expression='APOSTROPHE ((!(GT/APOSTROPHE) any_char) / TAB)+ APOSTROPHE', name='value_apostrophe')(toolset['join'])
     value_noquote = Repetition(Sequence([NextNot(Choice([GT, SPACETAB, SLASH], expression='GT/SPACETAB/SLASH'), expression='!(GT/SPACETAB/SLASH)'), raw_char], expression='!(GT/SPACETAB/SLASH) raw_char'), numMin=1, numMax=False, expression='(!(GT/SPACETAB/SLASH) raw_char)+', name='value_noquote')(toolset['join'])
-    attribute_value = Option(Sequence([EQUAL, Choice([value_quote, value_apostrophe, value_noquote], expression='value_quote / value_apostrophe / value_noquote')], expression='EQUAL (value_quote / value_apostrophe / value_noquote)'), expression='(EQUAL (value_quote / value_apostrophe / value_noquote))?', name='attribute_value')(toolset['liftNode'])
+    attribute_value = Sequence([EQUAL, Choice([value_quote, value_apostrophe, value_noquote], expression='value_quote / value_apostrophe / value_noquote')], expression='EQUAL (value_quote / value_apostrophe / value_noquote)', name='attribute_value')(toolset['liftNode'])
     attribute_name = Repetition(Sequence([NextNot(Choice([EQUAL, SLASH, SPACETAB], expression='EQUAL/SLASH/SPACETAB'), expression='!(EQUAL/SLASH/SPACETAB)'), raw_char], expression='!(EQUAL/SLASH/SPACETAB) raw_char'), numMin=1, numMax=False, expression='(!(EQUAL/SLASH/SPACETAB) raw_char)+', name='attribute_name')(toolset['join'])
     tag_name = Repetition(Sequence([NextNot(Choice([SPACE, SLASH], expression='SPACE/SLASH'), expression='!(SPACE/SLASH)'), raw_char], expression='!(SPACE/SLASH) raw_char'), numMin=1, numMax=False, expression='(!(SPACE/SLASH) raw_char)+', name='tag_name')(toolset['join'])
-    optional_attribute = Sequence([Repetition(SPACETABEOL, numMin=1, numMax=False, expression='SPACETABEOL+'), attribute_name, attribute_value], expression='SPACETABEOL+ attribute_name attribute_value', name='optional_attribute')
+    optional_attribute = Sequence([Repetition(SPACETABEOL, numMin=1, numMax=False, expression='SPACETABEOL+'), attribute_name, Option(attribute_value, expression='attribute_value?')], expression='SPACETABEOL+ attribute_name attribute_value?', name='optional_attribute')
     optional_attributes = Repetition(optional_attribute, numMin=False, numMax=False, expression='optional_attribute*', name='optional_attributes')
     tag_lt = Clone(LT, expression='LT', name='tag_lt')(toolset['drop'])
     tag_gt = Clone(GT, expression='GT', name='tag_gt')(toolset['drop'])
@@ -473,31 +466,24 @@ def make_parser(actions=None):
     
     # Tables
     
-    HTML_value_quote = Sequence([QUOTE, Repetition(Choice([Sequence([NextNot(Choice([GT, QUOTE], expression='GT/QUOTE'), expression='!(GT/QUOTE)'), any_char], expression='!(GT/QUOTE) any_char'), TAB], expression='(!(GT/QUOTE) any_char) / TAB'), numMin=1, numMax=False, expression='((!(GT/QUOTE) any_char) / TAB)+'), QUOTE], expression='QUOTE ((!(GT/QUOTE) any_char) / TAB)+ QUOTE', name='HTML_value_quote')(toolset['join'])
-    HTML_value_apostrophe = Sequence([APOSTROPHE, Repetition(Choice([Sequence([NextNot(Choice([GT, APOSTROPHE], expression='GT/APOSTROPHE'), expression='!(GT/APOSTROPHE)'), any_char], expression='!(GT/APOSTROPHE) any_char'), TAB], expression='(!(GT/APOSTROPHE) any_char) / TAB'), numMin=1, numMax=False, expression='((!(GT/APOSTROPHE) any_char) / TAB)+'), APOSTROPHE], expression='APOSTROPHE ((!(GT/APOSTROPHE) any_char) / TAB)+ APOSTROPHE', name='HTML_value_apostrophe')(toolset['join'])
-    HTML_value_noquote = Repetition(Sequence([NextNot(Choice([GT, SPACETAB, SLASH], expression='GT/SPACETAB/SLASH'), expression='!(GT/SPACETAB/SLASH)'), raw_char], expression='!(GT/SPACETAB/SLASH) raw_char'), numMin=1, numMax=False, expression='(!(GT/SPACETAB/SLASH) raw_char)+', name='HTML_value_noquote')(toolset['join'])
-    HTML_value = Choice([HTML_value_quote, HTML_value_apostrophe, HTML_value_noquote], expression='HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote', name='HTML_value')
-    HTML_name = Repetition(Sequence([NextNot(Choice([EQUAL, SLASH, SPACETAB], expression='EQUAL/SLASH/SPACETAB'), expression='!(EQUAL/SLASH/SPACETAB)'), raw_char], expression='!(EQUAL/SLASH/SPACETAB) raw_char'), numMin=1, numMax=False, expression='(!(EQUAL/SLASH/SPACETAB) raw_char)+', name='HTML_name')(toolset['join'])
-    HTML_attribute = Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), HTML_name, EQUAL, HTML_value, Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*')], expression='SPACETAB* HTML_name EQUAL HTML_value SPACETAB*', name='HTML_attribute')
-    HTML_attributes = Repetition(HTML_attribute, numMin=False, numMax=False, expression='HTML_attribute*', name='HTML_attributes')
+    HTML_attribute = Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), attribute_name, attribute_value, Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*')], expression='SPACETAB* attribute_name attribute_value SPACETAB*', name='HTML_attribute')(toolset['render_attribute'])
     table_parameters_pipe = Option(Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), Repetition(HTML_attribute, numMin=1, numMax=False, expression='HTML_attribute+'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE'), expression='(SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?', name='table_parameters_pipe')(toolset['liftNode'])
-    table_parameters = Repetition(Choice([HTML_attribute, clean_inline], expression='HTML_attribute / clean_inline'), numMin=1, numMax=False, expression='(HTML_attribute / clean_inline)+', name='table_parameters')(toolset['liftValue'])
+    table_parameters = Repetition(Choice([HTML_attribute, clean_inline], expression='HTML_attribute / clean_inline'), numMin=1, numMax=False, expression='(HTML_attribute / clean_inline)+', name='table_parameters')
     table_parameter = Repetition(table_parameters_pipe, numMin=0, numMax=1, expression='table_parameters_pipe{0..1}', name='table_parameter')(toolset['liftValue'])
-    table_cell_content = Repetition(clean_inline, numMin=False, numMax=False, expression='clean_inline*', name='table_cell_content')
+    table_cell_content = Repetition(clean_inline, numMin=1, numMax=False, expression='clean_inline+', name='table_cell_content')
     table_first_cell = Sequence([table_parameter, table_cell_content], expression='table_parameter table_cell_content', name='table_first_cell')(toolset['liftNode'])
     table_other_cell = Repetition(Sequence([Repetition(PIPE, numMin=2, numMax=2, expression='PIPE{2}'), table_first_cell], expression='PIPE{2} table_first_cell'), numMin=False, numMax=False, expression='(PIPE{2} table_first_cell)*', name='table_other_cell')(toolset['liftValue'], toolset['liftNode'])
-    table_line_cells = Sequence([PIPE, table_first_cell, table_other_cell, EOL], expression='PIPE table_first_cell table_other_cell EOL', name='table_line_cells')(toolset['liftValue'])
-    table_line_header = Sequence([BANG, table_first_cell, table_other_cell, EOL], expression='BANG table_first_cell table_other_cell EOL', name='table_line_header')(toolset['liftValue'])
+    table_line_cells = Sequence([PIPE, table_first_cell, table_other_cell, EOL], expression='PIPE table_first_cell table_other_cell EOL', name='table_line_cells')(toolset['liftValue'], toolset['render_table_normal_cell'])
+    table_line_header = Sequence([BANG, table_first_cell, table_other_cell, EOL], expression='BANG table_first_cell table_other_cell EOL', name='table_line_header')(toolset['liftValue'], toolset['render_table_header_cell'])
     table_empty_cell = Sequence([PIPE, EOL], expression='PIPE EOL', name='table_empty_cell')(toolset['keep'])
-    table_param_line_break = Sequence([TABLE_NEWLINE, Repetition(table_parameters, numMin=False, numMax=False, expression='table_parameters*'), EOL], expression='TABLE_NEWLINE table_parameters* EOL', name='table_param_line_break')(toolset['keep'], toolset['liftValue'])
-    table_line_break = Sequence([TABLE_NEWLINE, EOL], expression='TABLE_NEWLINE EOL', name='table_line_break')(toolset['keep'])
-    table_title = Sequence([TABLE_TITLE, table_parameter, table_cell_content, EOL], expression='TABLE_TITLE table_parameter table_cell_content EOL', name='table_title')(toolset['liftValue'])
-    table_special_line = Choice([table_title, table_line_break, table_param_line_break], expression='table_title / table_line_break / table_param_line_break', name='table_special_line')
+    table_line_break = Sequence([TABLE_NEWLINE, Repetition(table_parameters, numMin=False, numMax=False, expression='table_parameters*'), EOL], expression='TABLE_NEWLINE table_parameters* EOL', name='table_line_break')(toolset['keep'], toolset['liftValue'], toolset['render_table_line_break'])
+    table_title = Sequence([TABLE_TITLE, table_parameter, table_cell_content, EOL], expression='TABLE_TITLE table_parameter table_cell_content EOL', name='table_title')(toolset['liftValue'], toolset['render_table_caption'])
+    table_special_line = Choice([table_title, table_line_break], expression='table_title / table_line_break', name='table_special_line')
     table_normal_line = Choice([table_line_cells, table_line_header, table_empty_cell], expression='table_line_cells / table_line_header / table_empty_cell', name='table_normal_line')
     table_line = Sequence([NextNot(TABLE_END, expression='!TABLE_END'), Choice([table_special_line, table_normal_line], expression='table_special_line / table_normal_line')], expression='!TABLE_END (table_special_line / table_normal_line)', name='table_line')(toolset['liftNode'])
     table_content = Repetition(Choice([table_line, table, EOL], expression='table_line / table / EOL'), numMin=False, numMax=False, expression='(table_line / table / EOL)*', name='table_content')(toolset['liftNode'])
     table_begin = Sequence([TABLE_BEGIN, Repetition(table_parameters, numMin=False, numMax=False, expression='table_parameters*')], expression='TABLE_BEGIN table_parameters*', name='table_begin')(toolset['liftValue'])
-    table **= Sequence([table_begin, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), table_content, TABLE_END, EOL], expression='table_begin SPACETABEOL* table_content TABLE_END EOL', name='table')(toolset['liftValue'])
+    table **= Sequence([table_begin, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), table_content, TABLE_END, EOL], expression='table_begin SPACETABEOL* table_content TABLE_END EOL', name='table')(toolset['liftValue'], toolset['render_table'])
     
     # Top pattern
     

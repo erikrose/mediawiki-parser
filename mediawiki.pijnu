@@ -84,10 +84,10 @@ def replace_by_space(node):
     value_quote             : QUOTE ((!(GT/QUOTE) any_char) / TAB)+ QUOTE                           : join
     value_apostrophe        : APOSTROPHE ((!(GT/APOSTROPHE) any_char) / TAB)+ APOSTROPHE            : join
     value_noquote           : (!(GT/SPACETAB/SLASH) raw_char)+                                      : join
-    attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))?             : liftNode
+    attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))              : liftNode
     attribute_name          : (!(EQUAL/SLASH/SPACETAB) raw_char)+                                   : join
     tag_name                : (!(SPACE/SLASH) raw_char)+                                            : join
-    optional_attribute      : SPACETABEOL+ attribute_name attribute_value
+    optional_attribute      : SPACETABEOL+ attribute_name attribute_value?
     optional_attributes     : optional_attribute*
     tag_lt                  : LT                                                                    : drop
     tag_gt                  : GT                                                                    : drop
@@ -202,31 +202,24 @@ def replace_by_space(node):
 
 # Tables
 
-    HTML_value_quote        : QUOTE ((!(GT/QUOTE) any_char) / TAB)+ QUOTE                           : join
-    HTML_value_apostrophe   : APOSTROPHE ((!(GT/APOSTROPHE) any_char) / TAB)+ APOSTROPHE            : join
-    HTML_value_noquote      : (!(GT/SPACETAB/SLASH) raw_char)+                                      : join
-    HTML_value              : HTML_value_quote / HTML_value_apostrophe / HTML_value_noquote
-    HTML_name               : (!(EQUAL/SLASH/SPACETAB) raw_char)+                                   : join
-    HTML_attribute          : SPACETAB* HTML_name EQUAL HTML_value SPACETAB*
-    HTML_attributes         : HTML_attribute*
+    HTML_attribute          : SPACETAB* attribute_name attribute_value SPACETAB*                    : render_attribute
     table_parameters_pipe   : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
-    table_parameters        : (HTML_attribute / clean_inline)+                                      : liftValue
+    table_parameters        : (HTML_attribute / clean_inline)+
     table_parameter         : table_parameters_pipe{0..1}                                           : liftValue
-    table_cell_content      : clean_inline*
+    table_cell_content      : clean_inline+
     table_first_cell        : table_parameter table_cell_content                                    : liftNode
     table_other_cell        : (PIPE{2} table_first_cell)*                                           : liftValue liftNode
-    table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue
-    table_line_header       : BANG table_first_cell table_other_cell EOL                            : liftValue
+    table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue render_table_normal_cell
+    table_line_header       : BANG table_first_cell table_other_cell EOL                            : liftValue render_table_header_cell
     table_empty_cell        : PIPE EOL                                                              : keep
-    table_param_line_break  : TABLE_NEWLINE table_parameters* EOL                                   : keep liftValue
-    table_line_break        : TABLE_NEWLINE EOL                                                     : keep
-    table_title             : TABLE_TITLE table_parameter table_cell_content EOL                    : liftValue
-    table_special_line      : table_title / table_line_break / table_param_line_break
+    table_line_break        : TABLE_NEWLINE table_parameters* EOL                                   : keep liftValue render_table_line_break
+    table_title             : TABLE_TITLE table_parameter table_cell_content EOL                    : liftValue render_table_caption
+    table_special_line      : table_title / table_line_break
     table_normal_line       : table_line_cells / table_line_header / table_empty_cell
     table_line              : !TABLE_END (table_special_line / table_normal_line)                   : liftNode
     table_content           : (table_line / table / EOL)*                                           : liftNode
     table_begin             : TABLE_BEGIN table_parameters*                                         : liftValue
-    table                   : table_begin SPACETABEOL* table_content TABLE_END EOL                  : @ liftValue
+    table                   : table_begin SPACETABEOL* table_content TABLE_END EOL                  : @ liftValue render_table
 
 # Top pattern
 

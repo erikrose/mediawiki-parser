@@ -55,3 +55,122 @@ class HTMLBackendTests(PostprocessorTestCase):
         source = '<img src="file.png" />'
         result = '&lt;img src="file.png" /&gt;'
         self.parsed_equal_string(source, result, 'inline', {}, 'html')
+
+    def test_simple_table(self):
+        source = """{|
+! cellA
+! cellB
+|- style="color:red"
+| cell C
+| cell D
+|}
+"""
+        result = """<body>
+<table>
+<tr>
+\t<th> cellA</th>
+ \t<th> cellB</th>
+ </tr>
+<tr style="color:red">
+ \t<td> cell C</td>
+ \t<td> cell D</td>
+</tr>
+</table>
+</body>"""
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_complex_table(self):
+        source = """{| style="background:blue" {{prettyTable}}
+|+ style="color:red" | Table {{title|parameter}}
+|-
+|
+! scope=col | Title A
+! scope=col | Title B
+|-
+! scope=row | Line 1
+| style="test:test" | data L1.A
+|data L1.B
+|-
+! scope=row | Line 2
+|data L2.A
+|data {{template|with|parameters=L2.B}}
+|}
+"""
+        result = """<body>
+<table style="background:blue" class="prettyTable">
+<tr>
+\t<caption style="color:red"> Table This is the title with a parameter!</caption>
+</tr>
+<tr>
+\t<th scope="col"> Title A</th>
+\t<th scope="col"> Title B</th>
+</tr>
+<tr>
+\t<th scope="row"> Line 1</th>
+\t<td style="test:test"> data L1.A</td>
+\t<td>data L1.B</td>
+</tr>
+<tr>
+\t<th scope="row"> Line 2</th>
+\t<td>data L2.A</td>
+\t<td>data  Template:template</td>
+</tr>
+</table>
+</body>"""
+        templates = {'prettyTable': 'class="prettyTable"',
+                     'title': 'This is the title with a {{{1}}}!'}
+        self.parsed_equal_string(source, result, None, templates, 'html')
+
+    def test_nested_tables(self):
+        source = """{| style="background:blue" {{prettyTable}}
+|+ style="color:red" | Table {{title|1=true}}
+|-
+! scope=col | First (mother)
+! scope=col | table
+|
+{| style="background:red" {{prettyTable}}
+! scope=row | Second (daughter) table
+|data L1.A
+|data L1.B
+|-
+! scope=row | in the first one
+|data L2.A
+|data L2.B
+|}
+|-
+| first
+| table
+| again
+|}
+"""
+        result = """<body>
+<table style="background:blue" class="prettyTable">
+<tr>
+\t<caption style="color:red"> Table This is the title, true!</caption>
+</tr>
+<tr>
+\t<th scope="col"> First (mother)</th>
+\t<th scope="col"> table</th>
+<table style="background:red" class="prettyTable">
+<tr>
+\t<th scope="row"> Second (daughter) table</th>
+\t<td>data L1.A</td>
+\t<td>data L1.B</td>
+</tr>
+<tr>
+\t<th scope="row"> in the first one</th>
+\t<td>data L2.A</td>
+\t<td>data L2.B</td>
+</tr>
+</table>
+</tr>
+<tr>
+\t<td> first</td>
+\t<td> table</td>
+\t<td> again</td>
+</tr>
+</table>
+</body>"""
+        templates = {'prettyTable': 'class="prettyTable"',
+                     'title': 'This is the title, {{{1}}}!'}
+        self.parsed_equal_string(source, result, None, templates, 'html')
