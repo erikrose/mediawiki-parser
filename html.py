@@ -86,7 +86,8 @@ def toolset():
     def render_table(node):
         table_parameters = ''
         table_content = ''
-        if len(node.value) > 1 and node.value[0].tag == 'table_begin':
+        from pijnu.library.node import Nodes
+        if isinstance(node.value, Nodes) and node.value[0].tag == 'table_begin':
             attributes = node.value[0].value[0]
             for attribute in attributes:
                 if attribute.tag == 'HTML_attribute':

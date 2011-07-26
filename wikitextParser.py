@@ -202,7 +202,7 @@
     table_parameters_pipe   : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
     table_parameters        : (HTML_attribute / clean_inline)+
     table_parameter         : table_parameters_pipe{0..1}                                           : liftValue
-    table_cell_content      : clean_inline+
+    table_cell_content      : (clean_inline / (EOL+ table_structure))+
     table_first_cell        : table_parameter table_cell_content                                    : liftNode
     table_other_cell        : (PIPE{2} table_first_cell)*                                           : liftValue liftNode
     table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue render_table_normal_cell
@@ -213,9 +213,10 @@
     table_special_line      : table_title / table_line_break
     table_normal_line       : table_line_cells / table_line_header / table_empty_cell
     table_line              : !TABLE_END (table_special_line / table_normal_line)                   : liftNode
-    table_content           : (table_line / table / EOL)*                                           : liftNode
+    table_content           : (table_line / EOL)*                                                   : liftNode
     table_begin             : TABLE_BEGIN table_parameters*                                         : liftValue
-    table                   : table_begin SPACETABEOL* table_content TABLE_END EOL                  : @ liftValue render_table
+    table_structure         : table_begin SPACETABEOL* table_content TABLE_END                      : @ liftValue render_table 
+    table                   : table_structure EOL                                                   : liftValue
 
 # Top pattern
 
@@ -260,7 +261,7 @@ def make_parser(actions=None):
     
     ###   <definition>
     # recursive pattern(s)
-    table = Recursive(name='table')
+    table_structure = Recursive(name='table_structure')
     list_item = Recursive(name='list_item')
     sub_list = Recursive(name='sub_list')
     list_leaf = Recursive(name='list_leaf')
@@ -470,7 +471,7 @@ def make_parser(actions=None):
     table_parameters_pipe = Option(Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), Repetition(HTML_attribute, numMin=1, numMax=False, expression='HTML_attribute+'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE'), expression='(SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?', name='table_parameters_pipe')(toolset['liftNode'])
     table_parameters = Repetition(Choice([HTML_attribute, clean_inline], expression='HTML_attribute / clean_inline'), numMin=1, numMax=False, expression='(HTML_attribute / clean_inline)+', name='table_parameters')
     table_parameter = Repetition(table_parameters_pipe, numMin=0, numMax=1, expression='table_parameters_pipe{0..1}', name='table_parameter')(toolset['liftValue'])
-    table_cell_content = Repetition(clean_inline, numMin=1, numMax=False, expression='clean_inline+', name='table_cell_content')
+    table_cell_content = Repetition(Choice([clean_inline, Sequence([Repetition(EOL, numMin=1, numMax=False, expression='EOL+'), table_structure], expression='EOL+ table_structure')], expression='clean_inline / (EOL+ table_structure)'), numMin=1, numMax=False, expression='(clean_inline / (EOL+ table_structure))+', name='table_cell_content')
     table_first_cell = Sequence([table_parameter, table_cell_content], expression='table_parameter table_cell_content', name='table_first_cell')(toolset['liftNode'])
     table_other_cell = Repetition(Sequence([Repetition(PIPE, numMin=2, numMax=2, expression='PIPE{2}'), table_first_cell], expression='PIPE{2} table_first_cell'), numMin=False, numMax=False, expression='(PIPE{2} table_first_cell)*', name='table_other_cell')(toolset['liftValue'], toolset['liftNode'])
     table_line_cells = Sequence([PIPE, table_first_cell, table_other_cell, EOL], expression='PIPE table_first_cell table_other_cell EOL', name='table_line_cells')(toolset['liftValue'], toolset['render_table_normal_cell'])
@@ -481,9 +482,10 @@ def make_parser(actions=None):
     table_special_line = Choice([table_title, table_line_break], expression='table_title / table_line_break', name='table_special_line')
     table_normal_line = Choice([table_line_cells, table_line_header, table_empty_cell], expression='table_line_cells / table_line_header / table_empty_cell', name='table_normal_line')
     table_line = Sequence([NextNot(TABLE_END, expression='!TABLE_END'), Choice([table_special_line, table_normal_line], expression='table_special_line / table_normal_line')], expression='!TABLE_END (table_special_line / table_normal_line)', name='table_line')(toolset['liftNode'])
-    table_content = Repetition(Choice([table_line, table, EOL], expression='table_line / table / EOL'), numMin=False, numMax=False, expression='(table_line / table / EOL)*', name='table_content')(toolset['liftNode'])
+    table_content = Repetition(Choice([table_line, EOL], expression='table_line / EOL'), numMin=False, numMax=False, expression='(table_line / EOL)*', name='table_content')(toolset['liftNode'])
     table_begin = Sequence([TABLE_BEGIN, Repetition(table_parameters, numMin=False, numMax=False, expression='table_parameters*')], expression='TABLE_BEGIN table_parameters*', name='table_begin')(toolset['liftValue'])
-    table **= Sequence([table_begin, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), table_content, TABLE_END, EOL], expression='table_begin SPACETABEOL* table_content TABLE_END EOL', name='table')(toolset['liftValue'], toolset['render_table'])
+    table_structure **= Sequence([table_begin, Repetition(SPACETABEOL, numMin=False, numMax=False, expression='SPACETABEOL*'), table_content, TABLE_END], expression='table_begin SPACETABEOL* table_content TABLE_END', name='table_structure')(toolset['liftValue'], toolset['render_table'])
+    table = Sequence([table_structure, EOL], expression='table_structure EOL', name='table')(toolset['liftValue'])
     
     # Top pattern
     

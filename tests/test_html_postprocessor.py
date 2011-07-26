@@ -151,7 +151,8 @@ class HTMLBackendTests(PostprocessorTestCase):
 <tr>
 \t<th scope="col"> First (mother)</th>
 \t<th scope="col"> table</th>
-<table style="background:red" class="prettyTable">
+\t<td>
+ <table style="background:red" class="prettyTable">
 <tr>
 \t<th scope="row"> Second (daughter) table</th>
 \t<td>data L1.A</td>
@@ -163,6 +164,7 @@ class HTMLBackendTests(PostprocessorTestCase):
 \t<td>data L2.B</td>
 </tr>
 </table>
+</td>
 </tr>
 <tr>
 \t<td> first</td>

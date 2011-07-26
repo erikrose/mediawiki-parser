@@ -135,7 +135,7 @@ class TablesTests(ParserTestCase):
 | cell D
 |}
 """
-        result = """@table@:
+        result = """table:
    table_line_header:
       @clean_inline@:
          raw_text: cellA
@@ -163,7 +163,7 @@ class TablesTests(ParserTestCase):
 | cell 3 || cell 4
 |}
 """
-        result = """@table@:
+        result = """table:
    table_title:
       @clean_inline@:
          raw_text: Table test: yes
@@ -202,7 +202,7 @@ class TablesTests(ParserTestCase):
 |data {{template|with|parameters=L2.B}}
 |}
 """
-        result = """@table@:
+        result = """table:
    table_begin:
       table_parameters:
          HTML_attribute:
@@ -296,7 +296,7 @@ class TablesTests(ParserTestCase):
 | again
 |}
 """
-        result = """@table@:
+        result = """table:
    table_begin:
       table_parameters:
          HTML_attribute:
@@ -331,47 +331,50 @@ class TablesTests(ParserTestCase):
          table_cell_content:
             @clean_inline@:
                raw_text: table
-      table_empty_cell:
-      @table@:
-         table_begin:
-            table_parameters:
-               HTML_attribute:
-                  attribute_name:class
-                  value_quote:table
-               HTML_attribute:
-                  attribute_name:style
-                  value_quote:color:blue
-         table_content:
-            table_line_break:
-            table_line_header:
-               table_parameter:
-                  HTML_attribute:
-                     attribute_name:scope
-                     value_noquote:row
-               table_cell_content:
-                  @clean_inline@:
-                     raw_text: Second (daughter) table
-            table_line_cells:
-               @clean_inline@:
-                  raw_text:data L1.A
-            table_line_cells:
-               @clean_inline@:
-                  raw_text:data L1.B
-            table_line_break:
-            table_line_header:
-               table_parameter:
-                  HTML_attribute:
-                     attribute_name:scope
-                     value_noquote:row
-               table_cell_content:
-                  @clean_inline@:
-                     raw_text: in the first one
-            table_line_cells:
-               @clean_inline@:
-                  raw_text:data L2.A
-            table_line_cells:
-               @clean_inline@:
-                  raw_text:data L2.B
+      table_line_cells:
+         <?>:
+            <?>:
+
+            @table_structure@:
+               table_begin:
+                  table_parameters:
+                     HTML_attribute:
+                        attribute_name:class
+                        value_quote:table
+                     HTML_attribute:
+                        attribute_name:style
+                        value_quote:color:blue
+               table_content:
+                  table_line_break:
+                  table_line_header:
+                     table_parameter:
+                        HTML_attribute:
+                           attribute_name:scope
+                           value_noquote:row
+                     table_cell_content:
+                        @clean_inline@:
+                           raw_text: Second (daughter) table
+                  table_line_cells:
+                     @clean_inline@:
+                        raw_text:data L1.A
+                  table_line_cells:
+                     @clean_inline@:
+                        raw_text:data L1.B
+                  table_line_break:
+                  table_line_header:
+                     table_parameter:
+                        HTML_attribute:
+                           attribute_name:scope
+                           value_noquote:row
+                     table_cell_content:
+                        @clean_inline@:
+                           raw_text: in the first one
+                  table_line_cells:
+                     @clean_inline@:
+                        raw_text:data L2.A
+                  table_line_cells:
+                     @clean_inline@:
+                        raw_text:data L2.B
       table_line_break:
       table_line_cells:
          @clean_inline@:

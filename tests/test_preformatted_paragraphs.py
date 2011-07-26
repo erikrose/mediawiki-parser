@@ -82,7 +82,7 @@ Preformatted paragraph.
 |}
 """
         result = """body:
-   @table@:
+   table:
       table_line_break:
       table_line_header:
          @clean_inline@:
