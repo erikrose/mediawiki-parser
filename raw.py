@@ -3,9 +3,21 @@ from constants import html_entities
 allowed_tags = {}
 
 def toolset():
+    def render_title1(node):
+        pass
+
     def render_title2(node):
         pass
-    
+
+    def render_title3(node):
+        pass
+
+    def render_title4(node):
+        pass
+
+    def render_title5(node):
+        pass
+
     def render_title6(node):
         pass
     
@@ -60,6 +72,12 @@ def toolset():
         pass
 
     def render_table_caption(node):
+        pass
+
+    def render_preformatted(node):
+        pass
+
+    def render_hr(node):
         pass
 
     return locals()

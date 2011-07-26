@@ -3,19 +3,31 @@ from constants import html_entities
 def toolset():
     def render_tag_p(attributes):
         return '\n'
-    
+
     def render_tag_br(attributes):
         return '\n'
-    
+
     allowed_tags = {'p': render_tag_p,
                     'br': render_tag_br}
-    
+
+    def render_title1(node):
+        node.value += '\n'
+
     def render_title2(node):
         node.value += '\n'
-    
+
+    def render_title3(node):
+        node.value += '\n'
+
+    def render_title4(node):
+        node.value += '\n'
+
+    def render_title5(node):
+        node.value += '\n'
+
     def render_title6(node):
         node.value += '\n'
-    
+
     def render_raw_text(node):
         pass
     
@@ -95,6 +107,12 @@ def toolset():
 
     def render_table_caption(node):
         pass
+
+    def render_preformatted(node):
+        pass
+
+    def render_hr(node):
+        node.value = '------'
 
     return locals()
 

@@ -9,7 +9,10 @@ class preformatted_paragraphsTests(ParserTestCase):
         result = """body:
    preformatted_lines:
       preformatted_line:
-         raw_text:This is a preformatted paragraph."""
+         @inline@:
+            raw_text:This is a preformatted paragraph.
+         EOL_KEEP:
+"""
         self.parsed_equal_tree(source, result, None)
 
     def test_preformatted_and_normal_paragraphs(self):
@@ -19,7 +22,10 @@ Followed by a "normal" one.
         result = """body:
    preformatted_lines:
       preformatted_line:
-         raw_text:This is a preformatted paragraph.
+         @inline@:
+            raw_text:This is a preformatted paragraph.
+         EOL_KEEP:
+
    paragraphs:
       paragraph:
          raw_text:Followed by a "normal" one."""
@@ -32,20 +38,29 @@ Followed by a "normal" one.
         result = """body:
    preformatted_lines:
       preformatted_line:
-         raw_text:This is a multiline
+         @inline@:
+            raw_text:This is a multiline
+         EOL_KEEP:
+
       preformatted_line:
-         raw_text:preformatted paragraph."""
+         @inline@:
+            raw_text:preformatted paragraph.
+         EOL_KEEP:
+"""
         self.parsed_equal_tree(source, result, None)
 
-    def test_style_in_paragraph(self):
+    def test_style_in_preformatted_paragraph(self):
         source = """ Styled text such as ''italic'', '''bold''', {{templates}} also work.
 """
         result = """body:
    preformatted_lines:
       preformatted_line:
-         raw_text:Styled text such as <em>italic</em>, <strong>bold</strong>, 
-         internal_link:Template:templates
-         raw_text: also work."""
+         @inline@:
+            raw_text:Styled text such as <em>italic</em>, <strong>bold</strong>, 
+            internal_link:Template:templates
+            raw_text: also work.
+         EOL_KEEP:
+"""
         self.parsed_equal_tree(source, result, None)
 
     def test_html_pre_paragraph(self):

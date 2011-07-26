@@ -69,11 +69,11 @@ class HTMLBackendTests(PostprocessorTestCase):
 <table>
 <tr>
 \t<th> cellA</th>
- \t<th> cellB</th>
- </tr>
+\t<th> cellB</th>
+</tr>
 <tr style="color:red">
- \t<td> cell C</td>
- \t<td> cell D</td>
+\t<td> cell C</td>
+\t<td> cell D</td>
 </tr>
 </table>
 </body>"""
@@ -113,7 +113,7 @@ class HTMLBackendTests(PostprocessorTestCase):
 <tr>
 \t<th scope="row"> Line 2</th>
 \t<td>data L2.A</td>
-\t<td>data  Template:template</td>
+\t<td>data Template:template</td>
 </tr>
 </table>
 </body>"""
@@ -152,7 +152,7 @@ class HTMLBackendTests(PostprocessorTestCase):
 \t<th scope="col"> First (mother)</th>
 \t<th scope="col"> table</th>
 \t<td>
- <table style="background:red" class="prettyTable">
+<table style="background:red" class="prettyTable">
 <tr>
 \t<th scope="row"> Second (daughter) table</th>
 \t<td>data L1.A</td>
@@ -176,3 +176,29 @@ class HTMLBackendTests(PostprocessorTestCase):
         templates = {'prettyTable': 'class="prettyTable"',
                      'title': 'This is the title, {{{1}}}!'}
         self.parsed_equal_string(source, result, None, templates, 'html')
+
+    def test_horizontal_rule(self):
+        source = """test
+----
+test
+"""
+        result = """<body>
+<p>test</p>
+<hr />
+<p>test</p>
+</body>"""
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_preformatted_paragraph(self):
+        source = """ test
+ {{template}}
+ test
+"""
+        templates = {'template': 'content'}
+        result = """<body>
+<pre>test
+Template:template
+test
+</pre>
+</body>"""
+        self.parsed_equal_string(source, result, None, {}, 'html')

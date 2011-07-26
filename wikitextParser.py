@@ -151,11 +151,11 @@
 # Titles
 
     title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue render_title6
-    title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
-    title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue
-    title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue
+    title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue render_title5
+    title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue render_title4
+    title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue render_title3
     title2                  : TITLE2_BEGIN inline TITLE2_END                                        : liftValue render_title2
-    title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue
+    title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue render_title1
     title                   : title6 / title5 / title4 / title3 / title2 / title1
 
 # Lists
@@ -182,16 +182,16 @@
 
 # Preformatted
 
-    EOL_or_not              : EOL{0..1}                                                             : drop
-    preformatted_line       : SPACE inline EOL                                                      : liftValue
+    EOL_KEEP                : EOL                                                                   : restore
+    preformatted_line       : SPACE inline EOL_KEEP                                                 : liftValue
     preformatted_lines      : preformatted_line+
-    preformatted_text       : inline EOL_or_not                                                     : liftValue
+    preformatted_text       : inline EOL?                                                           : liftValue
     preformatted_paragraph  : PRE_BEGIN EOL preformatted_text PRE_END EOL
-    preformatted_group      : preformatted_paragraph / preformatted_lines
+    preformatted_group      : preformatted_paragraph / preformatted_lines                           : render_preformatted
 
 # Special lines
 
-    horizontal_rule         : DASH{4} DASH* inline* EOL                                             : liftValue keep
+    horizontal_rule         : DASH{4} DASH* inline* EOL                                             : liftValue keep render_hr
 
     # This should never happen
     invalid_line            : any_text EOL                                                          : liftValue
@@ -420,11 +420,11 @@ def make_parser(actions=None):
     # Titles
     
     title6 = Sequence([TITLE6_BEGIN, inline, TITLE6_END], expression='TITLE6_BEGIN inline TITLE6_END', name='title6')(toolset['liftValue'], toolset['render_title6'])
-    title5 = Sequence([TITLE5_BEGIN, inline, TITLE5_END], expression='TITLE5_BEGIN inline TITLE5_END', name='title5')(toolset['liftValue'])
-    title4 = Sequence([TITLE4_BEGIN, inline, TITLE4_END], expression='TITLE4_BEGIN inline TITLE4_END', name='title4')(toolset['liftValue'])
-    title3 = Sequence([TITLE3_BEGIN, inline, TITLE3_END], expression='TITLE3_BEGIN inline TITLE3_END', name='title3')(toolset['liftValue'])
+    title5 = Sequence([TITLE5_BEGIN, inline, TITLE5_END], expression='TITLE5_BEGIN inline TITLE5_END', name='title5')(toolset['liftValue'], toolset['render_title5'])
+    title4 = Sequence([TITLE4_BEGIN, inline, TITLE4_END], expression='TITLE4_BEGIN inline TITLE4_END', name='title4')(toolset['liftValue'], toolset['render_title4'])
+    title3 = Sequence([TITLE3_BEGIN, inline, TITLE3_END], expression='TITLE3_BEGIN inline TITLE3_END', name='title3')(toolset['liftValue'], toolset['render_title3'])
     title2 = Sequence([TITLE2_BEGIN, inline, TITLE2_END], expression='TITLE2_BEGIN inline TITLE2_END', name='title2')(toolset['liftValue'], toolset['render_title2'])
-    title1 = Sequence([TITLE1_BEGIN, inline, TITLE1_END], expression='TITLE1_BEGIN inline TITLE1_END', name='title1')(toolset['liftValue'])
+    title1 = Sequence([TITLE1_BEGIN, inline, TITLE1_END], expression='TITLE1_BEGIN inline TITLE1_END', name='title1')(toolset['liftValue'], toolset['render_title1'])
     title = Choice([title6, title5, title4, title3, title2, title1], expression='title6 / title5 / title4 / title3 / title2 / title1', name='title')
     
     # Lists
@@ -451,16 +451,16 @@ def make_parser(actions=None):
     
     # Preformatted
     
-    EOL_or_not = Repetition(EOL, numMin=0, numMax=1, expression='EOL{0..1}', name='EOL_or_not')(toolset['drop'])
-    preformatted_line = Sequence([SPACE, inline, EOL], expression='SPACE inline EOL', name='preformatted_line')(toolset['liftValue'])
+    EOL_KEEP = Clone(EOL, expression='EOL', name='EOL_KEEP')(toolset['restore'])
+    preformatted_line = Sequence([SPACE, inline, EOL_KEEP], expression='SPACE inline EOL_KEEP', name='preformatted_line')(toolset['liftValue'])
     preformatted_lines = Repetition(preformatted_line, numMin=1, numMax=False, expression='preformatted_line+', name='preformatted_lines')
-    preformatted_text = Sequence([inline, EOL_or_not], expression='inline EOL_or_not', name='preformatted_text')(toolset['liftValue'])
+    preformatted_text = Sequence([inline, Option(EOL, expression='EOL?')], expression='inline EOL?', name='preformatted_text')(toolset['liftValue'])
     preformatted_paragraph = Sequence([PRE_BEGIN, EOL, preformatted_text, PRE_END, EOL], expression='PRE_BEGIN EOL preformatted_text PRE_END EOL', name='preformatted_paragraph')
-    preformatted_group = Choice([preformatted_paragraph, preformatted_lines], expression='preformatted_paragraph / preformatted_lines', name='preformatted_group')
+    preformatted_group = Choice([preformatted_paragraph, preformatted_lines], expression='preformatted_paragraph / preformatted_lines', name='preformatted_group')(toolset['render_preformatted'])
     
     # Special lines
     
-    horizontal_rule = Sequence([Repetition(DASH, numMin=4, numMax=4, expression='DASH{4}'), Repetition(DASH, numMin=False, numMax=False, expression='DASH*'), Repetition(inline, numMin=False, numMax=False, expression='inline*'), EOL], expression='DASH{4} DASH* inline* EOL', name='horizontal_rule')(toolset['liftValue'], toolset['keep'])
+    horizontal_rule = Sequence([Repetition(DASH, numMin=4, numMax=4, expression='DASH{4}'), Repetition(DASH, numMin=False, numMax=False, expression='DASH*'), Repetition(inline, numMin=False, numMax=False, expression='inline*'), EOL], expression='DASH{4} DASH* inline* EOL', name='horizontal_rule')(toolset['liftValue'], toolset['keep'], toolset['render_hr'])
     
         # This should never happen
     invalid_line = Sequence([any_text, EOL], expression='any_text EOL', name='invalid_line')(toolset['liftValue'])

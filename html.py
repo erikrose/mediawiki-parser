@@ -4,8 +4,20 @@ def toolset():
     allowed_tags = ['p', 'span', 'b', 'br', 'hr']
     allowed_parameters = ['class', 'style', 'name', 'id', 'scope']
 
+    def render_title1(node):
+        node.value = '<h1>%s</h1>\n' % node.leaf()
+
     def render_title2(node):
         node.value = '<h2>%s</h2>\n' % node.leaf()
+
+    def render_title3(node):
+        node.value = '<h3>%s</h3>\n' % node.leaf()
+
+    def render_title4(node):
+        node.value = '<h4>%s</h4>\n' % node.leaf()
+
+    def render_title5(node):
+        node.value = '<h5>%s</h5>\n' % node.leaf()
 
     def render_title6(node):
         node.value = '<h6>%s</h6>\n' % node.leaf()
@@ -141,6 +153,12 @@ def toolset():
                 if value.tag == 'HTML_attribute':
                     line_parameters += ' ' + value.value
         node.value = '</tr>\n<tr%s>\n' % line_parameters
+
+    def render_preformatted(node):
+        node.value = '<pre>%s</pre>\n' % node.leaf()
+
+    def render_hr(node):
+        node.value = '<hr />\n'
 
     return locals()
 

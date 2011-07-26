@@ -14,7 +14,10 @@ class CommentsTests(ParserTestCase):
         result = """body:
    preformatted_lines:
       preformatted_line:
-         raw_text:This is a preformatted paragraph."""
+         @inline@:
+            raw_text:This is a preformatted paragraph.
+         EOL_KEEP:
+"""
         self.parsed_equal_tree(source, result, None)
 
     def test_comment_before_list(self):

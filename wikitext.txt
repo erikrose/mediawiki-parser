@@ -15,11 +15,16 @@ a <pre>preformatted {{section}} {{{parameter|default}}} </pre>
 
 a <nowiki>nowiki {{section}} {{{parameter|default}}} </nowiki>
 
+ preformatted line
+ with a {{template}}
+
 parameters: {{{parameter|default}}} {{{parameter}}}
 
 {{Template with|1=parameter| 2 = parameters }}
 
 another {{template 2|1=Value1|name=[[Value for name]]}} successfully substituted template
+
+----
 
 here, we use templates inside template parameters: {{template 2|1=Value1|name={{template 2|1=Value1|name=Value for name}}}}
 

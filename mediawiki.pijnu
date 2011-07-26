@@ -155,11 +155,11 @@ def replace_by_space(node):
 # Titles
 
     title6                  : TITLE6_BEGIN inline TITLE6_END                                        : liftValue render_title6
-    title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue
-    title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue
-    title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue
+    title5                  : TITLE5_BEGIN inline TITLE5_END                                        : liftValue render_title5
+    title4                  : TITLE4_BEGIN inline TITLE4_END                                        : liftValue render_title4
+    title3                  : TITLE3_BEGIN inline TITLE3_END                                        : liftValue render_title3
     title2                  : TITLE2_BEGIN inline TITLE2_END                                        : liftValue render_title2
-    title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue
+    title1                  : TITLE1_BEGIN inline TITLE1_END                                        : liftValue render_title1
     title                   : title6 / title5 / title4 / title3 / title2 / title1
 
 # Lists
@@ -186,16 +186,16 @@ def replace_by_space(node):
 
 # Preformatted
 
-    EOL_or_not              : EOL{0..1}                                                             : drop
-    preformatted_line       : SPACE inline EOL                                                      : liftValue
+    EOL_KEEP                : EOL                                                                   : restore
+    preformatted_line       : SPACE inline EOL_KEEP                                                 : liftValue
     preformatted_lines      : preformatted_line+
-    preformatted_text       : inline EOL_or_not                                                     : liftValue
+    preformatted_text       : inline EOL?                                                           : liftValue
     preformatted_paragraph  : PRE_BEGIN EOL preformatted_text PRE_END EOL
-    preformatted_group      : preformatted_paragraph / preformatted_lines
+    preformatted_group      : preformatted_paragraph / preformatted_lines                           : render_preformatted
 
 # Special lines
 
-    horizontal_rule         : DASH{4} DASH* inline* EOL                                             : liftValue keep
+    horizontal_rule         : DASH{4} DASH* inline* EOL                                             : liftValue keep render_hr
 
     # This should never happen
     invalid_line            : any_text EOL                                                          : liftValue
