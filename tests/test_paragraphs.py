@@ -59,7 +59,7 @@ Followed a blank line and another paragraph.
         result = """body:
    paragraphs:
       paragraph:
-         raw_text:Styled text such as <em>italic</em>, <strong>bold</strong>, 
+         raw_text:Styled text such as ''italic'', '''bold''', 
          internal_link:Template:templates
          raw_text: and 
          allowed_char:{

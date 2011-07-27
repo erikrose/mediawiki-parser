@@ -67,7 +67,7 @@ class LinksTests(ParserTestCase):
 
     def test_formatted_text_in_external_link(self):
         source = "[http://www.mozilla.org this is an ''external'' link]"
-        result = "[external_link:[url:'http://www.mozilla.org'  optional_link_text:[raw_text:'this is an <em>external</em> link']]]"
+        result = "[external_link:[url:'http://www.mozilla.org'  optional_link_text:[raw_text:'this is an \'\'external\'\' link']]]"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_spacetabs_in_external_link(self):
@@ -75,8 +75,8 @@ class LinksTests(ParserTestCase):
         result = "[external_link:[url:'http://www.mozilla.org'  optional_link_text:[raw_text:'some text']]]"
         self.parsed_equal_string(source, result, 'inline')
 
-    def test_html_external_link(self):
+    def test_HTML_external_link(self):
         # By default, HTML links are not allowed
-        source = '<a href="http://www.mozilla.org">this is an \'\'external\'\' link</a>'
-        result = "[tag_open:[tag_name:'a'  optional_attributes:[optional_attribute:[attribute_name:'href'  value_quote:'http://www.mozilla.org']]]  raw_text:'this is an <em>external</em> link'  tag_close:[tag_name:'a']]"
+        source = '<a href="http://www.mozilla.org">this is an external link</a>'
+        result = "[tag_open:[tag_name:'a'  optional_attributes:[optional_attribute:[attribute_name:'href'  value_quote:'http://www.mozilla.org']]]  raw_text:'this is an external link'  tag_close:[tag_name:'a']]"
         self.parsed_equal_string(source, result, 'inline')

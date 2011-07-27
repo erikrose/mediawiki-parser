@@ -23,14 +23,14 @@ def toolset():
         node.value = '<h6>%s</h6>\n' % node.leaf()
 
     def render_raw_text(node):
-        from apostrophes import parseQuotes
-        node.value = "%s" % parseQuotes(node.leaf())
+        node.value = "%s" % node.leaf()
 
     def render_paragraph(node):
         node.value = '<p>%s</p>\n' % node.leaf()
 
     def render_body(node):
-        node.value = '<body>\n%s</body>' % node.leaf()
+        from apostrophes import parseQuotes
+        node.value = '<body>\n%s</body>' % parseQuotes(node.leaf())
 
     def render_entity(node):
         value = '%s' % node.leaf()

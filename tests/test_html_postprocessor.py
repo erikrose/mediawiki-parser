@@ -202,3 +202,60 @@ test
 </pre>
 </body>"""
         self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_italic(self):
+        source = "Here, we have ''italic'' text.\n"
+        result = "<body>\n<p>Here, we have <em>italic</em> text.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold(self):
+        source = "Here, we have '''bold''' text.\n"
+        result = "<body>\n<p>Here, we have <strong>bold</strong> text.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_and_italic_case1(self):
+        source = "Here, we have '''''bold and italic''''' text.\n"
+        result = "<body>\n<p>Here, we have <em><strong>bold and italic</strong></em> text.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case2(self):
+        source = "Here, we have ''italic only and '''bold and italic''''' text.\n"
+        result = "<body>\n<p>Here, we have <em>italic only and <strong>bold and italic</strong></em> text.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case3(self):
+        source = "Here, we have '''bold only and ''bold and italic''''' text.\n"
+        result = "<body>\n<p>Here, we have <strong>bold only and <em>bold and italic</em></strong> text.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case4(self):
+        source = "Here, we have '''''bold and italic''' and italic only''.\n"
+        result = "<body>\n<p>Here, we have <em><strong>bold and italic</strong> and italic only</em>.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case5(self):
+        source = "Here, we have '''''bold and italic'' and bold only'''.\n"
+        result = "<body>\n<p>Here, we have <strong><em>bold and italic</em> and bold only</strong>.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case6(self):
+        source = "Here, we have ''italic, '''bold and italic''' and italic only''.\n"
+        result = "<body>\n<p>Here, we have <em>italic, <strong>bold and italic</strong> and italic only</em>.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case7(self):
+        source = "Here, we have '''bold, ''bold and italic'' and bold only'''.\n"
+        result = "<body>\n<p>Here, we have <strong>bold, <em>bold and italic</em> and bold only</strong>.</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_italic_template(self):
+        source = "Here, we have ''italic {{template}}!''.\n"
+        result = "<body>\n<p>Here, we have <em>italic text!</em>.</p>\n</body>"
+        templates = {'template': 'text'}
+        self.parsed_equal_string(source, result, None, templates, 'html')
+
+    def test_styles_in_template(self):
+        source = "Here, we have {{template}}.\n"
+        result = "<body>\n<p>Here, we have <strong>text</strong> and <em>more text</em> and <em><strong>still more text</strong></em>.</p>\n</body>"
+        templates = {'template': "'''text''' and ''more text'' and '''''still more text'''''"}
+        self.parsed_equal_string(source, result, None, templates, 'html')

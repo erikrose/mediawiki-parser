@@ -22,8 +22,7 @@ def toolset():
         pass
     
     def render_raw_text(node):
-        from apostrophes import parseQuotes
-        node.value = "%s" % parseQuotes(node.leaf())
+        pass
     
     def render_paragraph(node):
         pass

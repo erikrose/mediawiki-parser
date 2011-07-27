@@ -25,24 +25,25 @@ class ListsTests(ParserTestCase):
         self.parsed_equal_string(source, result, None)
 
     def test_2_hash_list(self):
-        source = "## ''more text''\n"
-        result = "[list:[@number_sub_list@:[number_list_leaf:[raw_text:' <em>more text</em>']]]]"
+        source = "## more text\n"
+        result = "[list:[@number_sub_list@:[number_list_leaf:[raw_text:' more text']]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_3_hash_list(self):
         source = "### ''other text''\n"
-        result = "[list:[@number_sub_list@:[@number_sub_list@:[number_list_leaf:[raw_text:' <em>other text</em>']]]]]"
+        result = "[list:[@number_sub_list@:[@number_sub_list@:[number_list_leaf:[raw_text:' \'\'other text\'\'']]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_colon_list(self):
-        source = ": '''more text'''\n"
-        result = "[list:[colon_list_leaf:[raw_text:' <strong>more text</strong>']]]"
+        source = ": more text\n"
+        result = "[list:[colon_list_leaf:[raw_text:' more text']]]"
         self.parsed_equal_string(source, result, None)
 
     def test_4_colon_list(self):
-        source = ":::: '''more text'''\n"
-        result = "[list:[@colon_sub_list@:[@colon_sub_list@:[@colon_sub_list@:[colon_list_leaf:[raw_text:' <strong>more text</strong>']]]]]]"
-        self.parsed_equal_string(source, result, None)
+        source = ":::: more {{text}}!\n"
+        result = "[list:[@colon_sub_list@:[@colon_sub_list@:[@colon_sub_list@:[colon_list_leaf:[raw_text:' more words!']]]]]]"
+        templates = {'text': 'words'}
+        self.parsed_equal_string(source, result, None, templates)
 
     def test_1_semicolon_list(self):
         source = '; still more [[text]]\n'
@@ -70,8 +71,8 @@ class ListsTests(ParserTestCase):
         self.parsed_equal_string(source, result, None)
 
     def test_composed_list(self):
-        source = "*:*;#*: this is '''correct''' syntax!\n"
-        result = "[list:[@bullet_sub_list@:[@colon_sub_list@:[@bullet_sub_list@:[@semi_colon_sub_list@:[@number_sub_list@:[@bullet_sub_list@:[colon_list_leaf:[raw_text:' this is <strong>correct</strong> syntax!']]]]]]]]]"
+        source = "*:*;#*: this is {{correct}} syntax!\n"
+        result = "[list:[@bullet_sub_list@:[@colon_sub_list@:[@bullet_sub_list@:[@semi_colon_sub_list@:[@number_sub_list@:[@bullet_sub_list@:[colon_list_leaf:[raw_text:' this is '  internal_link:'Template:correct'  raw_text:' syntax!']]]]]]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_multiline_bullet_list(self):
