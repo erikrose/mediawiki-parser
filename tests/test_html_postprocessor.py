@@ -259,3 +259,225 @@ test
         result = "<body>\n<p>Here, we have <strong>text</strong> and <em>more text</em> and <em><strong>still more text</strong></em>.</p>\n</body>"
         templates = {'template': "'''text''' and ''more text'' and '''''still more text'''''"}
         self.parsed_equal_string(source, result, None, templates, 'html')
+
+    def test_simple_bullet_list(self):
+        source = """* item 1
+** item 2
+*** item 3
+** item 2
+"""
+        result = """<body>
+<ul>
+\t<li> item 1<ul>
+\t<li> item 2<ul>
+\t<li> item 3</li>
+</ul>
+</li>
+\t<li> item 2</li>
+</ul>
+</li>
+</ul>
+</body>"""
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_simple_numbered_list(self):
+        source = """## item 2
+### item 3
+## item 2
+### item 3
+"""
+        result = """<body>
+<ol>
+\t<li><ol>
+\t<li> item 2</li>
+</ol>
+</li>
+\t<li><ol>
+\t<li><ol>
+\t<li> item 3</li>
+</ol>
+</li>
+</ol>
+</li>
+\t<li><ol>
+\t<li> item 2</li>
+</ol>
+</li>
+\t<li><ol>
+\t<li><ol>
+\t<li> item 3</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</body>"""
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_simple_semicolon_list(self):
+        source = """; item 1
+;; item 2
+;; item 2
+; item 1
+; item 1
+;;; item 3
+"""
+        result = """<body>
+<dl>
+\t<dt> item 1<dl>
+\t<dt> item 2</dt>
+\t<dt> item 2</dt>
+</dl>
+</dt>
+\t<dt> item 1</dt>
+\t<dt> item 1<dl>
+\t<dt><dl>
+\t<dt> item 3</dt>
+</dl>
+</dt>
+</dl>
+</dt>
+</dl>
+</body>"""
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_simple_colon_list(self):
+        source = """: item 1
+::: item 3
+:: item 2
+: item 1
+:: item 2
+:: item 2
+"""
+        result = """<body>
+<dl>
+\t<dd> item 1<dl>
+\t<dd><dl>
+\t<dd> item 3</dd>
+</dl>
+</dd>
+\t<dd> item 2</dd>
+</dl>
+</dd>
+\t<dd> item 1<dl>
+\t<dd> item 2</dd>
+\t<dd> item 2</dd>
+</dl>
+</dd>
+</dl>
+</body>"""
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_formatted_mixed_list(self):
+        source = """: item 1
+; this is ''italic''
+* and '''bold''' here
+# a [[link]]
+: a {{template}}
+"""
+        result = """<body>
+<dl>
+\t<dd> item 1</dd>
+</dl>
+<dl>
+\t<dt> this is <em>italic</em></dt>
+</dl>
+<ul>
+\t<li> and <strong>bold</strong> here</li>
+</ul>
+<ol>
+\t<li> a link</li>
+</ol>
+<dl>
+\t<dd> a template!</dd>
+</dl>
+</body>"""
+        templates = {'template': 'template!'}
+        self.parsed_equal_string(source, result, None, templates, 'html')
+
+    def test_complex_mixed_list(self):
+        source = """*level 1
+*level 1
+**level 2
+**#level 3
+**level 2
+:: level 2
+; level 1
+##level 2
+##;level 3
+####level 4
+#**#level 4
+:*;#*: weird syntax
+* end
+"""
+        result = """<body>
+<ul>
+\t<li>level 1</li>
+\t<li>level 1<ul>
+\t<li>level 2<ol>
+\t<li>level 3</li>
+</ol>
+</li>
+\t<li>level 2</li>
+</ul>
+</li>
+\t<li><dl>
+\t<dd> level 2</dd>
+</dl>
+</li>
+</ul>
+<dl>
+\t<dt> level 1</dt>
+\t<dt><ol>
+\t<li>level 2</li>
+</ol>
+</dt>
+\t<dt><ol>
+\t<li><dl>
+\t<dt>level 3</dt>
+</dl>
+</li>
+</ol>
+</dt>
+\t<dt><ol>
+\t<li><ol>
+\t<li><ol>
+\t<li>level 4</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</dt>
+\t<dt><ul>
+\t<li><ul>
+\t<li><ol>
+\t<li>level 4</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+</dt>
+\t<dt><ul>
+\t<li><dl>
+\t<dt><ol>
+\t<li><ul>
+\t<li><dl>
+\t<dd> weird syntax</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ol>
+</dt>
+</dl>
+</li>
+</ul>
+</dt>
+</dl>
+<ul>
+\t<li> end</li>
+</ul>
+</body>"""
+        self.parsed_equal_string(source, result, None, {}, 'html')

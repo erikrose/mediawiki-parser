@@ -79,6 +79,12 @@ def toolset():
     def render_hr(node):
         pass
 
+    def render_li(node):
+        pass
+
+    def render_list(node):
+        pass
+
     return locals()
 
 toolset = toolset()

@@ -182,7 +182,7 @@ def replace_by_space(node):
     list_leaf               : semi_colon_list_leaf/colon_list_leaf/number_list_leaf/bullet_list_leaf: @
     sub_list                : semi_colon_sub_list/colon_sub_list/number_sub_list/bullet_sub_list    : @
     list_item               : sub_list / list_leaf                                                  : @
-    list                    : list_item+
+    list                    : list_item+                                                            : render_list
 
 # Preformatted
 

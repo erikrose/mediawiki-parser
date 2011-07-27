@@ -1,4 +1,5 @@
 from constants import html_entities
+from pijnu.library.node import Nil, Nodes
 
 def toolset():
     allowed_tags = ['p', 'span', 'b', 'br', 'hr']
@@ -98,7 +99,6 @@ def toolset():
     def render_table(node):
         table_parameters = ''
         table_content = ''
-        from pijnu.library.node import Nodes
         if isinstance(node.value, Nodes) and node.value[0].tag == 'table_begin':
             attributes = node.value[0].value[0]
             for attribute in attributes:
@@ -112,7 +112,6 @@ def toolset():
         node.value = '<table%s>\n<tr>\n%s</tr>\n</table>\n' % (table_parameters, table_content)
 
     def render_cell_content(node):
-        from pijnu.library.node import Nil
         if isinstance(node.value, Nil):
             return None
         cell_parameters = ''
@@ -159,6 +158,82 @@ def toolset():
 
     def render_hr(node):
         node.value = '<hr />\n'
+
+    def render_ul(list):
+        result = '<ul>\n'
+        for i in range(len(list)):
+            result += '\t<li>%s</li>\n' % list[i].leaf()
+        result += '</ul>\n'
+        return result
+
+    def render_ol(list):
+        result = '<ol>\n'
+        for i in range(len(list)):
+            result += '\t<li>%s</li>\n' % list[i].leaf()
+        result += '</ol>\n'
+        return result
+
+    def render_dd(list):
+        result = '<dl>\n'
+        for i in range(len(list)):
+            result += '\t<dd>%s</dd>\n' % list[i].leaf()
+        result += '</dl>\n'
+        return result
+
+    def render_dt(list):
+        result = '<dl>\n'
+        for i in range(len(list)):
+            result += '\t<dt>%s</dt>\n' % list[i].leaf()
+        result += '</dl>\n'
+        return result
+
+    def collapse_list(list):
+        i = 0
+        while i+1 < len(list):
+            if list[i].tag == 'bullet_list_leaf' and list[i+1].tag == '@bullet_sub_list@' or \
+               list[i].tag == 'number_list_leaf' and list[i+1].tag == '@number_sub_list@' or \
+               list[i].tag == 'colon_list_leaf' and list[i+1].tag == '@colon_sub_list@' or \
+               list[i].tag == 'semi_colon_list_leaf' and list[i+1].tag == '@semi_colon_sub_list@':
+                list[i].value.append(list[i+1].value[0])
+                list.pop(i+1)
+            else:
+                i += 1
+        for i in range(len(list)):
+            if isinstance(list[i].value, Nodes):
+                collapse_list(list[i].value)
+
+    list_tags = ['bullet_list_leaf', 'number_list_leaf', 'colon_list_leaf', 'semi_colon_list_leaf']
+
+    def select_items(nodes, i, value):
+        list_tags_copy = list(list_tags)
+        list_tags_copy.remove(value)
+        if isinstance(nodes[i].value, Nodes):
+            render_lists(nodes[i].value)
+        items = [nodes[i]]
+        while i + 1 < len(nodes) and nodes[i+1].tag not in list_tags_copy:
+            if isinstance(nodes[i+1].value, Nodes):
+                render_lists(nodes[i+1].value)
+            items.append(nodes.pop(i+1))
+        return items
+
+    def render_lists(list):
+        i = 0
+        while i < len(list):
+            if list[i].tag == 'bullet_list_leaf' or list[i].tag == '@bullet_sub_list@':
+                list[i].value = render_ul(select_items(list, i, 'bullet_list_leaf'))
+            elif list[i].tag == 'number_list_leaf' or list[i].tag == '@number_sub_list@':
+                list[i].value = render_ol(select_items(list, i, 'number_list_leaf'))
+            elif list[i].tag == 'colon_list_leaf' or list[i].tag == '@colon_sub_list@':
+                list[i].value = render_dd(select_items(list, i, 'colon_list_leaf'))
+            elif list[i].tag == 'semi_colon_list_leaf' or list[i].tag == '@semi_colon_sub_list@':
+                list[i].value = render_dt(select_items(list, i, 'semi_colon_list_leaf'))
+            i += 1
+
+    def render_list(node):
+        collapsed = True
+        if isinstance(node.value, Nodes):
+            collapse_list(node.value)
+            render_lists(node.value)
 
     return locals()
 

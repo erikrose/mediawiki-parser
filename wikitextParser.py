@@ -178,7 +178,7 @@
     list_leaf               : semi_colon_list_leaf/colon_list_leaf/number_list_leaf/bullet_list_leaf: @
     sub_list                : semi_colon_sub_list/colon_sub_list/number_sub_list/bullet_sub_list    : @
     list_item               : sub_list / list_leaf                                                  : @
-    list                    : list_item+
+    list                    : list_item+                                                            : render_list
 
 # Preformatted
 
@@ -447,7 +447,7 @@ def make_parser(actions=None):
     list_leaf **= Choice([semi_colon_list_leaf, colon_list_leaf, number_list_leaf, bullet_list_leaf], expression='semi_colon_list_leaf/colon_list_leaf/number_list_leaf/bullet_list_leaf', name='list_leaf')
     sub_list **= Choice([semi_colon_sub_list, colon_sub_list, number_sub_list, bullet_sub_list], expression='semi_colon_sub_list/colon_sub_list/number_sub_list/bullet_sub_list', name='sub_list')
     list_item **= Choice([sub_list, list_leaf], expression='sub_list / list_leaf', name='list_item')
-    list = Repetition(list_item, numMin=1, numMax=False, expression='list_item+', name='list')
+    list = Repetition(list_item, numMin=1, numMax=False, expression='list_item+', name='list')(toolset['render_list'])
     
     # Preformatted
     
