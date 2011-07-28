@@ -32,10 +32,13 @@ def toolset():
         pass
     
     def render_paragraph(node):
-        node.value += '\n'
+        node.value = '%s\n' % node.leaf()
     
     def render_body(node):
-        pass
+        from apostrophes import parseQuotes
+        tags = {'bold': '*', 'bold_close': '*', 'italic': '_', 'italic_close': '_'}
+        print node
+        node.value = parseQuotes(node.leaf(), tags)
     
     def render_entity(node):
         value = '%s' % node.leaf()

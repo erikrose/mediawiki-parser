@@ -18,8 +18,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
+
 _quotePat = re.compile(u"""(''+)""", re.UNICODE)
-def parseQuotes(text):
+
+default_tags = {'bold': '<strong>',
+                'bold_close': '</strong>',
+                'italic': '<em>',
+                'italic_close': '</em>'}
+
+def parseQuotes(text, tags=default_tags):
         arr = _quotePat.split(text)
         if len(arr) == 1:
             return text
@@ -95,88 +102,88 @@ def parseQuotes(text):
             else:
                 if len(r) == 2:
                     if state == 'i':
-                        output.append(u"</em>")
+                        output.append(tags['italic_close'])
                         state = ''
                     elif state == 'bi':
-                        output.append(u"</em>")
+                        output.append(tags['italic_close'])
                         state = 'b'
                     elif state == 'ib':
-                        output.append(u"</strong></em><strong>")
+                        output.append(tags['bold_close']+tags['italic_close']+tags['bold'])
                         state = 'b'
                     elif state == 'both':
-                        output.append(u"<strong><em>")
+                        output.append(tags['bold']+tags['italic'])
                         output.append(u''.join(buffer))
                         buffer = None
-                        output.append(u"</em>")
+                        output.append(tags['italic_close'])
                         state = 'b'
                     elif state == 'b':
-                        output.append(u"<em>")
+                        output.append(tags['italic'])
                         state = 'bi'
                     else: # ''
-                        output.append(u"<em>")
+                        output.append(tags['italic'])
                         state = 'i'
                 elif len(r) == 3:
                     if state == 'b':
-                        output.append(u"</strong>")
+                        output.append(tags['bold_close'])
                         state = ''
                     elif state == 'bi':
-                        output.append(u"</em></strong><em>")
+                        output.append(tags['italic_close']+tags['bold_close']+tags['italic'])
                         state = 'i'
                     elif state == 'ib':
-                        output.append(u"</strong>")
+                        output.append(tags['bold_close'])
                         state = 'i'
                     elif state == 'both':
-                        output.append(u"<em><strong>")
+                        output.append(tags['italic']+tags['bold'])
                         output.append(u''.join(buffer))
                         buffer = None
-                        output.append(u"</strong>")
+                        output.append(tags['bold_close'])
                         state = 'i'
                     elif state == 'i':
-                        output.append(u"<strong>")
+                        output.append(tags['bold'])
                         state = 'ib'
                     else: # ''
-                        output.append(u"<strong>")
+                        output.append(tags['bold'])
                         state = 'b'
                 elif len(r) == 5:
                     if state == 'b':
-                        output.append(u"</strong><em>")
+                        output.append(tags['bold_close']+tags['italic'])
                         state = 'i'
                     elif state == 'i':
-                        output.append(u"</em><strong>")
+                        output.append(tags['italic_close']+tags['bold'])
                         state = 'b'
                     elif state == 'bi':
-                        output.append(u"</em></strong>")
+                        output.append(tags['italic_close']+tags['bold_close'])
                         state = ''
                     elif state == 'ib':
-                        output.append(u"</strong></em>")
+                        output.append(tags['bold_close']+tags['italic_close'])
                         state = ''
                     elif state == 'both':
-                        output.append(u"<em><strong>")
+                        output.append(tags['italic']+tags['bold'])
                         output.append(u''.join(buffer))
                         buffer = None
-                        output.append(u"</strong></em>")
+                        output.append(tags['bold_close']+tags['italic_close'])
                         state = ''
                     else: # ''
                         buffer = []
                         state = 'both'
 
         if state == 'both':
-            output.append(u"<em><strong>")
+            output.append(tags['italic']+tags['bold'])
             output.append(u''.join(buffer))
             buffer = None
-            output.append(u"</strong></em>")
+            output.append(tags['bold_close']+tags['italic_close'])
         elif state != '':
             if state == 'b' or state == 'ib':
-                output.append(u"</strong>")
+                output.append(tags['bold_close'])
             if state == 'i' or state == 'bi' or state == 'ib':
-                output.append(u"</em>")
+                output.append(tags['italic_close'])
             if state == 'bi':
-                output.append(u"</strong>")
+                output.append(tags['bold_close'])
         return u''.join(output)
 
-def parseAllQuotes(text):
+def parseAllQuotes(text, tags=default_tags):
     sb = []
     lines = text.split(u'\n')
     for line in lines:
-        sb.append(parseQuotes(line) + u'\n')
+        sb.append(parseQuotes(line, tags) + u'\n')
     return u''.join(sb)
