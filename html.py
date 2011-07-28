@@ -2,34 +2,51 @@ from constants import html_entities
 from pijnu.library.node import Nil, Nodes
 from mediawiki_parser import wikitextParser
 
-def toolset(allowed_tags, allowed_parameters):
+def toolset(allowed_tags, allowed_autoclose_tags, allowed_parameters):
+    tags_stack = []
+    
+    def balance_tags(tag=None):
+        i = 0
+        if tag is not None:
+            try:
+                i = tags_stack.index(tag, -1)
+            except:
+                return ''
+        result = ''
+        while len(tags_stack) > i:
+            result += '</%s>' % tags_stack.pop()
+        return result
+
+    def content(node):
+        return '%s' % node.leaf() + balance_tags()
+
     def render_title1(node):
-        node.value = '<h1>%s</h1>\n' % node.leaf()
+        node.value = '<h1>' + content(node) +  '</h1>\n'
 
     def render_title2(node):
-        node.value = '<h2>%s</h2>\n' % node.leaf()
+        node.value = '<h2>' + content(node) +  '</h2>\n'
 
     def render_title3(node):
-        node.value = '<h3>%s</h3>\n' % node.leaf()
+        node.value = '<h3>' + content(node) +  '</h3>\n'
 
     def render_title4(node):
-        node.value = '<h4>%s</h4>\n' % node.leaf()
+        node.value = '<h4>' + content(node) +  '</h4>\n'
 
     def render_title5(node):
-        node.value = '<h5>%s</h5>\n' % node.leaf()
+        node.value = '<h5>' + content(node) +  '</h5>\n'
 
     def render_title6(node):
-        node.value = '<h6>%s</h6>\n' % node.leaf()
+        node.value = '<h6>' + content(node) +  '</h6>\n'
 
     def render_raw_text(node):
         node.value = "%s" % node.leaf()
 
     def render_paragraph(node):
-        node.value = '<p>%s</p>\n' % node.leaf()
+        node.value = '<p>' + content(node) +  '</p>\n'
 
     def render_body(node):
         from apostrophes import parseQuotes
-        node.value = '<body>\n%s</body>' % parseQuotes(node.leaf())
+        node.value = '<body>\n' + parseQuotes(content(node)) +  '</body>'
 
     def render_entity(node):
         value = '%s' % node.leaf()
@@ -71,8 +88,11 @@ def toolset(allowed_tags, allowed_parameters):
 
     def render_tag_open(node):
         tag_name = node.value[0].value
-        if tag_name in allowed_tags:
+        if tag_name in allowed_autoclose_tags:
+            render_tag_autoclose(node)
+        elif tag_name in allowed_tags:
             attributes = process_attributes(node, True)
+            tags_stack.append(tag_name)
             node.value = '<%s%s>' % (tag_name, attributes) 
         else:
             attributes = process_attributes(node, False)
@@ -80,14 +100,16 @@ def toolset(allowed_tags, allowed_parameters):
 
     def render_tag_close(node):
         tag_name = node.value[0].value
-        if tag_name in allowed_tags:
-            node.value = "</%s>" % tag_name
+        if tag_name in allowed_autoclose_tags:
+            render_tag_autoclose(node)
+        elif tag_name in allowed_tags:
+            node.value = balance_tags(tag_name)
         else:
             node.value = "&lt;/%s&gt;" % tag_name
 
     def render_tag_autoclose(node):
         tag_name = node.value[0].value
-        if tag_name in allowed_tags:
+        if tag_name in allowed_autoclose_tags:
             attributes = process_attributes(node, True)
             node.value = '<%s%s />' % (tag_name, attributes) 
         else:
@@ -103,10 +125,10 @@ def toolset(allowed_tags, allowed_parameters):
                 if attribute.tag == 'HTML_attribute':
                     table_parameters += ' ' + attribute.value
             contents = node.value[1].value
-            for content in contents:
-                table_content += content.leaf() 
+            for item in contents:
+                table_content += content(item)
         else:
-            table_content = node.leaf()
+            table_content = content(node)
         node.value = '<table%s>\n<tr>\n%s</tr>\n</table>\n' % (table_parameters, table_content)
 
     def render_cell_content(node):
@@ -118,9 +140,9 @@ def toolset(allowed_tags, allowed_parameters):
             for value in values:
                 if value.tag == 'HTML_attribute':
                     cell_parameters += ' ' + value.value
-            cell_content = node.value[1].leaf()
+            cell_content = content(node.value[1])
         else:
-            cell_content = node.leaf()
+            cell_content = content(node)
         return (cell_parameters, cell_content)
 
     def render_table_header_cell(node):
@@ -152,7 +174,7 @@ def toolset(allowed_tags, allowed_parameters):
         node.value = '</tr>\n<tr%s>\n' % line_parameters
 
     def render_preformatted(node):
-        node.value = '<pre>%s</pre>\n' % node.leaf()
+        node.value = '<pre>' + content(node) +  '</pre>\n'
 
     def render_hr(node):
         node.value = '<hr />\n'
@@ -160,28 +182,28 @@ def toolset(allowed_tags, allowed_parameters):
     def render_ul(list):
         result = '<ul>\n'
         for i in range(len(list)):
-            result += '\t<li>%s</li>\n' % list[i].leaf()
+            result += '\t<li>' + content(list[i]) +  '</li>\n'
         result += '</ul>\n'
         return result
 
     def render_ol(list):
         result = '<ol>\n'
         for i in range(len(list)):
-            result += '\t<li>%s</li>\n' % list[i].leaf()
+            result += '\t<li>' + content(list[i]) +  '</li>\n'
         result += '</ol>\n'
         return result
 
     def render_dd(list):
         result = '<dl>\n'
         for i in range(len(list)):
-            result += '\t<dd>%s</dd>\n' % list[i].leaf()
+            result += '\t<dd>' + content(list[i]) +  '</dd>\n'
         result += '</dl>\n'
         return result
 
     def render_dt(list):
         result = '<dl>\n'
         for i in range(len(list)):
-            result += '\t<dt>%s</dt>\n' % list[i].leaf()
+            result += '\t<dt>' + content(list[i]) +  '</dt>\n'
         result += '</dl>\n'
         return result
 
@@ -232,6 +254,6 @@ def toolset(allowed_tags, allowed_parameters):
 
     return locals()
 
-def make_parser(allowed_tags=[], allowed_parameters=[]):
-    tools = toolset(allowed_tags, allowed_parameters)
+def make_parser(allowed_tags=[], allowed_autoclose_tags=[], allowed_parameters=[]):
+    tools = toolset(allowed_tags, allowed_autoclose_tags, allowed_parameters)
     return wikitextParser.make_parser(tools)

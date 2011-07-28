@@ -62,9 +62,10 @@ class PostprocessorTestCase(TestCase):
         """
         if postprocessor_name == 'html':
             from mediawiki_parser import html as postprocessor
-            allowed_tags = ['p', 'span', 'b', 'br', 'hr']
+            allowed_tags = ['p', 'span', 'b', 'i']
+            allowed_autoclose_tags = ['br', 'hr']
             allowed_parameters = ['class', 'style', 'name', 'id', 'scope']
-            parser = postprocessor.make_parser(allowed_tags, allowed_parameters)
+            parser = postprocessor.make_parser(allowed_tags, allowed_autoclose_tags, allowed_parameters)
         elif postprocessor_name == 'text':
             from mediawiki_parser import text as postprocessor
             parser = postprocessor.make_parser()

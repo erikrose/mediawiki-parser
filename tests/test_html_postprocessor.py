@@ -481,3 +481,44 @@ test
 </ul>
 </body>"""
         self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_tag_balancing_in_title6(self):
+        """Close open tags"""
+        source = '======<b>Test!======\n'
+        result = "<h6><b>Test!</b></h6>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
+
+    def test_tag_balancing_in_title2(self):
+        """Ignore close tags for non-open tags"""
+        source = '==Test!</i>==\n'
+        result = "<h2>Test!</h2>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
+
+    def test_convert_autoclose_tags(self):
+        """Ignore close tags for non-open tags"""
+        source = 'convert this: <br></br><br/> and <hr>this </hr> too <hr/>!\n'
+        result = '<p>convert this: <br /><br /><br /> and <hr />this <hr /> too <hr />!</p>\n'
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
+
+    def test_tag_balancing_in_mixed_structures(self):
+        """Ignore close tags for non-open tags"""
+        source = """==<b>Test!</i>==
+* test <i>test</b>
+A paragraph with a </hr> tag and a <span style="color:blue">span.
+
+a {{template}}</b>.
+
+Note: an <span>open tag can be closed {{in a template}}
+"""
+        result = """<body>
+<h2><b>Test!</b></h2>
+<ul>
+\t<li> test <i>test</i></li>
+</ul>
+<p>A paragraph with a <hr /> tag and a <span style="color:blue">span.</span></p>
+<p>a text<i>text.</i></p>
+<p>Note: an <span>open tag can be closed like </span> this!</p>
+</body>"""
+        templates = {'template': 'text<i>text',
+                     'in a template': 'like </span> this!'}
+        self.parsed_equal_string(source, result, None, templates, 'html')
