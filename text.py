@@ -1,4 +1,5 @@
 from constants import html_entities
+from mediawiki_parser import wikitextParser
 
 def toolset():
     def render_tag_p(attributes):
@@ -125,9 +126,5 @@ def toolset():
 
     return locals()
 
-toolset = toolset()
-
-from mediawiki_parser import wikitextParser
-
 def make_parser():
-    return wikitextParser.make_parser(toolset)
+    return wikitextParser.make_parser(toolset())

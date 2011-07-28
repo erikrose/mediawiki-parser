@@ -1,10 +1,8 @@
 from constants import html_entities
 from pijnu.library.node import Nil, Nodes
+from mediawiki_parser import wikitextParser
 
-def toolset():
-    allowed_tags = ['p', 'span', 'b', 'br', 'hr']
-    allowed_parameters = ['class', 'style', 'name', 'id', 'scope']
-
+def toolset(allowed_tags, allowed_parameters):
     def render_title1(node):
         node.value = '<h1>%s</h1>\n' % node.leaf()
 
@@ -202,15 +200,13 @@ def toolset():
             if isinstance(list[i].value, Nodes):
                 collapse_list(list[i].value)
 
-    list_tags = ['bullet_list_leaf', 'number_list_leaf', 'colon_list_leaf', 'semi_colon_list_leaf']
-
     def select_items(nodes, i, value):
-        list_tags_copy = list(list_tags)
-        list_tags_copy.remove(value)
+        list_tags = ['bullet_list_leaf', 'number_list_leaf', 'colon_list_leaf', 'semi_colon_list_leaf']
+        list_tags.remove(value)
         if isinstance(nodes[i].value, Nodes):
             render_lists(nodes[i].value)
         items = [nodes[i]]
-        while i + 1 < len(nodes) and nodes[i+1].tag not in list_tags_copy:
+        while i + 1 < len(nodes) and nodes[i+1].tag not in list_tags:
             if isinstance(nodes[i+1].value, Nodes):
                 render_lists(nodes[i+1].value)
             items.append(nodes.pop(i+1))
@@ -230,16 +226,12 @@ def toolset():
             i += 1
 
     def render_list(node):
-        collapsed = True
-        if isinstance(node.value, Nodes):
-            collapse_list(node.value)
-            render_lists(node.value)
+        assert isinstance(node.value, Nodes), "Bad AST shape!"
+        collapse_list(node.value)
+        render_lists(node.value)
 
     return locals()
 
-toolset = toolset()
-
-from mediawiki_parser import wikitextParser
-
-def make_parser():
-    return wikitextParser.make_parser(toolset)
+def make_parser(allowed_tags=[], allowed_parameters=[]):
+    tools = toolset(allowed_tags, allowed_parameters)
+    return wikitextParser.make_parser(tools)

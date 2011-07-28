@@ -62,11 +62,15 @@ class PostprocessorTestCase(TestCase):
         """
         if postprocessor_name == 'html':
             from mediawiki_parser import html as postprocessor
+            allowed_tags = ['p', 'span', 'b', 'br', 'hr']
+            allowed_parameters = ['class', 'style', 'name', 'id', 'scope']
+            parser = postprocessor.make_parser(allowed_tags, allowed_parameters)
         elif postprocessor_name == 'text':
             from mediawiki_parser import text as postprocessor
+            parser = postprocessor.make_parser()
         else:
             from mediawiki_parser import raw as postprocessor
-        parser = postprocessor.make_parser()
+            parser = postprocessor.make_parser()
         return getattr(parser, method_name) if method_name else parser
 
     def parsed_equal_string(self, source, result, method_name, templates={}, postprocessor='raw'):
