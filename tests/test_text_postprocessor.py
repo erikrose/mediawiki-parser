@@ -100,6 +100,14 @@ class TextBackendTests(PostprocessorTestCase):
         result = "Here, we have *bold, _bold and italic_ and bold only*.\n"
         self.parsed_equal_string(source, result, None, {}, 'text')
 
+    def test_bold_italic_case8(self):
+        source = """'''Le gras :'''
+
+et l'''italique''...
+"""
+        result = "*Le gras :*\net l'_italique_...\n"
+        self.parsed_equal_string(source, result, None, {}, 'text')
+
     def test_italic_template(self):
         source = "Here, we have ''italic {{template}}!''.\n"
         result = "Here, we have _italic text!_.\n"

@@ -2,7 +2,7 @@ from constants import html_entities
 from pijnu.library.node import Nil, Nodes
 from mediawiki_parser import wikitextParser
 
-def toolset(allowed_tags, allowed_autoclose_tags, allowed_parameters):
+def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes):
     tags_stack = []
     
     def balance_tags(tag=None):
@@ -45,8 +45,8 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_parameters):
         node.value = '<p>' + content(node) +  '</p>\n'
 
     def render_body(node):
-        from apostrophes import parseQuotes
-        node.value = '<body>\n' + parseQuotes(content(node)) +  '</body>'
+        from apostrophes import parseAllQuotes
+        node.value = '<body>\n' + parseAllQuotes(content(node)) +  '</body>'
 
     def render_entity(node):
         value = '%s' % node.leaf()
@@ -65,7 +65,7 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_parameters):
         assert len(node.value) == 2, "Bad AST shape!"
         attribute_name = node.value[0].value
         attribute_value = node.value[1].value
-        if attribute_name in allowed_parameters or not allowed_tag:
+        if attribute_name in allowed_attributes or not allowed_tag:
             return '%s="%s"' % (attribute_name, attribute_value)
         return ''
 
@@ -254,6 +254,17 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_parameters):
 
     return locals()
 
-def make_parser(allowed_tags=[], allowed_autoclose_tags=[], allowed_parameters=[]):
-    tools = toolset(allowed_tags, allowed_autoclose_tags, allowed_parameters)
+def make_parser(allowed_tags=[], allowed_autoclose_tags=[], allowed_attributes=[]):
+    """Constructs the parser for the HTML backend.
+    
+    :arg allowed_tags: List of the HTML tags that should be allowed in the parsed wikitext.
+            Opening tags will be closed. Closing tags with no opening tag will be removed.
+            All the tags that are not in the list will be output as &lt;tag&gt;.
+    :arg allowed_autoclose_tags: List of the self-closing tags that should be allowed in the
+            parsed wikitext. All the other self-closing tags will be output as &lt;tag /&gt;
+    :arg allowed_attributes: List of the HTML attributes that should be allowed in the parsed
+            tags (e.g.: class="", style=""). All the other attributes (e.g.: onclick="") will
+            be removed. 
+    """
+    tools = toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes)
     return wikitextParser.make_parser(tools)

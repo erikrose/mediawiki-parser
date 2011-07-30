@@ -36,10 +36,10 @@ def toolset():
         node.value = '%s\n' % node.leaf()
     
     def render_body(node):
-        from apostrophes import parseQuotes
+        from apostrophes import parseAllQuotes
         tags = {'bold': '*', 'bold_close': '*', 'italic': '_', 'italic_close': '_'}
         print node
-        node.value = parseQuotes(node.leaf(), tags)
+        node.value = parseAllQuotes(node.leaf(), tags)
     
     def render_entity(node):
         value = '%s' % node.leaf()

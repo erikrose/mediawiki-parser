@@ -26,7 +26,7 @@ default_tags = {'bold': '<strong>',
                 'italic': '<em>',
                 'italic_close': '</em>'}
 
-def parseQuotes(text, tags=default_tags):
+def _parseQuotes(text, tags=default_tags):
         arr = _quotePat.split(text)
         if len(arr) == 1:
             return text
@@ -46,10 +46,10 @@ def parseQuotes(text, tags=default_tags):
                     arr[i] = u"'''''"
                 if l == 2:
                     numItalics += 1
-                elif l >= 5:
-                    numItalics += 1
+                elif l == 3:
                     numBold += 1
-                else:
+                elif l == 5:
+                    numItalics += 1
                     numBold += 1
 
         # If there is an odd number of both bold and italics, it is likely
@@ -91,7 +91,7 @@ def parseQuotes(text, tags=default_tags):
 
         # Now let's actually convert our apostrophic mush to HTML!
         output = []
-        buffer = None
+        buffer = []
         state = ''
         for i,r in zip(range(len(arr)), arr):
             if i%2 == 0:
@@ -113,15 +113,11 @@ def parseQuotes(text, tags=default_tags):
                     elif state == 'both':
                         output.append(tags['bold']+tags['italic'])
                         output.append(u''.join(buffer))
-                        buffer = None
                         output.append(tags['italic_close'])
                         state = 'b'
-                    elif state == 'b':
-                        output.append(tags['italic'])
-                        state = 'bi'
                     else: # ''
                         output.append(tags['italic'])
-                        state = 'i'
+                        state += 'i'
                 elif len(r) == 3:
                     if state == 'b':
                         output.append(tags['bold_close'])
@@ -135,15 +131,11 @@ def parseQuotes(text, tags=default_tags):
                     elif state == 'both':
                         output.append(tags['italic']+tags['bold'])
                         output.append(u''.join(buffer))
-                        buffer = None
                         output.append(tags['bold_close'])
                         state = 'i'
-                    elif state == 'i':
-                        output.append(tags['bold'])
-                        state = 'ib'
                     else: # ''
                         output.append(tags['bold'])
-                        state = 'b'
+                        state += 'b'
                 elif len(r) == 5:
                     if state == 'b':
                         output.append(tags['bold_close']+tags['italic'])
@@ -160,30 +152,32 @@ def parseQuotes(text, tags=default_tags):
                     elif state == 'both':
                         output.append(tags['italic']+tags['bold'])
                         output.append(u''.join(buffer))
-                        buffer = None
                         output.append(tags['bold_close']+tags['italic_close'])
                         state = ''
                     else: # ''
                         buffer = []
                         state = 'both'
 
-        if state == 'both':
+        if state == 'b' or state == 'ib':
+            output.append(tags['bold_close'])
+        if state == 'i' or state == 'bi' or state == 'ib':
+            output.append(tags['italic_close'])
+        if state == 'bi':
+            output.append(tags['bold_close'])
+        if state == 'both' and buffer is not []:
             output.append(tags['italic']+tags['bold'])
             output.append(u''.join(buffer))
-            buffer = None
             output.append(tags['bold_close']+tags['italic_close'])
-        elif state != '':
-            if state == 'b' or state == 'ib':
-                output.append(tags['bold_close'])
-            if state == 'i' or state == 'bi' or state == 'ib':
-                output.append(tags['italic_close'])
-            if state == 'bi':
-                output.append(tags['bold_close'])
         return u''.join(output)
 
 def parseAllQuotes(text, tags=default_tags):
     sb = []
     lines = text.split(u'\n')
+    first = True
     for line in lines:
-        sb.append(parseQuotes(line, tags) + u'\n')
+        if not first:
+            sb.append(u'\n')
+        else:
+            first = False
+        sb.append(_parseQuotes(line, tags))
     return u''.join(sb)

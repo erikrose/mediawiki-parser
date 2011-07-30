@@ -248,6 +248,14 @@ test
         result = "<body>\n<p>Here, we have <strong>bold, <em>bold and italic</em> and bold only</strong>.</p>\n</body>"
         self.parsed_equal_string(source, result, None, {}, 'html')
 
+    def test_bold_italic_case8(self):
+        source = """'''Le gras :'''
+
+et l'''italique''...
+"""
+        result = "<body>\n<p><strong>Le gras :</strong></p>\n<p>et l'<em>italique</em>...</p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
     def test_italic_template(self):
         source = "Here, we have ''italic {{template}}!''.\n"
         result = "<body>\n<p>Here, we have <em>italic text!</em>.</p>\n</body>"
