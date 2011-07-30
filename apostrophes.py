@@ -170,13 +170,5 @@ def _parseQuotes(text, tags=default_tags):
 
 
 def parseAllQuotes(text, tags=default_tags):
-    sb = []
     lines = text.split(u'\n')
-    first = True
-    for line in lines:
-        if not first:
-            sb.append(u'\n')
-        else:
-            first = False
-        sb.append(_parseQuotes(line, tags))
-    return u''.join(sb)
+    return u'\n'.join(_parseQuotes(line, tags) for line in lines)
