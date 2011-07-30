@@ -84,6 +84,12 @@ def toolset():
     def render_list(node):
         pass
 
+    def render_url(node):
+        pass
+
+    def render_external_link(node):
+        pass
+
     return locals()
 
 def make_parser():

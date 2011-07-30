@@ -57,7 +57,7 @@ class LinksTests(ParserTestCase):
 
     def test_inline_url(self):
         source = 'An URL: http://www.mozilla.org'
-        result = "[raw_text:'An URL: '  url:'http://www.mozilla.org']"
+        result = "[raw_text:'An URL: '  inline_url:[url:'http://www.mozilla.org']]"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_external_link(self):

@@ -118,7 +118,7 @@
     link_arguments          : link_argument*
     internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : liftValue
     optional_link_text      : SPACETAB+ link_text                                                   : liftValue
-    external_link           : L_BRACKET url optional_link_text? R_BRACKET 
+    external_link           : L_BRACKET url optional_link_text? R_BRACKET                           : render_external_link
     link                    : internal_link / external_link
 
 # Pre and nowiki tags
@@ -133,7 +133,8 @@
 
 # Text types
 
-    styled_text             : link / url / html_comment / tag / entity
+    inline_url              : url{1}                                                                : render_url
+    styled_text             : link / inline_url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowed_char            : ESC_CHAR{1}                                                           : restore liftValue
     allowed_text            : raw_text / LT / GT / allowed_char
@@ -387,7 +388,7 @@ def make_parser(actions=None):
     link_arguments = Repetition(link_argument, numMin=False, numMax=False, expression='link_argument*', name='link_arguments')
     internal_link = Sequence([LINK_BEGIN, page_name, link_arguments, LINK_END], expression='LINK_BEGIN page_name link_arguments LINK_END', name='internal_link')(toolset['liftValue'])
     optional_link_text = Sequence([Repetition(SPACETAB, numMin=1, numMax=False, expression='SPACETAB+'), link_text], expression='SPACETAB+ link_text', name='optional_link_text')(toolset['liftValue'])
-    external_link = Sequence([L_BRACKET, url, Option(optional_link_text, expression='optional_link_text?'), R_BRACKET], expression='L_BRACKET url optional_link_text? R_BRACKET', name='external_link')
+    external_link = Sequence([L_BRACKET, url, Option(optional_link_text, expression='optional_link_text?'), R_BRACKET], expression='L_BRACKET url optional_link_text? R_BRACKET', name='external_link')(toolset['render_external_link'])
     link = Choice([internal_link, external_link], expression='internal_link / external_link', name='link')
     
     # Pre and nowiki tags
@@ -402,7 +403,8 @@ def make_parser(actions=None):
     
     # Text types
     
-    styled_text = Choice([link, url, html_comment, tag, entity], expression='link / url / html_comment / tag / entity', name='styled_text')
+    inline_url = Repetition(url, numMin=1, numMax=1, expression='url{1}', name='inline_url')(toolset['render_url'])
+    styled_text = Choice([link, inline_url, html_comment, tag, entity], expression='link / inline_url / html_comment / tag / entity', name='styled_text')
     not_styled_text = Choice([preformatted, nowiki], expression='preformatted / nowiki', name='not_styled_text')
     allowed_char = Repetition(ESC_CHAR, numMin=1, numMax=1, expression='ESC_CHAR{1}', name='allowed_char')(toolset['restore'], toolset['liftValue'])
     allowed_text = Choice([raw_text, LT, GT, allowed_char], expression='raw_text / LT / GT / allowed_char', name='allowed_text')

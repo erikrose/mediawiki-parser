@@ -530,3 +530,13 @@ Note: an <span>open tag can be closed {{in a template}}
         templates = {'template': 'text<i>text',
                      'in a template': 'like </span> this!'}
         self.parsed_equal_string(source, result, None, templates, 'html')
+
+    def test_inline_url(self):
+        source = 'text http://www.mozilla.org text\n'
+        result = '<p>text <a href="http://www.mozilla.org">http://www.mozilla.org</a> text</p>\n'
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
+
+    def test_external_links(self):
+        source = "text [http://www.mozilla.org], [http://www.github.com] and [http://fr.wikipedia.org ''French'' Wikipedia] text\n"
+        result = '<body>\n<p>text <a href="http://www.mozilla.org">[1]</a>, <a href="http://www.github.com">[2]</a> and <a href="http://fr.wikipedia.org"><em>French</em> Wikipedia</a> text</p>\n</body>'
+        self.parsed_equal_string(source, result, None, {}, 'html')

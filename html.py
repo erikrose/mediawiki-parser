@@ -4,7 +4,13 @@ from mediawiki_parser import wikitextParser
 
 def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes):
     tags_stack = []
-    
+
+    external_autonumber = []
+    """ This is for the autonumbering of external links.
+    e.g.: "[http://www.mozilla.org] [http://fr.wikipedia.org]"
+    is rendered as: "<a href="...">[1]</a> <a href="...">[2]</a>
+    """
+
     def balance_tags(tag=None):
         i = 0
         if tag is not None:
@@ -251,6 +257,17 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes):
         assert isinstance(node.value, Nodes), "Bad AST shape!"
         collapse_list(node.value)
         render_lists(node.value)
+
+    def render_url(node):
+        node.value = '<a href="%s">%s</a>' % (node.leaf(), node.leaf())
+
+    def render_external_link(node):
+        if len(node.value) == 1:
+            external_autonumber.append(node.leaf())
+            node.value = '<a href="%s">[%s]</a>' % (node.leaf(), len(external_autonumber))
+        else:
+            text = node.value[1].leaf()
+            node.value = '<a href="%s">%s</a>' % (node.value[0].leaf(), text)
 
     return locals()
 
