@@ -1,14 +1,17 @@
 # -*- coding: utf8 -*-
 from unittest import TestCase
 
+from pijnu import makeParser
+
+from mediawiki_parser import preprocessor, raw, text, html
+
 
 def setup_module():
-        from pijnu import makeParser
-        preprocessorGrammar = file("preprocessor.pijnu").read()
-        makeParser(preprocessorGrammar)
+    preprocessorGrammar = file("preprocessor.pijnu").read()
+    makeParser(preprocessorGrammar)
 
-        mediawikiGrammar = file("mediawiki.pijnu").read()
-        makeParser(mediawikiGrammar)
+    mediawikiGrammar = file("mediawiki.pijnu").read()
+    makeParser(mediawikiGrammar)
 
 
 class PreprocessorTestCase(TestCase):
@@ -18,7 +21,6 @@ class PreprocessorTestCase(TestCase):
         method_name -- If truthy, the attribute of the full grammar to return
 
         """
-        from mediawiki_parser import preprocessor
         return preprocessor.make_parser(templates)
 
     def parsed_equal_string(self, source, result, templates={}):
@@ -27,7 +29,6 @@ class PreprocessorTestCase(TestCase):
 
 class ParserTestCase(TestCase):
     def _preprocessor(self, templates):
-        from mediawiki_parser import preprocessor
         return preprocessor.make_parser(templates)
 
     def _grammar(self, method_name):
@@ -36,7 +37,6 @@ class ParserTestCase(TestCase):
         method_name -- If truthy, the attribute of the full grammar to return
 
         """
-        from mediawiki_parser import raw
         parser = raw.make_parser()
         return getattr(parser, method_name) if method_name else parser
 
@@ -51,7 +51,6 @@ class ParserTestCase(TestCase):
 
 class PostprocessorTestCase(TestCase):
     def _preprocessor(self, templates):
-        from mediawiki_parser import preprocessor
         return preprocessor.make_parser(templates)
 
     def _grammar(self, method_name, postprocessor_name):
@@ -61,17 +60,14 @@ class PostprocessorTestCase(TestCase):
 
         """
         if postprocessor_name == 'html':
-            from mediawiki_parser import html as postprocessor
             allowed_tags = ['p', 'span', 'b', 'i']
             allowed_autoclose_tags = ['br', 'hr']
             allowed_parameters = ['class', 'style', 'name', 'id', 'scope']
-            parser = postprocessor.make_parser(allowed_tags, allowed_autoclose_tags, allowed_parameters)
+            parser = html.make_parser(allowed_tags, allowed_autoclose_tags, allowed_parameters)
         elif postprocessor_name == 'text':
-            from mediawiki_parser import text as postprocessor
-            parser = postprocessor.make_parser()
+            parser = text.make_parser()
         else:
-            from mediawiki_parser import raw as postprocessor
-            parser = postprocessor.make_parser()
+            parser = raw.make_parser()
         return getattr(parser, method_name) if method_name else parser
 
     def parsed_equal_string(self, source, result, method_name, templates={}, postprocessor='raw'):
