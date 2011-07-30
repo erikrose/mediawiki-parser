@@ -6,7 +6,7 @@ from mediawiki_parser.tests import ParserTestCase
 class LinksTests(ParserTestCase):
     def test_simple_internal_link(self):
         source = '[[article]]'
-        result = "[internal_link:'article']"
+        result = "[internal_link:[page_name:'article']]"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_advanced_internal_link(self):
@@ -37,12 +37,12 @@ class LinksTests(ParserTestCase):
 
     def test_category_foreign_language(self):
         source = u'[[Catégorie:Nom de catégorie]]'
-        result = u"[internal_link:'Catégorie:Nom de catégorie']"
+        result = u"[internal_link:[page_name:'Catégorie:Nom de catégorie']]"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_image(self):
         source = '[[File:Filename.png]]'
-        result = "[internal_link:'File:Filename.png']"
+        result = "[internal_link:[page_name:'File:Filename.png']]"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_image_with_parameter(self):

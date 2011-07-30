@@ -47,12 +47,12 @@ class ListsTests(ParserTestCase):
 
     def test_1_semicolon_list(self):
         source = '; still more [[text]]\n'
-        result = "[list:[semi_colon_list_leaf:[raw_text:' still more '  internal_link:'text']]]"
+        result = "[list:[semi_colon_list_leaf:[raw_text:' still more '  internal_link:[page_name:'text']]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_2_semicolon_list(self):
         source = ';; still more [[text]]\n'
-        result = "[list:[@semi_colon_sub_list@:[semi_colon_list_leaf:[raw_text:' still more '  internal_link:'text']]]]"
+        result = "[list:[@semi_colon_sub_list@:[semi_colon_list_leaf:[raw_text:' still more '  internal_link:[page_name:'text']]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_1_colon_1_bullet_list(self):
@@ -72,7 +72,7 @@ class ListsTests(ParserTestCase):
 
     def test_composed_list(self):
         source = "*:*;#*: this is {{correct}} syntax!\n"
-        result = "[list:[@bullet_sub_list@:[@colon_sub_list@:[@bullet_sub_list@:[@semi_colon_sub_list@:[@number_sub_list@:[@bullet_sub_list@:[colon_list_leaf:[raw_text:' this is '  internal_link:'Template:correct'  raw_text:' syntax!']]]]]]]]]"
+        result = "[list:[@bullet_sub_list@:[@colon_sub_list@:[@bullet_sub_list@:[@semi_colon_sub_list@:[@number_sub_list@:[@bullet_sub_list@:[colon_list_leaf:[raw_text:' this is '  internal_link:[page_name:'Template:correct']  raw_text:' syntax!']]]]]]]]]"
         self.parsed_equal_string(source, result, None)
 
     def test_multiline_bullet_list(self):

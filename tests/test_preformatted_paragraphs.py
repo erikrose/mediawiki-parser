@@ -57,7 +57,8 @@ Followed by a "normal" one.
       preformatted_line:
          @inline@:
             raw_text:Styled text such as ''italic'', '''bold''', 
-            internal_link:Template:templates
+            internal_link:
+               page_name:Template:templates
             raw_text: also work.
          EOL_KEEP:
 """

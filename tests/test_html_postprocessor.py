@@ -113,7 +113,7 @@ class HTMLBackendTests(PostprocessorTestCase):
 <tr>
 \t<th scope="row"> Line 2</th>
 \t<td>data L2.A</td>
-\t<td>data Template:template</td>
+\t<td>data <a href="Template:template">Template:template</a></td>
 </tr>
 </table>
 </body>"""
@@ -197,7 +197,7 @@ test
         templates = {'template': 'content'}
         result = """<body>
 <pre>test
-Template:template
+<a href="Template:template">Template:template</a>
 test
 </pre>
 </body>"""
@@ -394,7 +394,7 @@ et l'''italique''...
 \t<li> and <strong>bold</strong> here</li>
 </ul>
 <ol>
-\t<li> a link</li>
+\t<li> a <a href="link">link</a></li>
 </ol>
 <dl>
 \t<dd> a template!</dd>
@@ -539,4 +539,35 @@ Note: an <span>open tag can be closed {{in a template}}
     def test_external_links(self):
         source = "text [http://www.mozilla.org], [http://www.github.com] and [http://fr.wikipedia.org ''French'' Wikipedia] text\n"
         result = '<body>\n<p>text <a href="http://www.mozilla.org">[1]</a>, <a href="http://www.github.com">[2]</a> and <a href="http://fr.wikipedia.org"><em>French</em> Wikipedia</a> text</p>\n</body>'
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_internal_links(self):
+        source = "Links: [[page]], [[page|alternate]], [[page|alternate|alternate2]] and [[Page name|a{{test}}c]]\n"
+        result = '<p>Links: <a href="page">page</a>, <a href="page">alternate</a>, <a href="page">alternate|alternate2</a> and <a href="Page name">abc</a></p>\n'
+        templates = {'test': 'b'}
+        self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
+
+    def test_categories_links(self):
+        source = u"[[:Category:Cat name|a ''text'']]\n[[Catégorie:Ma catégorie]]\n[[Category:My category|sort key]]\n"
+        result = u'<body>\n<p><a href="Category:Cat name">a <em>text</em></a></p>\n<p>Categories: <a href="Ma catégorie">Ma catégorie</a>, <a href="My category">My category</a></p>\n</body>'
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_interwiki_links(self):
+        source = u"[[:fr:Un lien...|texte]]\n[[fr:Mon article]]\n[[en:My article]]\n"
+        result = u'<body>\n<p><a href="http://fr.wikipedia.org/wiki/Un lien...">texte</a></p>\n<p>Interwiki: <a href="http://fr.wikipedia.org/wiki/Mon article">Mon article</a>, <a href="http://en.wikipedia.org/wiki/My article">My article</a></p>\n</body>'
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_files(self):
+        source = """[[Image:File.png|thumb|right|200px|Legend]]
+[[Image:File.png|thumb|right|200x100px|'''Formatted''' [[legend]]!]]
+[[File:Name.png]]
+[[:File:Name.png|link to a file]]
+[[File:Test.jpg|left|thumbnail]]
+"""
+        result = """<body>
+<p><div class="thumbnail"><img src="File.png" style="float:right;width:200px;" /><p>Legend</p></div>
+<div class="thumbnail"><img src="File.png" style="float:right;width:200px;height:100px" /><p><strong>Formatted</strong> <a href="legend">legend</a>!</p></div>
+<img src="Name.png" style="" /><a href="File:Name.png">link to a file</a><div class="thumbnail"><img src="Test.jpg" style="float:left;" /><p></p></div>
+</p>
+</body>"""
         self.parsed_equal_string(source, result, None, {}, 'html')

@@ -130,6 +130,9 @@ def toolset():
     def render_external_link(node):
         pass
 
+    def render_internal_link(node):
+        pass
+
     return locals()
 
 def make_parser():

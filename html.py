@@ -1,14 +1,42 @@
 from constants import html_entities
 from pijnu.library.node import Nil, Nodes
 from mediawiki_parser import wikitextParser
+from mutagen import Metadata
 
-def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes):
+def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki, namespaces):
     tags_stack = []
 
     external_autonumber = []
     """ This is for the autonumbering of external links.
     e.g.: "[http://www.mozilla.org] [http://fr.wikipedia.org]"
     is rendered as: "<a href="...">[1]</a> <a href="...">[2]</a>
+    """
+
+    category_links = []
+    """ This will contain the links to the categories of the article. """
+    interwiki_links = []
+    """ This will contain the links to the foreign versions of the article. """
+
+    for namespace, value in namespaces.iteritems():
+        assert value in range(16), "Incorrect value for namespaces"
+    """
+    Predefined namespaces; source: includes/Defines.php of MediaWiki-1.17.0
+    'NS_MAIN', 0
+    'NS_TALK', 1
+    'NS_USER', 2
+    'NS_USER_TALK', 3
+    'NS_PROJECT', 4
+    'NS_PROJECT_TALK', 5
+    'NS_FILE', 6
+    'NS_FILE_TALK', 7
+    'NS_MEDIAWIKI', 8
+    'NS_MEDIAWIKI_TALK', 9
+    'NS_TEMPLATE', 10
+    'NS_TEMPLATE_TALK', 11
+    'NS_HELP', 12
+    'NS_HELP_TALK', 13
+    'NS_CATEGORY', 14
+    'NS_CATEGORY_TALK', 15 
     """
 
     def balance_tags(tag=None):
@@ -48,11 +76,18 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes):
         node.value = "%s" % node.leaf()
 
     def render_paragraph(node):
-        node.value = '<p>' + content(node) +  '</p>\n'
+        value = content(node)
+        if value != '':
+            node.value = '<p>' + value +  '</p>\n'
 
     def render_body(node):
         from apostrophes import parseAllQuotes
-        node.value = '<body>\n' + parseAllQuotes(content(node)) +  '</body>'
+        metadata = ''
+        if category_links != []:
+            metadata += '<p>Categories: ' + ', '.join(category_links) + '</p>\n'
+        if interwiki_links != []:
+            metadata += '<p>Interwiki: ' + ', '.join(interwiki_links) + '</p>\n'
+        node.value = '<body>\n' + parseAllQuotes(content(node)) + metadata + '</body>'
 
     def render_entity(node):
         value = '%s' % node.leaf()
@@ -269,9 +304,91 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes):
             text = node.value[1].leaf()
             node.value = '<a href="%s">%s</a>' % (node.value[0].leaf(), text)
 
+    def render_interwiki(prefix, page):
+        link = '<a href="%s">%s</a>' % (interwiki[prefix] + page, page)
+        if link not in interwiki_links:
+            interwiki_links.append(link)
+
+    def render_category(category_name):
+        link = '<a href="%s">%s</a>' % (category_name, category_name)
+        if link not in category_links:
+            category_links.append(link)
+
+    def render_file(file_name, arguments):
+        """ This implements a basic handling of images.
+        MediaWiki supports much more parameters (see includes/Parser.php).
+        """
+        style = ''
+        thumbnail = False
+        legend = ''
+        if arguments != []:
+            parameters = arguments[0].value
+            for parameter in parameters:
+                parameter = '%s' % parameter.leaf()
+                if parameter[-2:] == 'px':
+                    size = parameter[0:-2]
+                    if 'x' in size:
+                        size_x, size_y = size.split('x', 1)
+                        try:
+                            size_x = int(size_x)
+                            size_y = int(size_y)
+                            style += 'width:%spx;height:%spx' % (size_x, size_y)
+                        except:
+                            legend = parameter
+                    else:
+                        try:
+                            size_x = int(size)
+                            style += 'width:%spx;' % size_x
+                        except:
+                            legend = parameter
+                elif parameter in ['left', 'right', 'center']:
+                    style += 'float:%s;' % parameter
+                elif parameter in ['thumb', 'thumbnail']:
+                    thumbnail = True
+                elif parameter == 'border':
+                    style += 'border:1px solid grey'
+                else:
+                    legend = parameter
+        result = '<img src="%s" style="%s" />' % (file_name, style)
+        if thumbnail:
+            result = '<div class="thumbnail">%s<p>%s</p></div>\n' % (result, legend)
+        return result
+
+    def render_internal_link(node):
+        force_link = False
+        url = ''
+        page_name = node.value.pop(0).value
+        if page_name[0] == ':':
+            force_link = True
+            page_name = page_name[1:]
+        if ':' in page_name:
+            namespace, page_name = page_name.split(':', 1)
+            if namespace in interwiki and not force_link:
+                render_interwiki(namespace, page_name)
+                node.value = ''
+                return
+            elif namespace in interwiki:
+                url = interwiki[namespace]
+                namespace = ''
+            if namespace in namespaces:
+                if namespaces[namespace] == 6 and not force_link:  # File
+                    node.value = render_file(page_name, node.value)
+                    return
+                elif namespaces[namespace] == 14 and not force_link:  # Category
+                    render_category(page_name)
+                    node.value = ''
+                    return
+            if namespace:
+                page_name = namespace + ':' + page_name
+        if len(node.value) == 0:
+            text = page_name
+        else:
+            text = '|'.join('%s' % item.leaf() for item in node.value[0])
+        node.value = '<a href="%s%s">%s</a>' % (url, page_name, text)
+
     return locals()
 
-def make_parser(allowed_tags=[], allowed_autoclose_tags=[], allowed_attributes=[]):
+def make_parser(allowed_tags=[], allowed_autoclose_tags=[], allowed_attributes=[], interwiki={}, namespaces={}):
     """Constructs the parser for the HTML backend.
     
     :arg allowed_tags: List of the HTML tags that should be allowed in the parsed wikitext.
@@ -281,7 +398,11 @@ def make_parser(allowed_tags=[], allowed_autoclose_tags=[], allowed_attributes=[
             parsed wikitext. All the other self-closing tags will be output as &lt;tag /&gt;
     :arg allowed_attributes: List of the HTML attributes that should be allowed in the parsed
             tags (e.g.: class="", style=""). All the other attributes (e.g.: onclick="") will
-            be removed. 
+            be removed.
+    :arg interwiki: List of the allowed interwiki prefixes (en, fr, es, commons, etc.)
+    :arg namespaces: List of the namespaces of the wiki (File, Category, Template, etc.),
+            including the localized version of those strings (Modele, Categorie, etc.),
+            associated to the corresponding namespace code.
     """
-    tools = toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes)
+    tools = toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki, namespaces)
     return wikitextParser.make_parser(tools)

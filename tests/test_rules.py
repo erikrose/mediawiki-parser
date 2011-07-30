@@ -24,6 +24,6 @@ class RulesTests(ParserTestCase):
     def test_inline_after_rule(self):
         # In this case, it is a paragraph!
         source = '------ {{template|arg=[[link]]}}\n'
-        result = u"[horizontal_rule:[@inline@:[raw_text:' test: '  internal_link:'link']]]"
+        result = u"[horizontal_rule:[@inline@:[raw_text:' test: '  internal_link:[page_name:'link']]]]"
         templates = {'template': 'test: {{{arg}}}'}
         self.parsed_equal_string(source, result, None, templates)

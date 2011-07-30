@@ -113,6 +113,7 @@ def replace_by_space(node):
 # TODO: allow IPv6 addresses (http://[::1]/etc)
     address                 : (!(QUOTE/R_BRACKET) [\x21..\xff])+                                    : liftValue
     url                     : protocol address                                                      : join
+    inline_url              : url{1}                                                                : render_url
 
 # Links
 
@@ -120,7 +121,7 @@ def replace_by_space(node):
     link_text               : (clean_inline / allowed_in_link)*                                     : liftValue
     link_argument           : PIPE link_text                                                        : liftValue
     link_arguments          : link_argument*
-    internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : liftValue
+    internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : render_internal_link
     optional_link_text      : SPACETAB+ link_text                                                   : liftValue
     external_link           : L_BRACKET url optional_link_text? R_BRACKET                           : render_external_link
     link                    : internal_link / external_link
@@ -137,7 +138,6 @@ def replace_by_space(node):
 
 # Text types
 
-    inline_url              : url{1}                                                                : render_url
     styled_text             : link / inline_url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowed_char            : ESC_CHAR{1}                                                           : restore liftValue

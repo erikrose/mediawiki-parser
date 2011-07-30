@@ -43,7 +43,7 @@ class TitlesTests(ParserTestCase):
 
     def test_link_in_title(self):
         source = '= [[a link]] =\n'
-        result = "[title1:[raw_text:' '  internal_link:'a link'  raw_text:' ']]"
+        result = "[title1:[raw_text:' '  internal_link:[page_name:'a link']  raw_text:' ']]"
         self.parsed_equal_string(source, result, None)
 
     def test_italic_in_title(self):
@@ -63,7 +63,7 @@ class TitlesTests(ParserTestCase):
 
     def test_simple_template_in_title(self):
         source = '===== {{Title 5}} =====\n'
-        result = "[title5:[raw_text:' '  internal_link:'Template:Title 5'  raw_text:' ']]"
+        result = "[title5:[raw_text:' '  internal_link:[page_name:'Template:Title 5']  raw_text:' ']]"
         self.parsed_equal_string(source, result, None)
 
     def test_braces_in_title(self):

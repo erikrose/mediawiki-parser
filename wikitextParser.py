@@ -109,6 +109,7 @@
 # TODO: allow IPv6 addresses (http://[::1]/etc)
     address                 : (!(QUOTE/R_BRACKET) [\x21..\xff])+                                    : liftValue
     url                     : protocol address                                                      : join
+    inline_url              : url{1}                                                                : render_url
 
 # Links
 
@@ -116,7 +117,7 @@
     link_text               : (clean_inline / allowed_in_link)*                                     : liftValue
     link_argument           : PIPE link_text                                                        : liftValue
     link_arguments          : link_argument*
-    internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : liftValue
+    internal_link           : LINK_BEGIN page_name link_arguments LINK_END                          : render_internal_link
     optional_link_text      : SPACETAB+ link_text                                                   : liftValue
     external_link           : L_BRACKET url optional_link_text? R_BRACKET                           : render_external_link
     link                    : internal_link / external_link
@@ -133,7 +134,6 @@
 
 # Text types
 
-    inline_url              : url{1}                                                                : render_url
     styled_text             : link / inline_url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowed_char            : ESC_CHAR{1}                                                           : restore liftValue
@@ -379,6 +379,7 @@ def make_parser(actions=None):
     # TODO: allow IPv6 addresses (http://[::1]/etc)
     address = Repetition(Sequence([NextNot(Choice([QUOTE, R_BRACKET], expression='QUOTE/R_BRACKET'), expression='!(QUOTE/R_BRACKET)'), Klass(u'!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x21..\\xff]')], expression='!(QUOTE/R_BRACKET) [\\x21..\\xff]'), numMin=1, numMax=False, expression='(!(QUOTE/R_BRACKET) [\\x21..\\xff])+', name='address')(toolset['liftValue'])
     url = Sequence([protocol, address], expression='protocol address', name='url')(toolset['join'])
+    inline_url = Repetition(url, numMin=1, numMax=1, expression='url{1}', name='inline_url')(toolset['render_url'])
     
     # Links
     
@@ -386,7 +387,7 @@ def make_parser(actions=None):
     link_text = Repetition(Choice([clean_inline, allowed_in_link], expression='clean_inline / allowed_in_link'), numMin=False, numMax=False, expression='(clean_inline / allowed_in_link)*', name='link_text')(toolset['liftValue'])
     link_argument = Sequence([PIPE, link_text], expression='PIPE link_text', name='link_argument')(toolset['liftValue'])
     link_arguments = Repetition(link_argument, numMin=False, numMax=False, expression='link_argument*', name='link_arguments')
-    internal_link = Sequence([LINK_BEGIN, page_name, link_arguments, LINK_END], expression='LINK_BEGIN page_name link_arguments LINK_END', name='internal_link')(toolset['liftValue'])
+    internal_link = Sequence([LINK_BEGIN, page_name, link_arguments, LINK_END], expression='LINK_BEGIN page_name link_arguments LINK_END', name='internal_link')(toolset['render_internal_link'])
     optional_link_text = Sequence([Repetition(SPACETAB, numMin=1, numMax=False, expression='SPACETAB+'), link_text], expression='SPACETAB+ link_text', name='optional_link_text')(toolset['liftValue'])
     external_link = Sequence([L_BRACKET, url, Option(optional_link_text, expression='optional_link_text?'), R_BRACKET], expression='L_BRACKET url optional_link_text? R_BRACKET', name='external_link')(toolset['render_external_link'])
     link = Choice([internal_link, external_link], expression='internal_link / external_link', name='link')
@@ -403,7 +404,6 @@ def make_parser(actions=None):
     
     # Text types
     
-    inline_url = Repetition(url, numMin=1, numMax=1, expression='url{1}', name='inline_url')(toolset['render_url'])
     styled_text = Choice([link, inline_url, html_comment, tag, entity], expression='link / inline_url / html_comment / tag / entity', name='styled_text')
     not_styled_text = Choice([preformatted, nowiki], expression='preformatted / nowiki', name='not_styled_text')
     allowed_char = Repetition(ESC_CHAR, numMin=1, numMax=1, expression='ESC_CHAR{1}', name='allowed_char')(toolset['restore'], toolset['liftValue'])

@@ -1,37 +1,92 @@
-== Title ==
-This is a paragraph.
+Contenu soumis à la licence CC-BY-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/deed.fr) Source : Article Berceuse de Wikipédia en français (http://fr.wikipedia.org/wiki/Berceuse). 
 
-This is a [[link#Title|link test]], '''bold and ''italic'' texts'''.
+{{Voir homonymes|Berceuse (homonymie)}}
+{{ébauche|musique}}
+[[Fichier:William-Adolphe Bouguereau (1825-1905) - Lullaby (1875).jpg|thumb|right|250px|''La Berceuse'' (œuvre de [[William Bouguereau]] - {{XIXe siècle}})]]
+Une '''berceuse''' est une [[chanson]] douce destinée à aider les [[enfant]]s à [[Sommeil|s'endormir]]. Il existe des berceuses chantées dans toutes les langues du monde.
 
-An http://www.mozilla.org URL.
+==Berceuses françaises==
+Les berceuses françaises traditionnelles les plus connues sont « Dodo, l'enfant do / l'enfant dormira peut-être » et « Fais dodo, Colas mon p'tit frère ». Une berceuse du Nord, « [[P'tit Quinquin (chanson)|P'tit Quinquin]] » est également devenue célèbre.
 
-[[Image:Test.png|thumb|150px|Legend]]
+==Dans la musique classique==
+Les berceuses en musique classique obéissent souvent à une forme nommée aussi "berceuse" dans les langues étrangères. Elles sont généralement à trois [[Temps (solfège)|temps]], à [[tonalité]] simple, alternant des harmonies [[dominante]] et [[Tonique (musique)|tonique]].
 
-{{template1}}
+'''Berceuses célèbres classées par compositeurs :'''
+{{listen
+|title=''Wiegenlied'' (Berceuse, op 49/4)
+|filename=Brahms_-_Schumann-Heink_-_Wiegenlied_(Berceuse)_(1915).ogg‎
+|description= ''Wiegenlied'' interprété par [[Ernestine Schumann-Heink]]
+}}
+* [[Jean-Sébastien Bach|Bach]]
+** Menuet pour clavier Nº1 en sol majeur (Carnets intimes d'Anna Magdalena II/1), BWV Anh. 114
+** « [[Jésus que ma joie demeure|Jésus, que ma joie demeure]] », ([[Liste des cantates de Johann Sebastian Bach|Cantate Nº147]]), BWV 147
+** Suite pour orchestre n°3 en re majeur, BWV 1068
+* [[Ludwig van Beethoven|Beethoven]]
+** « [[Sonate pour piano nº 14 de Beethoven|Sonate au clair de lune]] » (Sonate pour piano n° 14 en do dièse mineur), op. 27/2
+** « [[La Lettre à Élise|Lettre à Élise]] » (La Bagatelle en la mineur), WoO 59
+** « [[Sonate pour piano nº 8 de Beethoven|Sonate Pathétique]] » (Sonate pour piano nº 8 de Beethoven), op. 13/2, Adagio cantabile
+* [[Johannes Brahms|Brahms]]
+** « Bonsoir et bonne nuit », berceuse ("Guten Abend, gut Nacht", Wiegenlied), op. 49/4
+* [[Frédéric Chopin|Chopin]]
+** « [[Berceuse (Chopin)|Berceuse en ré bémol majeur]] », op.57
+* [[Claude Debussy|Debussy]]
+** « [[Suite Bergamasque|Clair de lune]] » ("Suite Bergamasque" pour piano), L. 75/3
+* [[Antonín Dvořák|Dvořák]]
+** « [[Symphonie nº 9 de Dvořák|Sonate du Nouveau Monde]] » (Symphonie n° 9 en mi mineur, B. 178), op. 95
+* [[Gabriel Fauré|Fauré]]
+** « [[Dolly (Fauré)|Berceuse]] » (première pièce de la suite Dolly, pour piano à quatre mains), op. 56
+* [[Felix Mendelssohn Bartholdy|Mendelssohn]]
+** « [[Romances sans paroles (Mendelssohn)|Chant du printemps]] » (Romances sans paroles pour piano), op. 62/6
+* [[Wolfgang Amadeus Mozart|Mozart]]
+** « [[Ah ! vous dirai-je, maman]] » (Douze variations), K. 265
+** « [[Sonate pour piano n° 16 de Mozart|Sonate facile]] » (Sonate pour piano nº 16 en do majeur), K. 545
+** « La Chasse » (Sonate pour piano n° 18 en ré majeur), K. 576, 3ème mouvement
+* [[Johann Pachelbel|Pachelbel]]
+** « [[Canon de Pachelbel|Canon en ré majeur sur une basse obstinée]] »
+* [[Robert Schumann|Schumann]]
+** « [[Scènes d'enfants (Schumann)|Gens et pays étrangers]] » (Les Scènes d'enfants, "Kinderszenen"), op. 15
+* [[Bedřich Smetana|Smetana]]
+** « [[Má Vlast|La Moldau]] » (Second poèmes symphoniques de "Ma Patrie")
+* [[Antonio Vivaldi|Vivaldi]]
+** « [[Les Quatre Saisons|L'Hiver]] » (Les Quatre Saisons, Opus 8/4)
 
-a comment <!-- comment --> (ignored)... < > <<< >>>
 
-a <pre>preformatted {{section}} {{{parameter|default}}} </pre>
+Les plus connues sont la berceuse « ''Bonsoir et bonne nuit'' » de Brahms et la « ''Berceuse en ré bémol majeur'' » de [[Chopin]]. Des compositeurs comme [[Franz Liszt]], [[Gabriel Fauré]], [[Maurice Ravel]], [[Mili Balakirev]], [[Igor Stravinski]] (''[[Berceuses du chat]]'') et [[George Gershwin]] ont aussi écrit des berceuses.
 
-a <nowiki>nowiki {{section}} {{{parameter|default}}} </nowiki>
+==Dans la musique populaire==
 
- preformatted line
- with a {{template}}
+===Dans la chanson française===
+* [[Bénabar]] : « La berceuse », de l'album ''[[Reprise des négociations]]'', 2005
+* [[Henri Salvador]] : « Une chanson douce » (Le Loup, la Biche et le Chevalier), de l'album ''Rigolo'', 1968
 
-parameters: {{{parameter|default}}} {{{parameter}}}
+===Dans la musique pop===
+* [[Beatles]] : « [[Good Night (chanson)|Good Night]] », de l'''[[The Beatles (album)|album blanc]]'', 1968
 
-{{Template with|1=parameter| 2 = parameters }}
+===Dans le jazz===
+* [[Baden Powell de Aquino|Baden Powell]] : « Berceuse a Jussara », de l'album ''Le Monde Musical'', 1964
+* [[Henri Salvador]] : « Une chanson douce » (Le Loup, la Biche et le Chevalier), de l'album ''Rigolo'', 1968
 
-another {{template 2|1=Value1|name=[[Value for name]]}} successfully substituted template
+== Voir aussi ==
+* [[Lullaby]] dans la section anglaise et italienne où il y a une description d'une bonne partie des berceuses européennes.
+{{Wiktionnaire|berceuse}}
 
-----
+===Bibliographie===
+*Claudine Antoine, ''La Berceuse populaire dans le contexte de la petite enfance'', Université Strasbourg 2, 1988, 2 vol., 358 + 333 p. (thèse de Musiocologie)
+*Marina Altmann de Litvan (dir.), ''La berceuse : jeux d'amour et de magie'', Erès, Ramonville Saint-Agne, 2008, 151 p. {{ISBN|978-2-7492-0925-8}}
 
-here, we use templates inside template parameters: {{template 2|1=Value1|name={{template 2|1=Value1|name=Value for name}}}}
+{{portail musique}}
 
-here, we specify no value so the default value is used when it exists: {{template 2|1=test}} or {{template 2|name=test}}
+[[Catégorie:Berceuse|*]]
+[[Catégorie:Musique par genre]]
+[[Catégorie:Musique traditionnelle]]
 
-links in templates: {{template 2|1=[http://www.mozilla.org Value1]|name=[[Value|for name]]}} 
-
-unknown templates are replaced by a link: {{template 3|param|param2=[[link]]   | param3 = [[the|parameters]]|test={{template}}|test2={{other template|param=[[link]]}}}}
-
-a [[Category:Tests|Text]]
+[[ar:تهويدة]]
+[[az:Layla]]
+[[br:Luskellerez]]
+[[ca:Cançó de bressol]]
+[[cs:Ukolébavka]]
+[[da:Berceuse]]
+[[de:Wiegenlied]]
+[[en:Lullaby]]
+[[eo:Lulkanto]]
+[[es:Nana (canción de cuna)]]

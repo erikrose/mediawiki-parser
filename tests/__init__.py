@@ -63,7 +63,14 @@ class PostprocessorTestCase(TestCase):
             allowed_tags = ['p', 'span', 'b', 'i']
             allowed_autoclose_tags = ['br', 'hr']
             allowed_parameters = ['class', 'style', 'name', 'id', 'scope']
-            parser = html.make_parser(allowed_tags, allowed_autoclose_tags, allowed_parameters)
+            interwiki = {'en': 'http://en.wikipedia.org/wiki/',
+                         'fr': 'http://fr.wikipedia.org/wiki/'}
+            namespaces = {'Template':   10,
+                          u'Catégorie': 14,
+                          'Category':   14,
+                          'File':        6,
+                          'Image':       6}
+            parser = html.make_parser(allowed_tags, allowed_autoclose_tags, allowed_parameters, interwiki, namespaces)
         elif postprocessor_name == 'text':
             parser = text.make_parser()
         else:

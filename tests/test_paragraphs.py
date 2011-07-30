@@ -60,7 +60,8 @@ Followed a blank line and another paragraph.
    paragraphs:
       paragraph:
          raw_text:Styled text such as ''italic'', '''bold''', 
-         internal_link:Template:templates
+         internal_link:
+            page_name:Template:templates
          raw_text: and 
          allowed_char:{
          allowed_char:{

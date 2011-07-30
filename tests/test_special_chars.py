@@ -107,7 +107,7 @@ class SpecialCharsTests(ParserTestCase):
 
     def test_double_r_bracket_with_link(self):
         source = 'This should be a [[link]] and [[plain text'
-        result = "[raw_text:'This should be a '  internal_link:'link'  raw_text:' and '  allowed_char:'['  allowed_char:'['  raw_text:'plain text']"
+        result = "[raw_text:'This should be a '  internal_link:[page_name:'link']  raw_text:' and '  allowed_char:'['  allowed_char:'['  raw_text:'plain text']"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_valid_named_entities(self):
@@ -132,7 +132,7 @@ class SpecialCharsTests(ParserTestCase):
 
     def test_valid_entities_in_links(self):
         source = 'a [[test&copy;test]] and two other: [[&diams;]] [[&#8212;]]'
-        result = u"[raw_text:'a '  internal_link:'test©test'  raw_text:' and two other: '  internal_link:'♦'  raw_text:' '  internal_link:'—']"
+        result = u"[raw_text:'a '  internal_link:[page_name:'test©test']  raw_text:' and two other: '  internal_link:[page_name:'♦']  raw_text:' '  internal_link:[page_name:'—']]"
         self.parsed_equal_string(source, result, 'inline')
 
     def test_invalid_entities_in_links(self):
@@ -142,7 +142,7 @@ class SpecialCharsTests(ParserTestCase):
 
     def test_valid_entities_in_template_calls(self):
         source = 'a {{test&copy;test}} and another: {{&diams;}}'
-        result = u"[raw_text:'a '  internal_link:'Template:test©test'  raw_text:' and another: '  internal_link:'Template:♦']"
+        result = u"[raw_text:'a '  internal_link:[page_name:'Template:test©test']  raw_text:' and another: '  internal_link:page_name['Template:♦']]"
         #self.parsed_equal_string(source, result, 'inline')
         import nose
         raise nose.SkipTest
