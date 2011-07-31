@@ -565,9 +565,9 @@ Note: an <span>open tag can be closed {{in a template}}
 [[File:Test.jpg|left|thumbnail]]
 """
         result = """<body>
-<p><div class="thumbnail"><img src="File.png" style="float:right;width:200px;" /><p>Legend</p></div>
-<div class="thumbnail"><img src="File.png" style="float:right;width:200px;height:100px" /><p><strong>Formatted</strong> <a href="legend">legend</a>!</p></div>
-<img src="Name.png" style="" /><a href="File:Name.png">link to a file</a><div class="thumbnail"><img src="Test.jpg" style="float:left;" /><p></p></div>
+<p><div class="thumbnail"><img src="File.png" style="float:right;width:200px;" alt="" /><p>Legend</p></div>
+<div class="thumbnail"><img src="File.png" style="float:right;width:200px;height:100px" alt="" /><p><strong>Formatted</strong> <a href="legend">legend</a>!</p></div>
+<img src="Name.png" style="" alt="" /><a href="File:Name.png">link to a file</a><div class="thumbnail"><img src="Test.jpg" style="float:left;" alt="" /><p></p></div>
 </p>
 </body>"""
         self.parsed_equal_string(source, result, None, {}, 'html')

@@ -8,7 +8,7 @@ makeParser(preprocessorGrammar)
 mediawikiGrammar = file("mediawiki.pijnu").read()
 makeParser(mediawikiGrammar)
 
-allowed_tags = ['p', 'span', 'b', 'i']
+allowed_tags = ['p', 'span', 'b', 'i', 'small', 'center']
 allowed_autoclose_tags = ['br', 'hr']
 allowed_parameters = ['class', 'style', 'name', 'id', 'scope']
 interwiki = {'ar': 'http://ar.wikipedia.org/wiki/',

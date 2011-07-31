@@ -37,6 +37,11 @@ class TemplatesTests(PreprocessorTestCase):
         result = "default value"
         self.parsed_equal_string(source, result)
 
+    def test_template_parameter_with_void_default_value(self):
+        source = "{{{parameter name|}}}"
+        result = ""
+        self.parsed_equal_string(source, result)
+
     def test_nested_default_values(self):
         source = "Cheese or dessert? Person1: {{menu|cheese=camembert}}; person2: {{menu|dessert=apple}}; person3: {{menu}}."
         result = "Cheese or dessert? Person1: Menu: camembert; person2: Menu: apple; person3: Menu: not cheese nor dessert."

@@ -176,12 +176,15 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
         if isinstance(node.value, Nil):
             return None
         cell_parameters = ''
+        cell_content = ''
         if len(node.value) > 1:
             values = node.value[0].value
             for value in values:
                 if value.tag == 'HTML_attribute':
                     cell_parameters += ' ' + value.value
-            cell_content = content(node.value[1])
+                else:
+                    cell_content += value.value
+            cell_content += content(node.value[1])
         else:
             cell_content = content(node)
         return (cell_parameters, cell_content)
@@ -349,7 +352,7 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
                     style += 'border:1px solid grey'
                 else:
                     legend = parameter
-        result = '<img src="%s" style="%s" />' % (file_name, style)
+        result = '<img src="%s" style="%s" alt="" />' % (file_name, style)
         if thumbnail:
             result = '<div class="thumbnail">%s<p>%s</p></div>\n' % (result, legend)
         return result

@@ -207,7 +207,8 @@ def replace_by_space(node):
     table_parameters_pipe   : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
     table_parameters        : (HTML_attribute / clean_inline)+
     table_parameter         : table_parameters_pipe{0..1}                                           : liftValue
-    table_cell_content      : (clean_inline / (EOL+ table_structure))+
+    table_multiline_content : EOL_KEEP !(PIPE/BANG) clean_inline
+    table_cell_content      : (clean_inline / (EOL+ table_structure) / table_multiline_content)+
     table_first_cell        : table_parameter table_cell_content                                    : liftNode
     table_other_cell        : (PIPE{2} table_first_cell)*                                           : liftValue liftNode
     table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue render_table_normal_cell

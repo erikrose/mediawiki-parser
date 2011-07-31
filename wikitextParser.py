@@ -203,7 +203,8 @@
     table_parameters_pipe   : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
     table_parameters        : (HTML_attribute / clean_inline)+
     table_parameter         : table_parameters_pipe{0..1}                                           : liftValue
-    table_cell_content      : (clean_inline / (EOL+ table_structure))+
+    table_multiline_content : EOL_KEEP !(PIPE/BANG) clean_inline
+    table_cell_content      : (clean_inline / (EOL+ table_structure) / table_multiline_content)+
     table_first_cell        : table_parameter table_cell_content                                    : liftNode
     table_other_cell        : (PIPE{2} table_first_cell)*                                           : liftValue liftNode
     table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue render_table_normal_cell
@@ -473,7 +474,8 @@ def make_parser(actions=None):
     table_parameters_pipe = Option(Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), Repetition(HTML_attribute, numMin=1, numMax=False, expression='HTML_attribute+'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE'), expression='(SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?', name='table_parameters_pipe')(toolset['liftNode'])
     table_parameters = Repetition(Choice([HTML_attribute, clean_inline], expression='HTML_attribute / clean_inline'), numMin=1, numMax=False, expression='(HTML_attribute / clean_inline)+', name='table_parameters')
     table_parameter = Repetition(table_parameters_pipe, numMin=0, numMax=1, expression='table_parameters_pipe{0..1}', name='table_parameter')(toolset['liftValue'])
-    table_cell_content = Repetition(Choice([clean_inline, Sequence([Repetition(EOL, numMin=1, numMax=False, expression='EOL+'), table_structure], expression='EOL+ table_structure')], expression='clean_inline / (EOL+ table_structure)'), numMin=1, numMax=False, expression='(clean_inline / (EOL+ table_structure))+', name='table_cell_content')
+    table_multiline_content = Sequence([EOL_KEEP, NextNot(Choice([PIPE, BANG], expression='PIPE/BANG'), expression='!(PIPE/BANG)'), clean_inline], expression='EOL_KEEP !(PIPE/BANG) clean_inline', name='table_multiline_content')
+    table_cell_content = Repetition(Choice([clean_inline, Sequence([Repetition(EOL, numMin=1, numMax=False, expression='EOL+'), table_structure], expression='EOL+ table_structure'), table_multiline_content], expression='clean_inline / (EOL+ table_structure) / table_multiline_content'), numMin=1, numMax=False, expression='(clean_inline / (EOL+ table_structure) / table_multiline_content)+', name='table_cell_content')
     table_first_cell = Sequence([table_parameter, table_cell_content], expression='table_parameter table_cell_content', name='table_first_cell')(toolset['liftNode'])
     table_other_cell = Repetition(Sequence([Repetition(PIPE, numMin=2, numMax=2, expression='PIPE{2}'), table_first_cell], expression='PIPE{2} table_first_cell'), numMin=False, numMax=False, expression='(PIPE{2} table_first_cell)*', name='table_other_cell')(toolset['liftValue'], toolset['liftNode'])
     table_line_cells = Sequence([PIPE, table_first_cell, table_other_cell, EOL], expression='PIPE table_first_cell table_other_cell EOL', name='table_line_cells')(toolset['liftValue'], toolset['render_table_normal_cell'])

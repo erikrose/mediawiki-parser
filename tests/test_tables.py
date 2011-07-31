@@ -126,6 +126,22 @@ class TablesTests(ParserTestCase):
         result = "[table_parameters:[HTML_attribute:[attribute_name:'style'  value_quote:'color:red']]]"
         self.parsed_equal_string(source, result, 'table_line')
 
+    def test_table_multiline_content(self):
+        source = """{|
+| test1
+test2
+|}
+"""
+        result = """table:
+   @clean_inline@:
+      raw_text: test1
+   table_multiline_content:
+      EOL_KEEP:
+
+      @clean_inline@:
+         raw_text:test2"""
+        self.parsed_equal_tree(source, result, 'table')
+
     def test_table_with_css(self):
         source = """{|
 ! cellA

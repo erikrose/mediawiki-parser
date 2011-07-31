@@ -63,7 +63,8 @@ def replace_by_space(node):
 # or by their optional default value in any case
 
     parameter_id            : raw_char+                                                             : join
-    optional_default_value  : (PIPE SPACETABEOL* inline)? SPACETABEOL*                              : liftNode
+    parameter_value         : inline? : keep
+    optional_default_value  : (PIPE SPACETABEOL* parameter_value)? SPACETABEOL*                     : liftNode
     template_parameter      : PARAMETER_BEGIN parameter_id optional_default_value PARAMETER_END     : substitute_template_parameter
 
 # Links
