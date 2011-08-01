@@ -3,7 +3,7 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Tags_tests(ParserTestCase):
+class TagsTests(ParserTestCase):
     def test_basic_tag(self):
         source = '<a>'
         result = "[tag_name:'a']"
@@ -55,7 +55,7 @@ class Tags_tests(ParserTestCase):
     def test_multiple_tags(self):
         source = 'a <tag name="mytag" attribute=value /> and <span style=\'color: red\'>text</span>...'
         result = """@inline@:
-   rawText:a 
+   raw_text:a 
    tag_autoclose:
       tag_name:tag
       optional_attributes:
@@ -65,15 +65,15 @@ class Tags_tests(ParserTestCase):
          optional_attribute:
             attribute_name:attribute
             value_noquote:value
-   rawText: and 
+   raw_text: and 
    tag_open:
       tag_name:span
       optional_attributes:
          optional_attribute:
             attribute_name:style
             value_apostrophe:color: red
-   rawText:text
+   raw_text:text
    tag_close:
       tag_name:span
-   rawText:..."""
+   raw_text:..."""
         self.parsed_equal_tree(source, result, 'inline')

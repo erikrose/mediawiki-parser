@@ -3,13 +3,16 @@
 from mediawiki_parser.tests import ParserTestCase
 
 
-class Paragraphs_tests(ParserTestCase):
+class PreformattedParagraphsTests(ParserTestCase):
     def test_single_line_paragraph(self):
         source = " This is a preformatted paragraph.\n"
         result = """body:
-   preformattedLines:
-      preformattedLine:
-         rawText:This is a preformatted paragraph."""
+   preformatted_lines:
+      preformatted_line:
+         @inline@:
+            raw_text:This is a preformatted paragraph.
+         EOL_KEEP:
+"""
         self.parsed_equal_tree(source, result, None)
 
     def test_preformatted_and_normal_paragraphs(self):
@@ -17,12 +20,15 @@ class Paragraphs_tests(ParserTestCase):
 Followed by a "normal" one.
 """
         result = """body:
-   preformattedLines:
-      preformattedLine:
-         rawText:This is a preformatted paragraph.
+   preformatted_lines:
+      preformatted_line:
+         @inline@:
+            raw_text:This is a preformatted paragraph.
+         EOL_KEEP:
+
    paragraphs:
       paragraph:
-         rawText:Followed by a "normal" one."""
+         raw_text:Followed by a "normal" one."""
         self.parsed_equal_tree(source, result, None)
 
     def test_multiline_paragraph(self):
@@ -30,23 +36,32 @@ Followed by a "normal" one.
  preformatted paragraph.
 """
         result = """body:
-   preformattedLines:
-      preformattedLine:
-         rawText:This is a multiline
-      preformattedLine:
-         rawText:preformatted paragraph."""
+   preformatted_lines:
+      preformatted_line:
+         @inline@:
+            raw_text:This is a multiline
+         EOL_KEEP:
+
+      preformatted_line:
+         @inline@:
+            raw_text:preformatted paragraph.
+         EOL_KEEP:
+"""
         self.parsed_equal_tree(source, result, None)
 
-    def test_style_in_paragraph(self):
+    def test_style_in_preformatted_paragraph(self):
         source = """ Styled text such as ''italic'', '''bold''', {{templates}} also work.
 """
         result = """body:
-   preformattedLines:
-      preformattedLine:
-         rawText:Styled text such as <em>italic</em>, <strong>bold</strong>, 
-         template:
-            page_name:templates
-         rawText: also work."""
+   preformatted_lines:
+      preformatted_line:
+         @inline@:
+            raw_text:Styled text such as ''italic'', '''bold''', 
+            internal_link:
+               page_name:Template:templates
+            raw_text: also work.
+         EOL_KEEP:
+"""
         self.parsed_equal_tree(source, result, None)
 
     def test_html_pre_paragraph(self):
@@ -55,9 +70,9 @@ Preformatted paragraph.
 </pre>
 """
         result = """body:
-   preformattedParagraph:
-      preformattedText:
-         rawText:Preformatted paragraph."""
+   preformatted_paragraph:
+      preformatted_text:
+         raw_text:Preformatted paragraph."""
         self.parsed_equal_tree(source, result, None)
 
     def test_formatted_html_pre_paragraph(self):
@@ -66,15 +81,14 @@ Preformatted paragraph.
         result = "[paragraphs:[paragraph:[preformatted:'some [[text]] that should {{not}} be changed']]]"
         self.parsed_equal_string(source, result, None)
 
-
     def test_html_pre_in_paragraph(self):
         source = "Normal paragraph <pre>Preformatted one</pre> Normal one.\n"
         result = """body:
    paragraphs:
       paragraph:
-         rawText:Normal paragraph 
+         raw_text:Normal paragraph 
          preformatted:Preformatted one
-         rawText: Normal one."""
+         raw_text: Normal one."""
         self.parsed_equal_tree(source, result, None)
 
     def test_pre_paragraph_in_table(self):
@@ -84,10 +98,10 @@ Preformatted paragraph.
 |}
 """
         result = """body:
-   @wikiTable@:
-      wikiTableLineBreak:
-      wikiTableLineHeader:
-         @cleanInline@:
-            rawText: 
+   table:
+      table_line_break:
+      table_line_header:
+         @clean_inline@:
+            raw_text: 
             preformatted:Text"""
         self.parsed_equal_tree(source, result, None)
