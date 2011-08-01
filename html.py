@@ -45,7 +45,7 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
         if tag is not None:
             try:
                 i = tags_stack.index(tag, -1)
-            except:
+            except ValueError:
                 return ''
         result = ''
         while len(tags_stack) > i:
