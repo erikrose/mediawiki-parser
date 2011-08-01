@@ -27,8 +27,8 @@ default_tags = {'bold': '<strong>',
                 'italic_close': '</em>'}
 
 
-def _parseQuotes(text, tags=default_tags):
-        arr = _quotePat.split(text)
+def parse_one_line(text, tags=default_tags):
+        arr = _quotePat.split(text.strip())
         if len(arr) == 1:
             return text
 
@@ -162,13 +162,13 @@ def _parseQuotes(text, tags=default_tags):
             output.append(tags['italic_close'])
         if state == 'bi':
             output.append(tags['bold_close'])
-        if state == 'both' and buffer is not []:
+        if state == 'both' and buffer != []:
             output.append(tags['italic']+tags['bold'])
             output.append(u''.join(buffer))
             output.append(tags['bold_close']+tags['italic_close'])
         return u''.join(output)
 
 
-def parseAllQuotes(text, tags=default_tags):
+def parse(text, tags=default_tags):
     lines = text.split(u'\n')
-    return u'\n'.join(_parseQuotes(line, tags) for line in lines)
+    return u'\n'.join(parse_one_line(line, tags) for line in lines)

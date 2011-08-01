@@ -2,6 +2,7 @@ from constants import html_entities
 from pijnu.library.node import Nil, Nodes
 from mediawiki_parser import wikitextParser
 from mutagen import Metadata
+import apostrophes
 
 def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki, namespaces):
     tags_stack = []
@@ -52,7 +53,7 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
         return result
 
     def content(node):
-        return '%s' % node.leaf() + balance_tags()
+        return apostrophes.parse('%s' % node.leaf() + balance_tags())
 
     def render_title1(node):
         node.value = '<h1>' + content(node) +  '</h1>\n'
@@ -81,13 +82,12 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
             node.value = '<p>' + value +  '</p>\n'
 
     def render_body(node):
-        from apostrophes import parseAllQuotes
         metadata = ''
         if category_links != []:
             metadata += '<p>Categories: ' + ', '.join(category_links) + '</p>\n'
         if interwiki_links != []:
             metadata += '<p>Interwiki: ' + ', '.join(interwiki_links) + '</p>\n'
-        node.value = '<body>\n' + parseAllQuotes(content(node)) + metadata + '</body>'
+        node.value = '<body>\n' + content(node) + metadata + '</body>'
 
     def render_entity(node):
         value = '%s' % node.leaf()

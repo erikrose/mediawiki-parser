@@ -1,5 +1,6 @@
 from constants import html_entities
 from mediawiki_parser import wikitextParser
+import apostrophes
 
 def toolset():
     def render_tag_p(attributes):
@@ -36,10 +37,9 @@ def toolset():
         node.value = '%s\n' % node.leaf()
     
     def render_body(node):
-        from apostrophes import parseAllQuotes
         tags = {'bold': '*', 'bold_close': '*', 'italic': '_', 'italic_close': '_'}
         print node
-        node.value = parseAllQuotes(node.leaf(), tags)
+        node.value = apostrophes.parse(node.leaf(), tags)
     
     def render_entity(node):
         value = '%s' % node.leaf()
