@@ -264,6 +264,42 @@ lo'''
         result = "<body>\n<p><strong>he</strong></p>\n<p>lo<strong></strong></p>\n</body>"
         self.parsed_equal_string(source, result, None, {}, 'html')
 
+    def test_bold_italic_case10(self):
+        source = """'''hi!
+"""
+        result = "<body>\n<p><strong>hi!</strong></p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case11(self):
+        source = """''hi again!
+"""
+        result = "<body>\n<p><em>hi again!</em></p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case12(self):
+        source = """'''''bold and italic!
+"""
+        result = "<body>\n<p><em><strong>bold and italic!</strong></em></p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case13(self):
+        source = """'''
+"""
+        result = "<body>\n<p><strong></strong></p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case14(self):
+        source = """''
+"""
+        result = "<body>\n<p><em></em></p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
+    def test_bold_italic_case15(self):
+        source = """'''''
+"""
+        result = "<body>\n<p><em><strong></strong></em></p>\n</body>"
+        self.parsed_equal_string(source, result, None, {}, 'html')
+
     def test_italic_template(self):
         source = "Here, we have ''italic {{template}}!''.\n"
         result = "<body>\n<p>Here, we have <em>italic text!</em>.</p>\n</body>"
