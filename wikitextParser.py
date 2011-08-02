@@ -222,8 +222,9 @@
 
 # Top pattern
 
-    wikitext                : list / horizontal_rule / preformatted_group / title / table / EOL / paragraphs
-    body                    : optional_comment (wikitext/invalid_line)+                             : liftValue render_body
+    valid_syntax            : list/horizontal_rule/preformatted_group/title/table/EOL/paragraphs
+    wikitext                : optional_comment (valid_syntax/invalid_line)+                         : liftValue render_wikitext
+    body                    : wikitext{1}                                                           : liftValue render_body
 
 """
 
@@ -493,8 +494,9 @@ def make_parser(actions=None):
     
     # Top pattern
     
-    wikitext = Choice([list, horizontal_rule, preformatted_group, title, table, EOL, paragraphs], expression='list / horizontal_rule / preformatted_group / title / table / EOL / paragraphs', name='wikitext')
-    body = Sequence([optional_comment, Repetition(Choice([wikitext, invalid_line], expression='wikitext/invalid_line'), numMin=1, numMax=False, expression='(wikitext/invalid_line)+')], expression='optional_comment (wikitext/invalid_line)+', name='body')(toolset['liftValue'], toolset['render_body'])
+    valid_syntax = Choice([list, horizontal_rule, preformatted_group, title, table, EOL, paragraphs], expression='list/horizontal_rule/preformatted_group/title/table/EOL/paragraphs', name='valid_syntax')
+    wikitext = Sequence([optional_comment, Repetition(Choice([valid_syntax, invalid_line], expression='valid_syntax/invalid_line'), numMin=1, numMax=False, expression='(valid_syntax/invalid_line)+')], expression='optional_comment (valid_syntax/invalid_line)+', name='wikitext')(toolset['liftValue'], toolset['render_wikitext'])
+    body = Repetition(wikitext, numMin=1, numMax=1, expression='wikitext{1}', name='body')(toolset['liftValue'], toolset['render_body'])
 
     symbols = locals().copy()
     symbols.update(actions)

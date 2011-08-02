@@ -226,5 +226,6 @@ def replace_by_space(node):
 
 # Top pattern
 
-    wikitext                : list / horizontal_rule / preformatted_group / title / table / EOL / paragraphs
-    body                    : optional_comment (wikitext/invalid_line)+                             : liftValue render_body
+    valid_syntax            : list/horizontal_rule/preformatted_group/title/table/EOL/paragraphs
+    wikitext                : optional_comment (valid_syntax/invalid_line)+                         : liftValue render_wikitext
+    body                    : wikitext{1}                                                           : liftValue render_body

@@ -32,28 +32,31 @@ def toolset():
 
     def render_raw_text(node):
         pass
-    
+
     def render_paragraph(node):
         node.value = '%s\n' % node.leaf()
-    
+
+    def render_wikitext(node):
+        pass
+
     def render_body(node):
         tags = {'bold': '*', 'bold_close': '*', 'italic': '_', 'italic_close': '_'}
         print node
         node.value = apostrophes.parse(node.leaf(), tags)
-    
+
     def render_entity(node):
         value = '%s' % node.leaf()
         if value in html_entities:
             node.value = '%s' % unichr(html_entities[value])
         else:
             node.value = '&%s;' % value
-    
+
     def render_lt(node):
         pass
-    
+
     def render_gt(node):
         pass
-    
+
     def process_attributes(node, allowed_tag):
         result = ''
         if len(node.value) == 1:
@@ -80,10 +83,10 @@ def toolset():
         else:
             attributes = process_attributes(node, False)
             node.value = '<%s%s>' % (tag_name, attributes)
-    
+
     def render_tag_close(node):
         node.value = ''
-    
+
     def render_tag_autoclose(node):
         tag_name = node.value[0].value
         if tag_name in allowed_tags:

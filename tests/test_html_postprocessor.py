@@ -65,8 +65,7 @@ class HTMLBackendTests(PostprocessorTestCase):
 | cell D
 |}
 """
-        result = """<body>
-<table>
+        result = """<table>
 <tr>
 \t<th> cellA</th>
 \t<th> cellB</th>
@@ -76,8 +75,8 @@ class HTMLBackendTests(PostprocessorTestCase):
 \t<td> cell D</td>
 </tr>
 </table>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_complex_table(self):
         source = """{| style="background:blue" {{prettyTable}}
@@ -96,8 +95,7 @@ class HTMLBackendTests(PostprocessorTestCase):
 |data {{template|with|parameters=L2.B}}
 |}
 """
-        result = """<body>
-<table style="background:blue" class="prettyTable">
+        result = """<table style="background:blue" class="prettyTable">
 <tr>
 \t<caption style="color:red"> Table This is the title with a parameter!</caption>
 </tr>
@@ -116,10 +114,10 @@ class HTMLBackendTests(PostprocessorTestCase):
 \t<td>data <a href="Template:template">Template:template</a></td>
 </tr>
 </table>
-</body>"""
+"""
         templates = {'prettyTable': 'class="prettyTable"',
                      'title': 'This is the title with a {{{1}}}!'}
-        self.parsed_equal_string(source, result, None, templates, 'html')
+        self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
 
     def test_nested_tables(self):
         source = """{| style="background:blue" {{prettyTable}}
@@ -143,8 +141,7 @@ class HTMLBackendTests(PostprocessorTestCase):
 | again
 |}
 """
-        result = """<body>
-<table style="background:blue" class="prettyTable">
+        result = """<table style="background:blue" class="prettyTable">
 <tr>
 \t<caption style="color:red"> Table This is the title, true!</caption>
 </tr>
@@ -172,22 +169,21 @@ class HTMLBackendTests(PostprocessorTestCase):
 \t<td> again</td>
 </tr>
 </table>
-</body>"""
+"""
         templates = {'prettyTable': 'class="prettyTable"',
                      'title': 'This is the title, {{{1}}}!'}
-        self.parsed_equal_string(source, result, None, templates, 'html')
+        self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
 
     def test_horizontal_rule(self):
         source = """test
 ----
 test
 """
-        result = """<body>
-<p>test</p>
+        result = """<p>test</p>
 <hr />
 <p>test</p>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_preformatted_paragraph(self):
         source = """ test
@@ -195,122 +191,121 @@ test
  test
 """
         templates = {'template': 'content'}
-        result = """<body>
-<pre>test
+        result = """<pre>test
 <a href="Template:template">Template:template</a>
 test
 </pre>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_italic(self):
         source = "Here, we have ''italic'' text.\n"
-        result = "<body>\n<p>Here, we have <em>italic</em> text.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <em>italic</em> text.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold(self):
         source = "Here, we have '''bold''' text.\n"
-        result = "<body>\n<p>Here, we have <strong>bold</strong> text.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <strong>bold</strong> text.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_and_italic_case1(self):
         source = "Here, we have '''''bold and italic''''' text.\n"
-        result = "<body>\n<p>Here, we have <em><strong>bold and italic</strong></em> text.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <em><strong>bold and italic</strong></em> text.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case2(self):
         source = "Here, we have ''italic only and '''bold and italic''''' text.\n"
-        result = "<body>\n<p>Here, we have <em>italic only and <strong>bold and italic</strong></em> text.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <em>italic only and <strong>bold and italic</strong></em> text.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case3(self):
         source = "Here, we have '''bold only and ''bold and italic''''' text.\n"
-        result = "<body>\n<p>Here, we have <strong>bold only and <em>bold and italic</em></strong> text.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <strong>bold only and <em>bold and italic</em></strong> text.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case4(self):
         source = "Here, we have '''''bold and italic''' and italic only''.\n"
-        result = "<body>\n<p>Here, we have <em><strong>bold and italic</strong> and italic only</em>.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <em><strong>bold and italic</strong> and italic only</em>.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case5(self):
         source = "Here, we have '''''bold and italic'' and bold only'''.\n"
-        result = "<body>\n<p>Here, we have <strong><em>bold and italic</em> and bold only</strong>.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <strong><em>bold and italic</em> and bold only</strong>.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case6(self):
         source = "Here, we have ''italic, '''bold and italic''' and italic only''.\n"
-        result = "<body>\n<p>Here, we have <em>italic, <strong>bold and italic</strong> and italic only</em>.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <em>italic, <strong>bold and italic</strong> and italic only</em>.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case7(self):
         source = "Here, we have '''bold, ''bold and italic'' and bold only'''.\n"
-        result = "<body>\n<p>Here, we have <strong>bold, <em>bold and italic</em> and bold only</strong>.</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p>Here, we have <strong>bold, <em>bold and italic</em> and bold only</strong>.</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case8(self):
         source = """'''Le gras :'''
 
 et l'''italique''...
 """
-        result = "<body>\n<p><strong>Le gras :</strong></p>\n<p>et l'<em>italique</em>...</p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p><strong>Le gras :</strong></p>\n<p>et l'<em>italique</em>...</p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case9(self):
         source = """'''he
 
 lo'''
 """
-        result = "<body>\n<p><strong>he</strong></p>\n<p>lo<strong></strong></p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p><strong>he</strong></p>\n<p>lo<strong></strong></p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case10(self):
         source = """'''hi!
 """
-        result = "<body>\n<p><strong>hi!</strong></p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p><strong>hi!</strong></p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case11(self):
         source = """''hi again!
 """
-        result = "<body>\n<p><em>hi again!</em></p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p><em>hi again!</em></p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case12(self):
         source = """'''''bold and italic!
 """
-        result = "<body>\n<p><em><strong>bold and italic!</strong></em></p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p><em><strong>bold and italic!</strong></em></p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case13(self):
         source = """'''
 """
-        result = "<body>\n<p><strong></strong></p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p><strong></strong></p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case14(self):
         source = """''
 """
-        result = "<body>\n<p><em></em></p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p><em></em></p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_bold_italic_case15(self):
         source = """'''''
 """
-        result = "<body>\n<p><em><strong></strong></em></p>\n</body>"
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = "<p><em><strong></strong></em></p>\n"
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_italic_template(self):
         source = "Here, we have ''italic {{template}}!''.\n"
-        result = "<body>\n<p>Here, we have <em>italic text!</em>.</p>\n</body>"
+        result = "<p>Here, we have <em>italic text!</em>.</p>\n"
         templates = {'template': 'text'}
-        self.parsed_equal_string(source, result, None, templates, 'html')
+        self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
 
     def test_styles_in_template(self):
         source = "Here, we have {{template}}.\n"
-        result = "<body>\n<p>Here, we have <strong>text</strong> and <em>more text</em> and <em><strong>still more text</strong></em>.</p>\n</body>"
+        result = "<p>Here, we have <strong>text</strong> and <em>more text</em> and <em><strong>still more text</strong></em>.</p>\n"
         templates = {'template': "'''text''' and ''more text'' and '''''still more text'''''"}
-        self.parsed_equal_string(source, result, None, templates, 'html')
+        self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
 
     def test_simple_bullet_list(self):
         source = """* item 1
@@ -318,8 +313,7 @@ lo'''
 *** item 3
 ** item 2
 """
-        result = """<body>
-<ul>
+        result = """<ul>
 \t<li> item 1<ul>
 \t<li> item 2<ul>
 \t<li> item 3</li>
@@ -329,8 +323,8 @@ lo'''
 </ul>
 </li>
 </ul>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_simple_numbered_list(self):
         source = """## item 2
@@ -338,8 +332,7 @@ lo'''
 ## item 2
 ### item 3
 """
-        result = """<body>
-<ol>
+        result = """<ol>
 \t<li><ol>
 \t<li> item 2</li>
 </ol>
@@ -363,8 +356,8 @@ lo'''
 </ol>
 </li>
 </ol>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_simple_semicolon_list(self):
         source = """; item 1
@@ -374,8 +367,7 @@ lo'''
 ; item 1
 ;;; item 3
 """
-        result = """<body>
-<dl>
+        result = """<dl>
 \t<dt> item 1<dl>
 \t<dt> item 2</dt>
 \t<dt> item 2</dt>
@@ -390,8 +382,8 @@ lo'''
 </dl>
 </dt>
 </dl>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_simple_colon_list(self):
         source = """: item 1
@@ -401,8 +393,7 @@ lo'''
 :: item 2
 :: item 2
 """
-        result = """<body>
-<dl>
+        result = """<dl>
 \t<dd> item 1<dl>
 \t<dd><dl>
 \t<dd> item 3</dd>
@@ -417,8 +408,8 @@ lo'''
 </dl>
 </dd>
 </dl>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_formatted_mixed_list(self):
         source = """: item 1
@@ -427,8 +418,7 @@ lo'''
 # a [[link]]
 : a {{template}}
 """
-        result = """<body>
-<dl>
+        result = """<dl>
 \t<dd> item 1</dd>
 </dl>
 <dl>
@@ -443,9 +433,9 @@ lo'''
 <dl>
 \t<dd> a template!</dd>
 </dl>
-</body>"""
+"""
         templates = {'template': 'template!'}
-        self.parsed_equal_string(source, result, None, templates, 'html')
+        self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
 
     def test_complex_mixed_list(self):
         source = """*level 1
@@ -462,8 +452,7 @@ lo'''
 :*;#*: weird syntax
 * end
 """
-        result = """<body>
-<ul>
+        result = """<ul>
 \t<li>level 1</li>
 \t<li>level 1<ul>
 \t<li>level 2<ol>
@@ -531,8 +520,8 @@ lo'''
 <ul>
 \t<li> end</li>
 </ul>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_tag_balancing_in_title6(self):
         """Close open tags"""
@@ -562,18 +551,17 @@ a {{template}}</b>.
 
 Note: an <span>open tag can be closed {{in a template}}
 """
-        result = """<body>
-<h2><b>Test!</b></h2>
+        result = """<h2><b>Test!</b></h2>
 <ul>
 \t<li> test <i>test</i></li>
 </ul>
 <p>A paragraph with a <hr /> tag and a <span style="color:blue">span.</span></p>
 <p>a text<i>text.</i></p>
 <p>Note: an <span>open tag can be closed like </span> this!</p>
-</body>"""
+"""
         templates = {'template': 'text<i>text',
                      'in a template': 'like </span> this!'}
-        self.parsed_equal_string(source, result, None, templates, 'html')
+        self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
 
     def test_inline_url(self):
         source = 'text http://www.mozilla.org text\n'
@@ -582,8 +570,8 @@ Note: an <span>open tag can be closed {{in a template}}
 
     def test_external_links(self):
         source = "text [http://www.mozilla.org], [http://www.github.com] and [http://fr.wikipedia.org ''French'' Wikipedia] text\n"
-        result = '<body>\n<p>text <a href="http://www.mozilla.org">[1]</a>, <a href="http://www.github.com">[2]</a> and <a href="http://fr.wikipedia.org"><em>French</em> Wikipedia</a> text</p>\n</body>'
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        result = '<p>text <a href="http://www.mozilla.org">[1]</a>, <a href="http://www.github.com">[2]</a> and <a href="http://fr.wikipedia.org"><em>French</em> Wikipedia</a> text</p>\n'
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')
 
     def test_internal_links(self):
         source = "Links: [[page]], [[page|alternate]], [[page|alternate|alternate2]] and [[Page name|a{{test}}c]]\n"
@@ -591,15 +579,15 @@ Note: an <span>open tag can be closed {{in a template}}
         templates = {'test': 'b'}
         self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
 
-    def test_categories_links(self):
+    def test_categories_and_category_links(self):
         source = u"[[:Category:Cat name|a ''text'']]\n[[Catégorie:Ma catégorie]]\n[[Category:My category|sort key]]\n"
         result = u'<body>\n<p><a href="Category:Cat name">a <em>text</em></a></p>\n<p>Categories: <a href="Ma catégorie">Ma catégorie</a>, <a href="My category">My category</a></p>\n</body>'
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        self.parsed_equal_string(source, result, 'body', {}, 'html')
 
     def test_interwiki_links(self):
         source = u"[[:fr:Un lien...|texte]]\n[[fr:Mon article]]\n[[en:My article]]\n"
         result = u'<body>\n<p><a href="http://fr.wikipedia.org/wiki/Un lien...">texte</a></p>\n<p>Interwiki: <a href="http://fr.wikipedia.org/wiki/Mon article">Mon article</a>, <a href="http://en.wikipedia.org/wiki/My article">My article</a></p>\n</body>'
-        self.parsed_equal_string(source, result, None, {}, 'html')
+        self.parsed_equal_string(source, result, 'body', {}, 'html')
 
     def test_files(self):
         source = """[[Image:File.png|thumb|right|200px|Legend]]
@@ -608,10 +596,9 @@ Note: an <span>open tag can be closed {{in a template}}
 [[:File:Name.png|link to a file]]
 [[File:Test.jpg|left|thumbnail]]
 """
-        result = """<body>
-<p><div class="thumbnail"><img src="File.png" style="float:right;width:200px;" alt="" /><p>Legend</p></div>
+        result = """<p><div class="thumbnail"><img src="File.png" style="float:right;width:200px;" alt="" /><p>Legend</p></div>
 <div class="thumbnail"><img src="File.png" style="float:right;width:200px;height:100px" alt="" /><p><strong>Formatted</strong> <a href="legend">legend</a>!</p></div>
 <img src="Name.png" style="" alt="" /><a href="File:Name.png">link to a file</a><div class="thumbnail"><img src="Test.jpg" style="float:left;" alt="" /><p></p></div>
 </p>
-</body>"""
-        self.parsed_equal_string(source, result, None, {}, 'html')
+"""
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'html')

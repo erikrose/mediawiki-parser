@@ -81,6 +81,9 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
         if value != '':
             node.value = '<p>' + value +  '</p>\n'
 
+    def render_wikitext(node):
+        node.value = content(node)
+
     def render_body(node):
         metadata = ''
         if category_links != []:
