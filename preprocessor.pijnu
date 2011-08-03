@@ -76,13 +76,13 @@ def replace_by_space(node):
 
 # Templates
 
-    value_content           : (inline / (!(TEMPLATE_END/PIPE) any_char)+)*                          : keep
+    value_content           : (inline / (!(TEMPLATE_END/PIPE) any_char) / EOL)*                     : keep
     parameter_value         : value_content SPACETABEOL*
     optional_value          : parameter_value?
     parameter_equal         : SPACETABEOL* EQUAL SPACETABEOL*
     parameter_name          : (!(esc_char/parameter_equal) raw_char)+                               : join
     named_parameter         : parameter_name parameter_equal optional_value
-    standalone_parameter    : inline?                                                               : join
+    standalone_parameter    : value_content?                                                        : join
     parameter               : SPACETABEOL* PIPE SPACETABEOL* (named_parameter/standalone_parameter) : liftValue
     parameters              : parameter*
     template                : TEMPLATE_BEGIN page_name parameters SPACETABEOL* TEMPLATE_END         : substitute_template

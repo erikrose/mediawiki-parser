@@ -90,10 +90,11 @@ class TemplatesTests(PreprocessorTestCase):
     def test_template_with_multiline_named_parameters(self):
         source = """{{Template which
  | has = test1
+continues here
  | multi = test2
  | line parameters = test3
 }}"""
-        result = "Tests: test1 test3 test2..."
+        result = "Tests: test1\ncontinues here\n  test3\n test2\n ..."
         templates = {'Template which': 'Tests: {{{has}}} {{{line parameters}}} {{{multi}}}...'}
         self.parsed_equal_string(source, result, templates)
 
@@ -101,6 +102,12 @@ class TemplatesTests(PreprocessorTestCase):
         source = "Special chars: {{Template with|1=#<>--| two = '{'}'[']'}}."
         result = "Special chars: test #<>-- '{'}'[']' default."
         templates = {'Template with': 'test {{{1}}} {{{two}}} {{{other param|default}}}'}
+        self.parsed_equal_string(source, result, templates)
+
+    def test_template_with_special_chars_in_standalone_parameter(self):
+        source = "Special chars: {{Template with|#<>--|'{'}'[']'}}."
+        result = "Special chars: test #<>-- '{'}'[']' default."
+        templates = {'Template with': 'test {{{1}}} {{{2}}} {{{other param|default}}}'}
         self.parsed_equal_string(source, result, templates)
 
     def test_links_in_template_arguments(self):
@@ -141,6 +148,12 @@ class TemplatesTests(PreprocessorTestCase):
         templates = {'Template with': '1: {{{1}}}; 2: {{{2}}}; 3: {{{3}}}',
                      'templates': 'another {{nested|inside = inside}}!',
                      'nested': 'nested template with parameter {{{inside}}}'}
+        self.parsed_equal_string(source, result, templates)
+
+    def test_nested_templates_with_tag(self):
+        source = "{{Template with|1=<tag>{{other}}}}"
+        result = "1: <tag>[[Template:other]]"
+        templates = {'Template with': '1: {{{1}}}'}
         self.parsed_equal_string(source, result, templates)
 
     def test_self_nested_templates(self):

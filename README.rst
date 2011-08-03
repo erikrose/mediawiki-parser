@@ -54,7 +54,7 @@ In order to use this tool to render wikitext into HTML in a Python program, you 
  preprocessed_text = preprocessor.parse(source)
  output = parser.parse(preprocessed_text.leaves())
 
-`output` will contain the rendered HTML. You should describe the behavior you expect by filling the variables of the first lines:
+The `output` string will contain the rendered HTML. You should describe the behavior you expect by filling the variables of the first lines:
  * if the wikitext calls foreign templates, put their names and content in the `templates` dict (e.g.: `{'my template': 'my template content'}`)
  * if some HTML tags are allowed on your wiki, list them in the `allowed_tags` list (e.g.: `['center', 'big', 'small', 'span']`; avoid `'script'` and some others, for security reasons)
  * if some self-closing HTML tags are allowed on your wiki, list them in the `allowed_self_closing_tags` list (e.g.: `['br', 'hr']`; avoid `'script'` and some others, for security reasons)
@@ -79,7 +79,7 @@ In order to use this tool to render wikitext into text in a Python program, you 
  preprocessed_text = preprocessor.parse(source)
  output = parser.parse(preprocessed_text.leaves())
 
-`output` will contain the rendered text.
+The `output` string will contain the rendered text.
 If the wikitext calls foreign templates, put their names and content in the `templates` dict (e.g.: `{'my template': 'my template content'}`)
 
 Example for templates substitution
@@ -95,7 +95,7 @@ If you just want to replace the templates in a given wikitext, you can just call
 
  output = preprocessor.parse(source)
 
-`output` will contain the rendered wikitext.
+The `output` string will contain the rendered wikitext.
 Put the templates names and content in the `templates` dict (e.g.: `{'my template': 'my template content'}`)
 
 
