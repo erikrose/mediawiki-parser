@@ -94,7 +94,7 @@ continues here
  | multi = test2
  | line parameters = test3
 }}"""
-        result = "Tests: test1\ncontinues here\n  test3\n test2\n ..."
+        result = "Tests: test1\ncontinues here test3 test2..."
         templates = {'Template which': 'Tests: {{{has}}} {{{line parameters}}} {{{multi}}}...'}
         self.parsed_equal_string(source, result, templates)
 

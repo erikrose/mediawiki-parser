@@ -1,5 +1,8 @@
 # -*- coding: utf8 -*-
 
+import time
+start_time = time.time()
+
 # get the parser
 from pijnu import makeParser
 preprocessorGrammar = file("preprocessor.pijnu").read()
@@ -62,3 +65,6 @@ output = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org
 <head><title>Test!</title></head>""" + tree.leaves() + "</html>"
 
 file("article.htm", "w").write(output.encode('UTF-8'))
+
+end_time = time.time()
+print "Parsed and rendered in", end_time - start_time, "s."

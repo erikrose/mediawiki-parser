@@ -105,7 +105,7 @@
 
 # Text
 
-    page_name               : raw_char+                                                             : join
+    page_name               : (raw_char / '/')+                                                     : join
 # TODO: allow IPv6 addresses (http://[::1]/etc)
     address                 : (!(QUOTE/R_BRACKET) [\x21..\xff])+                                    : liftValue
     url                     : protocol address                                                      : join
@@ -203,17 +203,20 @@
     table_parameters_pipe   : (SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?                     : liftNode
     table_parameters        : (HTML_attribute / clean_inline)+
     table_parameter         : table_parameters_pipe{0..1}                                           : liftValue
-    table_multiline_content : EOL_KEEP !(PIPE/BANG) clean_inline
-    table_cell_content      : (clean_inline / (EOL+ table_structure) / table_multiline_content)+
-    table_first_cell        : table_parameter table_cell_content                                    : liftNode
-    table_other_cell        : (PIPE{2} table_first_cell)*                                           : liftValue liftNode
-    table_line_cells        : PIPE table_first_cell table_other_cell EOL                            : liftValue render_table_normal_cell
-    table_line_header       : BANG table_first_cell table_other_cell EOL                            : liftValue render_table_header_cell
-    table_empty_cell        : PIPE EOL                                                              : keep
+    table_wikitext          : list/horizontal_rule/preformatted_group/title/table_structure
+    table_inline            : !(PIPE/BANG) clean_inline EOL?                                        : liftNode
+    table_paragraph         : (!(PIPE/BANG/TABLE_NEWLINE/TABLE_TITLE/TABLE_END) paragraph_line)     : render_paragraph
+    table_multiline_content : (table_paragraph / table_wikitext / EOL)*
+    table_cell_content      : table_inline? table_multiline_content                                 : liftValue
+    table_cell              : table_parameter table_cell_content
+    table_other_cell        : (PIPE{2} table_cell)*                                                 : liftValue liftNode
+    table_line_cells        : PIPE table_cell table_other_cell                                      : render_table_normal_cell
+    table_line_header       : BANG table_cell table_other_cell                                      : render_table_header_cell
+    table_empty_cell        : PIPE EOL &(PIPE/BANG/TABLE_END)                                       : keep
     table_line_break        : TABLE_NEWLINE table_parameters* EOL                                   : keep liftValue render_table_line_break
-    table_title             : TABLE_TITLE table_parameter table_cell_content EOL                    : liftValue render_table_caption
+    table_title             : TABLE_TITLE table_parameter inline EOL                                : liftValue render_table_caption
     table_special_line      : table_title / table_line_break
-    table_normal_line       : table_line_cells / table_line_header / table_empty_cell
+    table_normal_line       : table_empty_cell / table_line_cells / table_line_header
     table_line              : !TABLE_END (table_special_line / table_normal_line)                   : liftNode
     table_content           : (table_line / EOL)*                                                   : liftNode
     table_begin             : TABLE_BEGIN table_parameters*                                         : liftValue
@@ -377,7 +380,7 @@ def make_parser(actions=None):
     
     # Text
     
-    page_name = Repetition(raw_char, numMin=1, numMax=False, expression='raw_char+', name='page_name')(toolset['join'])
+    page_name = Repetition(Choice([raw_char, Char('/', expression="'/'")], expression="raw_char / '/'"), numMin=1, numMax=False, expression="(raw_char / '/')+", name='page_name')(toolset['join'])
     # TODO: allow IPv6 addresses (http://[::1]/etc)
     address = Repetition(Sequence([NextNot(Choice([QUOTE, R_BRACKET], expression='QUOTE/R_BRACKET'), expression='!(QUOTE/R_BRACKET)'), Klass(u'!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x21..\\xff]')], expression='!(QUOTE/R_BRACKET) [\\x21..\\xff]'), numMin=1, numMax=False, expression='(!(QUOTE/R_BRACKET) [\\x21..\\xff])+', name='address')(toolset['liftValue'])
     url = Sequence([protocol, address], expression='protocol address', name='url')(toolset['join'])
@@ -475,17 +478,20 @@ def make_parser(actions=None):
     table_parameters_pipe = Option(Sequence([Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), Repetition(HTML_attribute, numMin=1, numMax=False, expression='HTML_attribute+'), Repetition(SPACETAB, numMin=False, numMax=False, expression='SPACETAB*'), PIPE, NextNot(PIPE, expression='!PIPE')], expression='SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE'), expression='(SPACETAB* HTML_attribute+ SPACETAB* PIPE !PIPE)?', name='table_parameters_pipe')(toolset['liftNode'])
     table_parameters = Repetition(Choice([HTML_attribute, clean_inline], expression='HTML_attribute / clean_inline'), numMin=1, numMax=False, expression='(HTML_attribute / clean_inline)+', name='table_parameters')
     table_parameter = Repetition(table_parameters_pipe, numMin=0, numMax=1, expression='table_parameters_pipe{0..1}', name='table_parameter')(toolset['liftValue'])
-    table_multiline_content = Sequence([EOL_KEEP, NextNot(Choice([PIPE, BANG], expression='PIPE/BANG'), expression='!(PIPE/BANG)'), clean_inline], expression='EOL_KEEP !(PIPE/BANG) clean_inline', name='table_multiline_content')
-    table_cell_content = Repetition(Choice([clean_inline, Sequence([Repetition(EOL, numMin=1, numMax=False, expression='EOL+'), table_structure], expression='EOL+ table_structure'), table_multiline_content], expression='clean_inline / (EOL+ table_structure) / table_multiline_content'), numMin=1, numMax=False, expression='(clean_inline / (EOL+ table_structure) / table_multiline_content)+', name='table_cell_content')
-    table_first_cell = Sequence([table_parameter, table_cell_content], expression='table_parameter table_cell_content', name='table_first_cell')(toolset['liftNode'])
-    table_other_cell = Repetition(Sequence([Repetition(PIPE, numMin=2, numMax=2, expression='PIPE{2}'), table_first_cell], expression='PIPE{2} table_first_cell'), numMin=False, numMax=False, expression='(PIPE{2} table_first_cell)*', name='table_other_cell')(toolset['liftValue'], toolset['liftNode'])
-    table_line_cells = Sequence([PIPE, table_first_cell, table_other_cell, EOL], expression='PIPE table_first_cell table_other_cell EOL', name='table_line_cells')(toolset['liftValue'], toolset['render_table_normal_cell'])
-    table_line_header = Sequence([BANG, table_first_cell, table_other_cell, EOL], expression='BANG table_first_cell table_other_cell EOL', name='table_line_header')(toolset['liftValue'], toolset['render_table_header_cell'])
-    table_empty_cell = Sequence([PIPE, EOL], expression='PIPE EOL', name='table_empty_cell')(toolset['keep'])
+    table_wikitext = Choice([list, horizontal_rule, preformatted_group, title, table_structure], expression='list/horizontal_rule/preformatted_group/title/table_structure', name='table_wikitext')
+    table_inline = Sequence([NextNot(Choice([PIPE, BANG], expression='PIPE/BANG'), expression='!(PIPE/BANG)'), clean_inline, Option(EOL, expression='EOL?')], expression='!(PIPE/BANG) clean_inline EOL?', name='table_inline')(toolset['liftNode'])
+    table_paragraph = Sequence([NextNot(Choice([PIPE, BANG, TABLE_NEWLINE, TABLE_TITLE, TABLE_END], expression='PIPE/BANG/TABLE_NEWLINE/TABLE_TITLE/TABLE_END'), expression='!(PIPE/BANG/TABLE_NEWLINE/TABLE_TITLE/TABLE_END)'), paragraph_line], expression='!(PIPE/BANG/TABLE_NEWLINE/TABLE_TITLE/TABLE_END) paragraph_line', name='table_paragraph')(toolset['render_paragraph'])
+    table_multiline_content = Repetition(Choice([table_paragraph, table_wikitext, EOL], expression='table_paragraph / table_wikitext / EOL'), numMin=False, numMax=False, expression='(table_paragraph / table_wikitext / EOL)*', name='table_multiline_content')
+    table_cell_content = Sequence([Option(table_inline, expression='table_inline?'), table_multiline_content], expression='table_inline? table_multiline_content', name='table_cell_content')(toolset['liftValue'])
+    table_cell = Sequence([table_parameter, table_cell_content], expression='table_parameter table_cell_content', name='table_cell')
+    table_other_cell = Repetition(Sequence([Repetition(PIPE, numMin=2, numMax=2, expression='PIPE{2}'), table_cell], expression='PIPE{2} table_cell'), numMin=False, numMax=False, expression='(PIPE{2} table_cell)*', name='table_other_cell')(toolset['liftValue'], toolset['liftNode'])
+    table_line_cells = Sequence([PIPE, table_cell, table_other_cell], expression='PIPE table_cell table_other_cell', name='table_line_cells')(toolset['render_table_normal_cell'])
+    table_line_header = Sequence([BANG, table_cell, table_other_cell], expression='BANG table_cell table_other_cell', name='table_line_header')(toolset['render_table_header_cell'])
+    table_empty_cell = Sequence([PIPE, EOL, Next(Choice([PIPE, BANG, TABLE_END], expression='PIPE/BANG/TABLE_END'), expression='&(PIPE/BANG/TABLE_END)')], expression='PIPE EOL &(PIPE/BANG/TABLE_END)', name='table_empty_cell')(toolset['keep'])
     table_line_break = Sequence([TABLE_NEWLINE, Repetition(table_parameters, numMin=False, numMax=False, expression='table_parameters*'), EOL], expression='TABLE_NEWLINE table_parameters* EOL', name='table_line_break')(toolset['keep'], toolset['liftValue'], toolset['render_table_line_break'])
-    table_title = Sequence([TABLE_TITLE, table_parameter, table_cell_content, EOL], expression='TABLE_TITLE table_parameter table_cell_content EOL', name='table_title')(toolset['liftValue'], toolset['render_table_caption'])
+    table_title = Sequence([TABLE_TITLE, table_parameter, inline, EOL], expression='TABLE_TITLE table_parameter inline EOL', name='table_title')(toolset['liftValue'], toolset['render_table_caption'])
     table_special_line = Choice([table_title, table_line_break], expression='table_title / table_line_break', name='table_special_line')
-    table_normal_line = Choice([table_line_cells, table_line_header, table_empty_cell], expression='table_line_cells / table_line_header / table_empty_cell', name='table_normal_line')
+    table_normal_line = Choice([table_empty_cell, table_line_cells, table_line_header], expression='table_empty_cell / table_line_cells / table_line_header', name='table_normal_line')
     table_line = Sequence([NextNot(TABLE_END, expression='!TABLE_END'), Choice([table_special_line, table_normal_line], expression='table_special_line / table_normal_line')], expression='!TABLE_END (table_special_line / table_normal_line)', name='table_line')(toolset['liftNode'])
     table_content = Repetition(Choice([table_line, EOL], expression='table_line / EOL'), numMin=False, numMax=False, expression='(table_line / EOL)*', name='table_content')(toolset['liftNode'])
     table_begin = Sequence([TABLE_BEGIN, Repetition(table_parameters, numMin=False, numMax=False, expression='table_parameters*')], expression='TABLE_BEGIN table_parameters*', name='table_begin')(toolset['liftValue'])

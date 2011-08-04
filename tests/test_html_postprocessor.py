@@ -119,6 +119,47 @@ class HTMLBackendTests(PostprocessorTestCase):
                      'title': 'This is the title with a {{{1}}}!'}
         self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
 
+    def test_wikitext_in_table(self):
+        source = """{| cellpadding="10"
+|- valign="top"
+|
+
+* Line : {{template}}
+* other line : [[link]]...
+|
+== title ==
+----
+::: lists
+|}
+"""
+        result = """<table>
+<tr>
+</tr>
+<tr>
+\t<td><ul>
+\t<li> Line : <a href="Template:template">Template:template</a></li>
+\t<li> other line : <a href="link">link</a>...</li>
+</ul>
+</td>
+\t<td><h2> title </h2>
+<hr />
+<dl>
+\t<dd><dl>
+\t<dd><dl>
+\t<dd> lists</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+"""
+        templates = {'prettyTable': 'class="prettyTable"',
+                     'title': 'This is the title with a {{{1}}}!'}
+        self.parsed_equal_string(source, result, 'wikitext', templates, 'html')
+
     def test_nested_tables(self):
         source = """{| style="background:blue" {{prettyTable}}
 |+ style="color:red" | Table {{title|1=true}}
@@ -148,8 +189,7 @@ class HTMLBackendTests(PostprocessorTestCase):
 <tr>
 \t<th scope="col"> First (mother)</th>
 \t<th scope="col"> table</th>
-\t<td>
-<table style="background:red" class="prettyTable">
+\t<td><table style="background:red" class="prettyTable">
 <tr>
 \t<th scope="row"> Second (daughter) table</th>
 \t<td>data L1.A</td>

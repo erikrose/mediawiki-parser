@@ -4,21 +4,20 @@ from mediawiki_parser.tests import ParserTestCase
 
 
 class TablesTests(ParserTestCase):
-    def test_table_first_cell(self):
+    def test_table_cell(self):
         source = 'style="color:red" | cell 1'
-        result = """table_first_cell:
+        result = """table_cell:
    table_parameter:
       HTML_attribute:
          attribute_name:style
          value_quote:color:red
    table_cell_content:
-      @clean_inline@:
-         raw_text: cell 1"""
-        self.parsed_equal_tree(source, result, 'table_first_cell')
+      raw_text: cell 1"""
+        self.parsed_equal_tree(source, result, 'table_cell')
 
     def test_table_other_cell(self):
         source = '|| cell 1'
-        result = "[@clean_inline@:[raw_text:' cell 1']]"
+        result = "[table_cell_content:[raw_text:' cell 1']]"
         self.parsed_equal_string(source, result, 'table_other_cell')
 
     def test_table_special_line(self):
@@ -29,95 +28,93 @@ class TablesTests(ParserTestCase):
     def test_table_line_with_css(self):
         source = '| style="color:red" | cell 1\n'
         result = """table_line_cells:
-   table_parameter:
-      HTML_attribute:
-         attribute_name:style
-         value_quote:color:red
-   table_cell_content:
-      @clean_inline@:
+   table_cell:
+      table_parameter:
+         HTML_attribute:
+            attribute_name:style
+            value_quote:color:red
+      table_cell_content:
          raw_text: cell 1"""
         self.parsed_equal_tree(source, result, 'table_line')
 
     def test_table_line_with_multiple_attributes(self):
         source = '| style="color:red" id=\'test\' name=test| cell 1\n'
         result = """table_line_cells:
-   table_parameter:
-      HTML_attribute:
-         attribute_name:style
-         value_quote:color:red
-      HTML_attribute:
-         attribute_name:id
-         value_apostrophe:test
-      HTML_attribute:
-         attribute_name:name
-         value_noquote:test
-   table_cell_content:
-      @clean_inline@:
+   table_cell:
+      table_parameter:
+         HTML_attribute:
+            attribute_name:style
+            value_quote:color:red
+         HTML_attribute:
+            attribute_name:id
+            value_apostrophe:test
+         HTML_attribute:
+            attribute_name:name
+            value_noquote:test
+      table_cell_content:
          raw_text: cell 1"""
         self.parsed_equal_tree(source, result, 'table_line')
 
     def test_table_line_without_css(self):
         source = '| cell 1\n'
-        result = "[@clean_inline@:[raw_text:' cell 1']]"
+        result = "[table_cell:[table_cell_content:[raw_text:' cell 1']]]"
         self.parsed_equal_string(source, result, 'table_line')
 
     def test_table_line_with_dash(self):
         source = '|data L2-B\n'
-        result = "[@clean_inline@:[raw_text:'data L2-B']]"
+        result = "[table_cell:[table_cell_content:[raw_text:'data L2-B']]]"
         self.parsed_equal_string(source, result, 'table_line')
 
     def test_table_line_with_2_cells(self):
         source = '| cell 1 || cell 2\n'
         result = """table_line_cells:
-   table_cell_content:
-      @clean_inline@:
+   table_cell:
+      table_cell_content:
          raw_text: cell 1 
-   table_cell_content:
-      @clean_inline@:
+   table_cell:
+      table_cell_content:
          raw_text: cell 2"""
         self.parsed_equal_tree(source, result, 'table_line')
 
     def test_table_line_with_HTML_in_1st_cell(self):
         source = '| style="color:red" | cell 1 || cell 2\n'
         result = """table_line_cells:
-   table_first_cell:
+   table_cell:
       table_parameter:
          HTML_attribute:
             attribute_name:style
             value_quote:color:red
       table_cell_content:
-         @clean_inline@:
-            raw_text: cell 1 
-   table_cell_content:
-      @clean_inline@:
+         raw_text: cell 1 
+   table_cell:
+      table_cell_content:
          raw_text: cell 2"""
         self.parsed_equal_tree(source, result, 'table_line')
 
     def test_table_line_with_HTML_in_2nd_cell(self):
         source = '| cell 1 || style="color:red" | cell 2\n'
         result = """table_line_cells:
-   table_cell_content:
-      @clean_inline@:
+   table_cell:
+      table_cell_content:
          raw_text: cell 1 
-   table_first_cell:
+   table_cell:
       table_parameter:
          HTML_attribute:
             attribute_name:style
             value_quote:color:red
       table_cell_content:
-         @clean_inline@:
-            raw_text: cell 2"""
+         raw_text: cell 2"""
         self.parsed_equal_tree(source, result, 'table_line')
 
     def test_table_header_with_css(self):
         source = '! scope=row | Line 1\n'
         result = """table_line_header:
-   table_parameter:
-      HTML_attribute:
-         attribute_name:scope
-         value_noquote:row
-   table_cell_content:
-      @clean_inline@:
+   table_cell:
+      table_parameter:
+         HTML_attribute:
+            attribute_name:scope
+            value_noquote:row
+      table_cell_content:
          raw_text: Line 1"""
         self.parsed_equal_tree(source, result, 'table_line')
 
@@ -131,15 +128,16 @@ class TablesTests(ParserTestCase):
 | test1
 test2
 |}
-"""
+""" 
         result = """table:
-   @clean_inline@:
-      raw_text: test1
-   table_multiline_content:
-      EOL_KEEP:
-
-      @clean_inline@:
-         raw_text:test2"""
+   table_cell:
+      table_cell_content:
+         @clean_inline@:
+            raw_text: test1
+         table_multiline_content:
+            table_paragraph:
+               paragraph_line:
+                  raw_text:test2"""
         self.parsed_equal_tree(source, result, 'table')
 
     def test_table_with_css(self):
@@ -153,22 +151,26 @@ test2
 """
         result = """table:
    table_line_header:
-      @clean_inline@:
-         raw_text: cellA
+      table_cell:
+         table_cell_content:
+            raw_text: cellA
    table_line_header:
-      @clean_inline@:
-         raw_text: cellB
+      table_cell:
+         table_cell_content:
+            raw_text: cellB
    table_line_break:
       table_parameters:
          HTML_attribute:
             attribute_name:style
             value_quote:color:red
    table_line_cells:
-      @clean_inline@:
-         raw_text: cell C
+      table_cell:
+         table_cell_content:
+            raw_text: cell C
    table_line_cells:
-      @clean_inline@:
-         raw_text: cell D"""
+      table_cell:
+         table_cell_content:
+            raw_text: cell D"""
         self.parsed_equal_tree(source, result, "table")
 
     def test_table_with_template(self):
@@ -181,22 +183,21 @@ test2
 """
         result = """table:
    table_title:
-      @clean_inline@:
-         raw_text: Table test: yes
+      raw_text: Table test: yes
    table_line_cells:
-      table_cell_content:
-         @clean_inline@:
+      table_cell:
+         table_cell_content:
             raw_text: cell 1 
-      table_cell_content:
-         @clean_inline@:
+      table_cell:
+         table_cell_content:
             raw_text: cell 2
    table_line_break:
    table_line_cells:
-      table_cell_content:
-         @clean_inline@:
+      table_cell:
+         table_cell_content:
             raw_text: cell 3 
-      table_cell_content:
-         @clean_inline@:
+      table_cell:
+         table_cell_content:
             raw_text: cell 4"""
         templates = {'title': 'test: {{{parameter}}}'}
         self.parsed_equal_tree(source, result, "table", templates)
@@ -233,57 +234,60 @@ test2
             HTML_attribute:
                attribute_name:style
                value_quote:color:red
-         table_cell_content:
-            @clean_inline@:
-               raw_text: Table test: parameter
+         @inline@:
+            raw_text: Table test: parameter
       table_line_break:
       table_empty_cell:
       table_line_header:
-         table_parameter:
-            HTML_attribute:
-               attribute_name:scope
-               value_noquote:col
-         table_cell_content:
-            @clean_inline@:
+         table_cell:
+            table_parameter:
+               HTML_attribute:
+                  attribute_name:scope
+                  value_noquote:col
+            table_cell_content:
                raw_text: Title A
       table_line_header:
-         table_parameter:
-            HTML_attribute:
-               attribute_name:scope
-               value_noquote:col
-         table_cell_content:
-            @clean_inline@:
+         table_cell:
+            table_parameter:
+               HTML_attribute:
+                  attribute_name:scope
+                  value_noquote:col
+            table_cell_content:
                raw_text: Title B
       table_line_break:
       table_line_header:
-         table_parameter:
-            HTML_attribute:
-               attribute_name:scope
-               value_noquote:row
-         table_cell_content:
-            @clean_inline@:
+         table_cell:
+            table_parameter:
+               HTML_attribute:
+                  attribute_name:scope
+                  value_noquote:row
+            table_cell_content:
                raw_text: Line 1
       table_line_cells:
-         @clean_inline@:
-            raw_text:data L1.A
+         table_cell:
+            table_cell_content:
+               raw_text:data L1.A
       table_line_cells:
-         @clean_inline@:
-            raw_text:data L1.B
+         table_cell:
+            table_cell_content:
+               raw_text:data L1.B
       table_line_break:
       table_line_header:
-         table_parameter:
-            HTML_attribute:
-               attribute_name:scope
-               value_noquote:row
-         table_cell_content:
-            @clean_inline@:
+         table_cell:
+            table_parameter:
+               HTML_attribute:
+                  attribute_name:scope
+                  value_noquote:row
+            table_cell_content:
                raw_text: Line 2
       table_line_cells:
-         @clean_inline@:
-            raw_text:data L2.A
+         table_cell:
+            table_cell_content:
+               raw_text:data L2.A
       table_line_cells:
-         @clean_inline@:
-            raw_text:data with and L2.B..."""
+         table_cell:
+            table_cell_content:
+               raw_text:data with and L2.B..."""
         templates = {'prettyTable': 'style="color:blue"',
                      'title': 'test: {{{1}}}',
                      'template': '{{{1}}} and {{{parameters}}}...'}
@@ -327,80 +331,85 @@ test2
             HTML_attribute:
                attribute_name:style
                value_quote:color:red
-         table_cell_content:
-            @clean_inline@:
-               raw_text: Table test: true
+         @inline@:
+            raw_text: Table test: true
       table_line_break:
       table_line_header:
-         table_parameter:
-            HTML_attribute:
-               attribute_name:scope
-               value_noquote:col
-         table_cell_content:
-            @clean_inline@:
+         table_cell:
+            table_parameter:
+               HTML_attribute:
+                  attribute_name:scope
+                  value_noquote:col
+            table_cell_content:
                raw_text: First (mother)
       table_line_header:
-         table_parameter:
-            HTML_attribute:
-               attribute_name:scope
-               value_noquote:col
-         table_cell_content:
-            @clean_inline@:
+         table_cell:
+            table_parameter:
+               HTML_attribute:
+                  attribute_name:scope
+                  value_noquote:col
+            table_cell_content:
                raw_text: table
       table_line_cells:
-         <?>:
-            <?>:
-
-            @table_structure@:
-               table_begin:
-                  table_parameters:
-                     HTML_attribute:
-                        attribute_name:class
-                        value_quote:table
-                     HTML_attribute:
-                        attribute_name:style
-                        value_quote:color:blue
-               table_content:
-                  table_line_break:
-                  table_line_header:
-                     table_parameter:
+         table_cell:
+            table_cell_content:
+               @table_structure@:
+                  table_begin:
+                     table_parameters:
                         HTML_attribute:
-                           attribute_name:scope
-                           value_noquote:row
-                     table_cell_content:
-                        @clean_inline@:
-                           raw_text: Second (daughter) table
-                  table_line_cells:
-                     @clean_inline@:
-                        raw_text:data L1.A
-                  table_line_cells:
-                     @clean_inline@:
-                        raw_text:data L1.B
-                  table_line_break:
-                  table_line_header:
-                     table_parameter:
+                           attribute_name:class
+                           value_quote:table
                         HTML_attribute:
-                           attribute_name:scope
-                           value_noquote:row
-                     table_cell_content:
-                        @clean_inline@:
-                           raw_text: in the first one
-                  table_line_cells:
-                     @clean_inline@:
-                        raw_text:data L2.A
-                  table_line_cells:
-                     @clean_inline@:
-                        raw_text:data L2.B
+                           attribute_name:style
+                           value_quote:color:blue
+                  table_content:
+                     table_line_break:
+                     table_line_header:
+                        table_cell:
+                           table_parameter:
+                              HTML_attribute:
+                                 attribute_name:scope
+                                 value_noquote:row
+                           table_cell_content:
+                              raw_text: Second (daughter) table
+                     table_line_cells:
+                        table_cell:
+                           table_cell_content:
+                              raw_text:data L1.A
+                     table_line_cells:
+                        table_cell:
+                           table_cell_content:
+                              raw_text:data L1.B
+                     table_line_break:
+                     table_line_header:
+                        table_cell:
+                           table_parameter:
+                              HTML_attribute:
+                                 attribute_name:scope
+                                 value_noquote:row
+                           table_cell_content:
+                              raw_text: in the first one
+                     table_line_cells:
+                        table_cell:
+                           table_cell_content:
+                              raw_text:data L2.A
+                     table_line_cells:
+                        table_cell:
+                           table_cell_content:
+                              raw_text:data L2.B
       table_line_break:
       table_line_cells:
-         @clean_inline@:
-            raw_text: first
+         table_cell:
+            table_cell_content:
+               raw_text: first
       table_line_cells:
-         @clean_inline@:
-            raw_text: table
+         table_cell:
+            table_cell_content:
+               raw_text: table
       table_line_cells:
-         @clean_inline@:
-            raw_text: again"""
+         table_cell:
+            table_cell_content:
+               raw_text: again"""
         templates = {'prettyTable': 'style="color:blue"',
                      'title': 'test: {{{1}}}'}
         self.parsed_equal_tree(source, result, "table", templates)

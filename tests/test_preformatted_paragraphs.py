@@ -101,7 +101,8 @@ Preformatted paragraph.
    table:
       table_line_break:
       table_line_header:
-         @clean_inline@:
-            raw_text: 
-            preformatted:Text"""
+         table_cell:
+            table_cell_content:
+               raw_text: 
+               preformatted:Text"""
         self.parsed_equal_tree(source, result, None)

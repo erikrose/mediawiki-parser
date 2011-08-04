@@ -43,7 +43,7 @@ def replace_by_space(node):
 
 # Characters
 
-    any_char                : [\x20..\xff]
+    any_char                : [\x20..\xff] / '/'
     esc_char                : L_BRACKET/R_BRACKET/PIPE/L_BRACE/R_BRACE/LT/GT/AMP/SEMICOLON
     raw_char                : !esc_char any_char
     raw_text                : raw_char+                                                             : join
@@ -76,7 +76,7 @@ def replace_by_space(node):
 
 # Templates
 
-    value_content           : (inline / (!(TEMPLATE_END/PIPE) any_char) / EOL)*                     : keep
+    value_content           : (inline / (!(SPACETABEOL* (TEMPLATE_END / PIPE)) (any_char / EOL)))*  : keep
     parameter_value         : value_content SPACETABEOL*
     optional_value          : parameter_value?
     parameter_equal         : SPACETABEOL* EQUAL SPACETABEOL*

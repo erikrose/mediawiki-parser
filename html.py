@@ -1,5 +1,5 @@
 from constants import html_entities
-from pijnu.library.node import Nil, Nodes
+from pijnu.library.node import Nil, Nodes, Node
 from mediawiki_parser import wikitextParser
 from mutagen import Metadata
 import apostrophes
@@ -166,7 +166,7 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
         if isinstance(node.value, Nodes) and node.value[0].tag == 'table_begin':
             attributes = node.value[0].value[0]
             for attribute in attributes:
-                if attribute.tag == 'HTML_attribute':
+                if attribute.tag == 'HTML_attribute' and attribute.value != '':
                     table_parameters += ' ' + attribute.value
             contents = node.value[1].value
             for item in contents:
@@ -183,24 +183,41 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
         if len(node.value) > 1:
             values = node.value[0].value
             for value in values:
-                if value.tag == 'HTML_attribute':
-                    cell_parameters += ' ' + value.value
+                if isinstance(value, Node):
+                    if value.tag == 'HTML_attribute' and value.value != '':
+                        cell_parameters += ' ' + value.value
+                    else:
+                        cell_content += value.leaf()
                 else:
-                    cell_content += value.value
+                    cell_content += value
             cell_content += content(node.value[1])
         else:
             cell_content = content(node)
         return (cell_parameters, cell_content)
 
     def render_table_header_cell(node):
-        content = render_cell_content(node)
-        if content is not None:
-            node.value = '\t<th%s>%s</th>\n' % content
+        result = ''
+        if isinstance(node.value, Nodes):
+            for i in range(len(node.value)):
+                content = render_cell_content(node.value[i])
+                result += '\t<th%s>%s</th>\n' % content
+        else:
+            content = render_cell_content(node)
+            result = '\t<th%s>%s</th>\n' % content            
+        if result != '':
+            node.value = result
 
     def render_table_normal_cell(node):
-        content = render_cell_content(node)
-        if content is not None:
-            node.value = '\t<td%s>%s</td>\n' % content
+        result = ''
+        if isinstance(node.value, Nodes):
+            for i in range(len(node.value)):
+                content = render_cell_content(node.value[i])
+                result += '\t<td%s>%s</td>\n' % content
+        else:
+            content = render_cell_content(node)
+            result = '\t<td%s>%s</td>\n' % content            
+        if result != '':
+            node.value = result
 
     def render_table_empty_cell(node):
         node.value = '\t<td></td>\n'
@@ -216,7 +233,7 @@ def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki,
             assert len(node.value) == 1, "Bad AST shape!"
             parameters = node.value[0].value
             for value in parameters:
-                if value.tag == 'HTML_attribute':
+                if value.tag == 'HTML_attribute' and value.value != '':
                     line_parameters += ' ' + value.value
         node.value = '</tr>\n<tr%s>\n' % line_parameters
 
