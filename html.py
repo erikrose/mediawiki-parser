@@ -1,7 +1,6 @@
 from constants import html_entities
 from pijnu.library.node import Nil, Nodes, Node
 from mediawiki_parser import wikitextParser
-from mutagen import Metadata
 import apostrophes
 
 def toolset(allowed_tags, allowed_autoclose_tags, allowed_attributes, interwiki, namespaces):
