@@ -9,7 +9,7 @@ class PreformattedParagraphsTests(ParserTestCase):
         result = """body:
    preformatted_lines:
       preformatted_line:
-         @inline@:
+         preformatted_inline:
             raw_text:This is a preformatted paragraph.
          EOL_KEEP:
 """
@@ -22,7 +22,7 @@ Followed by a "normal" one.
         result = """body:
    preformatted_lines:
       preformatted_line:
-         @inline@:
+         preformatted_inline:
             raw_text:This is a preformatted paragraph.
          EOL_KEEP:
 
@@ -38,12 +38,12 @@ Followed by a "normal" one.
         result = """body:
    preformatted_lines:
       preformatted_line:
-         @inline@:
+         preformatted_inline:
             raw_text:This is a multiline
          EOL_KEEP:
 
       preformatted_line:
-         @inline@:
+         preformatted_inline:
             raw_text:preformatted paragraph.
          EOL_KEEP:
 """
@@ -55,11 +55,40 @@ Followed by a "normal" one.
         result = """body:
    preformatted_lines:
       preformatted_line:
-         @inline@:
+         preformatted_inline:
             raw_text:Styled text such as ''italic'', '''bold''', 
             internal_link:
                page_name:Template:templates
             raw_text: also work.
+         EOL_KEEP:
+"""
+        self.parsed_equal_tree(source, result, None)
+
+    def test_tabs_in_preformatted_paragraph(self):
+        source = """ Preformatted\tparagraph
+ \twith
+ \t\tmultiple tabs.
+"""
+        result = """body:
+   preformatted_lines:
+      preformatted_line:
+         preformatted_inline:
+            raw_text:Preformatted
+            tab_to_8_spaces: 
+            raw_text:paragraph
+         EOL_KEEP:
+
+      preformatted_line:
+         preformatted_inline:
+            tab_to_8_spaces: 
+            raw_text:with
+         EOL_KEEP:
+
+      preformatted_line:
+         preformatted_inline:
+            tab_to_8_spaces: 
+            tab_to_8_spaces: 
+            raw_text:multiple tabs.
          EOL_KEEP:
 """
         self.parsed_equal_tree(source, result, None)

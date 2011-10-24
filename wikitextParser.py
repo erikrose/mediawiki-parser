@@ -65,14 +65,15 @@
 
 # Characters
 
-    ESC_CHAR                : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON
+    ESC_CHAR                : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON/TAB
     TITLE_END               : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
     ESC_SEQ                 : SPECIAL_TAG / ESC_CHAR / TITLE_END
-    raw_char                : !ESC_SEQ [\x20..\xff]
+    tab_to_space            : TAB+                                                                  : replace_by_space
+    raw_char                : (!ESC_SEQ [\x20..\xff])
     raw_text                : raw_char+                                                             : join render_raw_text
     alpha_num               : [a..zA..Z0..9]
     alpha_num_text          : alpha_num+                                                            : join
-    any_char                : [\x20..\xff]
+    any_char                : [\x20..\xff] / tab_to_space
     any_text                : any_char+                                                             : join
 
 # HTML tags
@@ -125,7 +126,8 @@
 # Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
-    pre_text                : (!PRE_END any_char)*                                                  : join
+    tab_to_2_spaces         : TAB                                                                   : replace_by_2_spaces
+    pre_text                : (tab_to_2_spaces / (!PRE_END any_char))*                              : join
     preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
     # We allow any char without parsing them as long as the tag is not closed
     eol_to_space            : EOL*                                                                  : replace_by_space
@@ -137,7 +139,7 @@
     styled_text             : link / inline_url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowed_char            : ESC_CHAR{1}                                                           : restore liftValue
-    allowed_text            : raw_text / LT / GT / allowed_char
+    allowed_text            : raw_text / LT / GT / tab_to_space / allowed_char
     clean_inline            : (not_styled_text / styled_text / raw_text)+                           : @
     inline                  : (not_styled_text / styled_text / allowed_text)+                       : @
 
@@ -184,9 +186,12 @@
 # Preformatted
 
     EOL_KEEP                : EOL                                                                   : restore
-    preformatted_line       : SPACE inline EOL_KEEP                                                 : liftValue
+    tab_to_8_spaces         : TAB                                                                   : replace_by_8_spaces
+    any_char_but_tab        : raw_text / LT / GT / (!TAB ESC_CHAR)                                  : join
+    preformatted_inline     : (tab_to_8_spaces / not_styled_text / styled_text / any_char_but_tab)+
+    preformatted_line       : SPACE preformatted_inline EOL_KEEP                                    : liftValue
     preformatted_lines      : preformatted_line+
-    preformatted_text       : inline EOL?                                                           : liftValue
+    preformatted_text       : preformatted_inline EOL?                                              : liftValue
     preformatted_paragraph  : PRE_BEGIN EOL preformatted_text PRE_END EOL
     preformatted_group      : preformatted_paragraph / preformatted_lines                           : render_preformatted
 
@@ -257,6 +262,12 @@ def make_parser(actions=None):
         """Return a map of toolset functions hard-coded into the grammar."""
     ###   <toolset>
         def replace_by_space(node):
+            node.value = ' '
+        
+        def replace_by_2_spaces(node):
+            node.value = ' '
+        
+        def replace_by_8_spaces(node):
             node.value = ' '
         
     
@@ -340,14 +351,15 @@ def make_parser(actions=None):
     
     # Characters
     
-    ESC_CHAR = Choice([L_BRACKET, R_BRACKET, protocol, PIPE, L_BRACE, R_BRACE, LT, GT, SLASH, AMP, SEMICOLON], expression='L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON', name='ESC_CHAR')
+    ESC_CHAR = Choice([L_BRACKET, R_BRACKET, protocol, PIPE, L_BRACE, R_BRACE, LT, GT, SLASH, AMP, SEMICOLON, TAB], expression='L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON/TAB', name='ESC_CHAR')
     TITLE_END = Choice([TITLE6_END, TITLE5_END, TITLE4_END, TITLE3_END, TITLE2_END, TITLE1_END], expression='TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END', name='TITLE_END')
     ESC_SEQ = Choice([SPECIAL_TAG, ESC_CHAR, TITLE_END], expression='SPECIAL_TAG / ESC_CHAR / TITLE_END', name='ESC_SEQ')
+    tab_to_space = Repetition(TAB, numMin=1, numMax=False, expression='TAB+', name='tab_to_space')(toolset['replace_by_space'])
     raw_char = Sequence([NextNot(ESC_SEQ, expression='!ESC_SEQ'), Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]')], expression='!ESC_SEQ [\\x20..\\xff]', name='raw_char')
     raw_text = Repetition(raw_char, numMin=1, numMax=False, expression='raw_char+', name='raw_text')(toolset['join'], toolset['render_raw_text'])
     alpha_num = Klass(u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', expression='[a..zA..Z0..9]', name='alpha_num')
     alpha_num_text = Repetition(alpha_num, numMin=1, numMax=False, expression='alpha_num+', name='alpha_num_text')(toolset['join'])
-    any_char = Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]', name='any_char')
+    any_char = Choice([Klass(u' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff', expression='[\\x20..\\xff]'), tab_to_space], expression='[\\x20..\\xff] / tab_to_space', name='any_char')
     any_text = Repetition(any_char, numMin=1, numMax=False, expression='any_char+', name='any_text')(toolset['join'])
     
     # HTML tags
@@ -400,7 +412,8 @@ def make_parser(actions=None):
     # Pre and nowiki tags
     
         # Preformatted acts like nowiki (disables wikitext parsing)
-    pre_text = Repetition(Sequence([NextNot(PRE_END, expression='!PRE_END'), any_char], expression='!PRE_END any_char'), numMin=False, numMax=False, expression='(!PRE_END any_char)*', name='pre_text')(toolset['join'])
+    tab_to_2_spaces = Clone(TAB, expression='TAB', name='tab_to_2_spaces')(toolset['replace_by_2_spaces'])
+    pre_text = Repetition(Choice([tab_to_2_spaces, Sequence([NextNot(PRE_END, expression='!PRE_END'), any_char], expression='!PRE_END any_char')], expression='tab_to_2_spaces / (!PRE_END any_char)'), numMin=False, numMax=False, expression='(tab_to_2_spaces / (!PRE_END any_char))*', name='pre_text')(toolset['join'])
     preformatted = Sequence([PRE_BEGIN, pre_text, PRE_END], expression='PRE_BEGIN pre_text PRE_END', name='preformatted')(toolset['liftValue'])
         # We allow any char without parsing them as long as the tag is not closed
     eol_to_space = Repetition(EOL, numMin=False, numMax=False, expression='EOL*', name='eol_to_space')(toolset['replace_by_space'])
@@ -412,7 +425,7 @@ def make_parser(actions=None):
     styled_text = Choice([link, inline_url, html_comment, tag, entity], expression='link / inline_url / html_comment / tag / entity', name='styled_text')
     not_styled_text = Choice([preformatted, nowiki], expression='preformatted / nowiki', name='not_styled_text')
     allowed_char = Repetition(ESC_CHAR, numMin=1, numMax=1, expression='ESC_CHAR{1}', name='allowed_char')(toolset['restore'], toolset['liftValue'])
-    allowed_text = Choice([raw_text, LT, GT, allowed_char], expression='raw_text / LT / GT / allowed_char', name='allowed_text')
+    allowed_text = Choice([raw_text, LT, GT, tab_to_space, allowed_char], expression='raw_text / LT / GT / tab_to_space / allowed_char', name='allowed_text')
     clean_inline **= Repetition(Choice([not_styled_text, styled_text, raw_text], expression='not_styled_text / styled_text / raw_text'), numMin=1, numMax=False, expression='(not_styled_text / styled_text / raw_text)+', name='clean_inline')
     inline **= Repetition(Choice([not_styled_text, styled_text, allowed_text], expression='not_styled_text / styled_text / allowed_text'), numMin=1, numMax=False, expression='(not_styled_text / styled_text / allowed_text)+', name='inline')
     
@@ -459,9 +472,12 @@ def make_parser(actions=None):
     # Preformatted
     
     EOL_KEEP = Clone(EOL, expression='EOL', name='EOL_KEEP')(toolset['restore'])
-    preformatted_line = Sequence([SPACE, inline, EOL_KEEP], expression='SPACE inline EOL_KEEP', name='preformatted_line')(toolset['liftValue'])
+    tab_to_8_spaces = Clone(TAB, expression='TAB', name='tab_to_8_spaces')(toolset['replace_by_8_spaces'])
+    any_char_but_tab = Choice([raw_text, LT, GT, Sequence([NextNot(TAB, expression='!TAB'), ESC_CHAR], expression='!TAB ESC_CHAR')], expression='raw_text / LT / GT / (!TAB ESC_CHAR)', name='any_char_but_tab')(toolset['join'])
+    preformatted_inline = Repetition(Choice([tab_to_8_spaces, not_styled_text, styled_text, any_char_but_tab], expression='tab_to_8_spaces / not_styled_text / styled_text / any_char_but_tab'), numMin=1, numMax=False, expression='(tab_to_8_spaces / not_styled_text / styled_text / any_char_but_tab)+', name='preformatted_inline')
+    preformatted_line = Sequence([SPACE, preformatted_inline, EOL_KEEP], expression='SPACE preformatted_inline EOL_KEEP', name='preformatted_line')(toolset['liftValue'])
     preformatted_lines = Repetition(preformatted_line, numMin=1, numMax=False, expression='preformatted_line+', name='preformatted_lines')
-    preformatted_text = Sequence([inline, Option(EOL, expression='EOL?')], expression='inline EOL?', name='preformatted_text')(toolset['liftValue'])
+    preformatted_text = Sequence([preformatted_inline, Option(EOL, expression='EOL?')], expression='preformatted_inline EOL?', name='preformatted_text')(toolset['liftValue'])
     preformatted_paragraph = Sequence([PRE_BEGIN, EOL, preformatted_text, PRE_END, EOL], expression='PRE_BEGIN EOL preformatted_text PRE_END EOL', name='preformatted_paragraph')
     preformatted_group = Choice([preformatted_paragraph, preformatted_lines], expression='preformatted_paragraph / preformatted_lines', name='preformatted_group')(toolset['render_preformatted'])
     

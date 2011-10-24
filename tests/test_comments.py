@@ -14,7 +14,7 @@ class CommentsTests(ParserTestCase):
         result = """body:
    preformatted_lines:
       preformatted_line:
-         @inline@:
+         preformatted_inline:
             raw_text:This is a preformatted paragraph.
          EOL_KEEP:
 """

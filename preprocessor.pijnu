@@ -11,12 +11,12 @@ def replace_by_space(node):
     CR                      : '
 '
     EOL                     : LF / CR
+    TAB                     : "	"
     L_BRACKET               : "["
     R_BRACKET               : "\]"
     L_BRACE                 : "{"                                                                   : drop
     R_BRACE                 : "}"                                                                   : drop
     SPACE                   : " "                                                                   : drop
-    TAB                     : "	"                                                                   : drop
     SPACETAB                : SPACE / TAB                                                           : drop
     SPACETABEOL             : SPACE / TAB / EOL                                                     : drop
     PIPE                    : "|"                                                                   : drop
@@ -46,7 +46,7 @@ def replace_by_space(node):
     any_char                : [\x20..\xff] / '/'
     esc_char                : L_BRACKET/R_BRACKET/PIPE/L_BRACE/R_BRACE/LT/GT/AMP/SEMICOLON
     raw_char                : !esc_char any_char
-    raw_text                : raw_char+                                                             : join
+    raw_text                : (raw_char / TAB)+                                                     : join
 
 # HTML comments
 # HTML comments are totally ignored and do not appear in the final text
@@ -63,7 +63,7 @@ def replace_by_space(node):
 # or by their optional default value in any case
 
     parameter_id            : raw_char+                                                             : join
-    parameter_value         : inline? : keep
+    parameter_value         : inline?                                                               : keep
     optional_default_value  : (PIPE SPACETABEOL* parameter_value)? SPACETABEOL*                     : liftNode
     template_parameter      : PARAMETER_BEGIN parameter_id optional_default_value PARAMETER_END     : substitute_template_parameter
 

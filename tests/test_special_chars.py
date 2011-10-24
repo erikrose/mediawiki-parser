@@ -4,6 +4,11 @@ from mediawiki_parser.tests import ParserTestCase
 
 
 class SpecialCharsTests(ParserTestCase):
+    def test_tabs_in_text(self):
+        source = "Some\ttext and\t\ttabs."
+        result = "[raw_text:'Some'  tab_to_space:' '  raw_text:'text and'  tab_to_space:' '  raw_text:'tabs.']"
+        self.parsed_equal_string(source, result, 'inline')
+
     def test_unicode_chars(self):
         source = u"Some Unicode characters: 你好."
         result = u"[raw_text:'Some Unicode characters: 你好.']"

@@ -3,6 +3,12 @@ wikitext
 def replace_by_space(node):
     node.value = ' '
 
+def replace_by_2_spaces(node):
+    node.value = ' '
+
+def replace_by_8_spaces(node):
+    node.value = ' '
+
 <definition>
 # Codes
 
@@ -69,14 +75,15 @@ def replace_by_space(node):
 
 # Characters
 
-    ESC_CHAR                : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON
+    ESC_CHAR                : L_BRACKET/R_BRACKET/protocol/PIPE/L_BRACE/R_BRACE/LT/GT/SLASH/AMP/SEMICOLON/TAB
     TITLE_END               : TITLE6_END/TITLE5_END/TITLE4_END/TITLE3_END/TITLE2_END/TITLE1_END
     ESC_SEQ                 : SPECIAL_TAG / ESC_CHAR / TITLE_END
-    raw_char                : !ESC_SEQ [\x20..\xff]
+    tab_to_space            : TAB+                                                                  : replace_by_space
+    raw_char                : (!ESC_SEQ [\x20..\xff])
     raw_text                : raw_char+                                                             : join render_raw_text
     alpha_num               : [a..zA..Z0..9]
     alpha_num_text          : alpha_num+                                                            : join
-    any_char                : [\x20..\xff]
+    any_char                : [\x20..\xff] / tab_to_space
     any_text                : any_char+                                                             : join
 
 # HTML tags
@@ -129,7 +136,8 @@ def replace_by_space(node):
 # Pre and nowiki tags
 
     # Preformatted acts like nowiki (disables wikitext parsing)
-    pre_text                : (!PRE_END any_char)*                                                  : join
+    tab_to_2_spaces         : TAB                                                                   : replace_by_2_spaces
+    pre_text                : (tab_to_2_spaces / (!PRE_END any_char))*                              : join
     preformatted            : PRE_BEGIN pre_text PRE_END                                            : liftValue
     # We allow any char without parsing them as long as the tag is not closed
     eol_to_space            : EOL*                                                                  : replace_by_space
@@ -141,7 +149,7 @@ def replace_by_space(node):
     styled_text             : link / inline_url / html_comment / tag / entity
     not_styled_text         : preformatted / nowiki
     allowed_char            : ESC_CHAR{1}                                                           : restore liftValue
-    allowed_text            : raw_text / LT / GT / allowed_char
+    allowed_text            : raw_text / LT / GT / tab_to_space / allowed_char
     clean_inline            : (not_styled_text / styled_text / raw_text)+                           : @
     inline                  : (not_styled_text / styled_text / allowed_text)+                       : @
 
@@ -188,9 +196,12 @@ def replace_by_space(node):
 # Preformatted
 
     EOL_KEEP                : EOL                                                                   : restore
-    preformatted_line       : SPACE inline EOL_KEEP                                                 : liftValue
+    tab_to_8_spaces         : TAB                                                                   : replace_by_8_spaces
+    any_char_but_tab        : raw_text / LT / GT / (!TAB ESC_CHAR)                                  : join
+    preformatted_inline     : (tab_to_8_spaces / not_styled_text / styled_text / any_char_but_tab)+
+    preformatted_line       : SPACE preformatted_inline EOL_KEEP                                    : liftValue
     preformatted_lines      : preformatted_line+
-    preformatted_text       : inline EOL?                                                           : liftValue
+    preformatted_text       : preformatted_inline EOL?                                              : liftValue
     preformatted_paragraph  : PRE_BEGIN EOL preformatted_text PRE_END EOL
     preformatted_group      : preformatted_paragraph / preformatted_lines                           : render_preformatted
 
