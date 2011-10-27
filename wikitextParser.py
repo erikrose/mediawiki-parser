@@ -83,7 +83,7 @@
     value_noquote           : (!(GT/SPACETAB/SLASH) raw_char)+                                      : join
     attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))              : liftNode
     attribute_name          : (!(EQUAL/SLASH/SPACETAB) raw_char)+                                   : join
-    tag_name                : (!(SPACE/SLASH) raw_char)+                                            : join
+    tag_name                : (!(SPACE/SLASH) alpha_num)+                                           : join
     optional_attribute      : SPACETABEOL+ attribute_name attribute_value?
     optional_attributes     : optional_attribute*
     tag_lt                  : LT                                                                    : drop
@@ -369,7 +369,7 @@ def make_parser(actions=None):
     value_noquote = Repetition(Sequence([NextNot(Choice([GT, SPACETAB, SLASH], expression='GT/SPACETAB/SLASH'), expression='!(GT/SPACETAB/SLASH)'), raw_char], expression='!(GT/SPACETAB/SLASH) raw_char'), numMin=1, numMax=False, expression='(!(GT/SPACETAB/SLASH) raw_char)+', name='value_noquote')(toolset['join'])
     attribute_value = Sequence([EQUAL, Choice([value_quote, value_apostrophe, value_noquote], expression='value_quote / value_apostrophe / value_noquote')], expression='EQUAL (value_quote / value_apostrophe / value_noquote)', name='attribute_value')(toolset['liftNode'])
     attribute_name = Repetition(Sequence([NextNot(Choice([EQUAL, SLASH, SPACETAB], expression='EQUAL/SLASH/SPACETAB'), expression='!(EQUAL/SLASH/SPACETAB)'), raw_char], expression='!(EQUAL/SLASH/SPACETAB) raw_char'), numMin=1, numMax=False, expression='(!(EQUAL/SLASH/SPACETAB) raw_char)+', name='attribute_name')(toolset['join'])
-    tag_name = Repetition(Sequence([NextNot(Choice([SPACE, SLASH], expression='SPACE/SLASH'), expression='!(SPACE/SLASH)'), raw_char], expression='!(SPACE/SLASH) raw_char'), numMin=1, numMax=False, expression='(!(SPACE/SLASH) raw_char)+', name='tag_name')(toolset['join'])
+    tag_name = Repetition(Sequence([NextNot(Choice([SPACE, SLASH], expression='SPACE/SLASH'), expression='!(SPACE/SLASH)'), alpha_num], expression='!(SPACE/SLASH) alpha_num'), numMin=1, numMax=False, expression='(!(SPACE/SLASH) alpha_num)+', name='tag_name')(toolset['join'])
     optional_attribute = Sequence([Repetition(SPACETABEOL, numMin=1, numMax=False, expression='SPACETABEOL+'), attribute_name, Option(attribute_value, expression='attribute_value?')], expression='SPACETABEOL+ attribute_name attribute_value?', name='optional_attribute')
     optional_attributes = Repetition(optional_attribute, numMin=False, numMax=False, expression='optional_attribute*', name='optional_attributes')
     tag_lt = Clone(LT, expression='LT', name='tag_lt')(toolset['drop'])

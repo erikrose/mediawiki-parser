@@ -93,7 +93,7 @@ def replace_by_8_spaces(node):
     value_noquote           : (!(GT/SPACETAB/SLASH) raw_char)+                                      : join
     attribute_value         : (EQUAL (value_quote / value_apostrophe / value_noquote))              : liftNode
     attribute_name          : (!(EQUAL/SLASH/SPACETAB) raw_char)+                                   : join
-    tag_name                : (!(SPACE/SLASH) raw_char)+                                            : join
+    tag_name                : (!(SPACE/SLASH) alpha_num)+                                           : join
     optional_attribute      : SPACETABEOL+ attribute_name attribute_value?
     optional_attributes     : optional_attribute*
     tag_lt                  : LT                                                                    : drop
