@@ -41,8 +41,7 @@ def toolset():
 
     def render_body(node):
         tags = {'bold': '*', 'bold_close': '*', 'italic': '_', 'italic_close': '_'}
-        print node
-        node.value = apostrophes.parse(node.leaf(), tags)
+        node.value = apostrophes.parse('%s' % node.leaves(), tags)
 
     def render_entity(node):
         value = '%s' % node.leaf()
@@ -57,6 +56,12 @@ def toolset():
     def render_gt(node):
         pass
 
+    def process_attribute(node, allowed_tag):
+        assert len(node.value) == 2, "Bad AST shape!"
+        attribute_name = node.value[0].value
+        attribute_value = node.value[1].value
+        return '%s="%s"' % (attribute_name, attribute_value)
+
     def process_attributes(node, allowed_tag):
         result = ''
         if len(node.value) == 1:
@@ -64,15 +69,15 @@ def toolset():
         elif len(node.value) == 2:
             attributes = node.value[1].value
             for i in range(len(attributes)):
-                attribute_name = attributes[i].value[0].value
-                attribute_value = attributes[i].value[1].value
-                result += ' %s="%s"' % (attribute_name, attribute_value)
+                attribute = process_attribute(attributes[i], allowed_tag)
+                if attribute is not '':
+                    result += ' ' + attribute 
         else:
             raise Exception("Bad AST shape!")
         return result
 
     def render_attribute(node):
-        node.value = process_attributes(node, True)
+        node.value = process_attribute(node, True)
 
     def render_tag_open(node):
         tag_name = node.value[0].value
