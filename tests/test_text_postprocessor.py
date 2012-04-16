@@ -4,8 +4,28 @@ from mediawiki_parser.tests import PostprocessorTestCase
 
 
 class TextBackendTests(PostprocessorTestCase):
+    def test_simple_title(self):
+        source = '= A title =\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'text')
+
     def test_simple_title2(self):
         source = '== A title ==\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'text')
+
+    def test_simple_title3(self):
+        source = '=== A title ===\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'text')
+
+    def test_simple_title4(self):
+        source = '==== A title ====\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, 'wikitext', {}, 'text')
+
+    def test_simple_title5(self):
+        source = '==== A title ====\n'
         result = ' A title \n'
         self.parsed_equal_string(source, result, 'wikitext', {}, 'text')
 
@@ -13,6 +33,36 @@ class TextBackendTests(PostprocessorTestCase):
         source = '====== Test! ======\n'
         result = ' Test! \n'
         self.parsed_equal_string(source, result, 'wikitext', {}, 'text')
+
+    def test_simple_title_without_method(self):
+        source = '= A title =\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, None, {}, 'text')
+
+    def test_simple_title2_without_method(self):
+        source = '== A title ==\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, None, {}, 'text')
+
+    def test_simple_title3_without_method(self):
+        source = '=== A title ===\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, None, {}, 'text')
+
+    def test_simple_title4_without_method(self):
+        source = '==== A title ====\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, None, {}, 'text')
+
+    def test_simple_title5_without_method(self):
+        source = '==== A title ====\n'
+        result = ' A title \n'
+        self.parsed_equal_string(source, result, None, {}, 'text')
+
+    def test_simple_title6_without_method(self):
+        source = '====== Test! ======\n'
+        result = ' Test! \n'
+        self.parsed_equal_string(source, result, None, {}, 'text')
 
     def test_simple_allowed_open_tag(self):
         source = 'a<p>test'

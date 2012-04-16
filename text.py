@@ -13,22 +13,22 @@ def toolset():
                     'br': render_tag_br}
 
     def render_title1(node):
-        node.value += '\n'
+        node.value = '%s\n' % node.leaf()
 
     def render_title2(node):
-        node.value += '\n'
+        node.value = '%s\n' % node.leaf()
 
     def render_title3(node):
-        node.value += '\n'
+        node.value = '%s\n' % node.leaf()
 
     def render_title4(node):
-        node.value += '\n'
+        node.value = '%s\n' % node.leaf()
 
     def render_title5(node):
-        node.value += '\n'
+        node.value = '%s\n' % node.leaf()
 
     def render_title6(node):
-        node.value += '\n'
+        node.value = '%s\n' % node.leaf()
 
     def render_raw_text(node):
         pass
