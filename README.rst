@@ -27,7 +27,17 @@ and the wikitext will be rendered as HTML in the article.htm file.
 
 Other ways might be implemented in the future.
 
+Unit tests
+----------
 
+Install nose and run:
+
+::
+
+ cd /PATH/TO/mediawiki-parser/
+ ln -s ../mediawiki-parser/ mediawiki_parser
+ export PYTHONPATH=/PATH/TO/mediawiki-parser/:/PATH/TO/pijnu/
+ nosetests tests
 
 How to use in a program
 =======================
